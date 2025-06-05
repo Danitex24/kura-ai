@@ -271,3 +271,77 @@
         margin: 10% auto;
     }
 }
+
+/* Basic alert styling */
+.kura-ai-alert {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 400px;
+    padding: 15px;
+    margin: 0;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+}
+
+.kura-ai-alert-content {
+    position: relative;
+}
+
+.kura-ai-alert-close {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* Alert types */
+.alert-warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+}
+
+.kura-ai-alert-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.kura-ai-alert-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+.kura-ai-alert-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(38, 143, 255, 0.5);
+}
+.kura-ai-alert-link:active {
+    color: #004085;
+}
+.kura-ai-alert-link:visited {
+    color: #004085;
+}
+.kura-ai-alert-link:visited:hover {
+    color: #003366;
+}
+.kura-ai-alert-link:visited:focus {
+    box-shadow: 0 0 0 2px rgba(38, 143, 255, 0.5);
+}
+.kura-ai-alert-link:visited:active {
+    color: #00264d;
+}
+.kura-ai-alert-link:visited:hover {
+    text-decoration: underline;
+}
