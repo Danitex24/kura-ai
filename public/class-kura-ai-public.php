@@ -70,5 +70,15 @@ class Kura_AI_Public
             $this->version,
             false,
         );
+
+        // Localize the script with PHP data for JS
+        wp_localize_script(
+            $this->plugin_name, // Same handle as used in wp_enqueue_script()
+            'kura_ai_public',  // JS object name
+            [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('kura_ai_public_nonce')
+            ],
+        );
     }
 }
