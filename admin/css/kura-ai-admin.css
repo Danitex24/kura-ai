@@ -121,18 +121,22 @@
 
 .kura-ai-issue-count.critical {
     border-left: 4px solid #d63638;
+    background-color: #ff5a5a3b;
 }
 
 .kura-ai-issue-count.high {
     border-left: 4px solid #dba617;
+    background-color: #dba6172e;
 }
 
 .kura-ai-issue-count.medium {
-    border-left: 4px solid #f0b849;
+    border-left: 4px solid #b4d04d;
+    background-color: #b4d04d47;
 }
 
 .kura-ai-issue-count.low {
     border-left: 4px solid #72aee6;
+    background-color: #72aee657;
 }
 
 .kura-ai-issue-count .count {
