@@ -466,21 +466,30 @@ class Kura_AI_Admin
             wp_send_json_error(__('You do not have sufficient permissions to perform this action.', 'kura-ai'));
         }
 
-        $scanner = new Kura_AI_Security_Scanner($this->plugin_name, $this->version);
-        $results = $scanner->run_scan();
+        try {
+            $scanner = new Kura_AI_Security_Scanner($this->plugin_name, $this->version);
+            $results = $scanner->run_scan();
 
-        // Log the scan
-        $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
-        $logger->log('scan', __('Manual security scan completed', 'kura-ai'), $results);
+            // Log the scan
+            $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
+            $logger->log('scan', __('Manual security scan completed', 'kura-ai'), $results);
 
-        // Send notification if enabled
-        $settings = get_option('kura_ai_settings');
-        if (!empty($settings['email_notifications'])) {
-            $notifier = new Kura_AI_Notifier($this->plugin_name, $this->version);
-            $notifier->send_scan_results($results);
+            // Send notification if enabled
+            $settings = get_option('kura_ai_settings');
+            if (!empty($settings['email_notifications'])) {
+                $notifier = new Kura_AI_Notifier($this->plugin_name, $this->version);
+                $notifier->send_scan_results($results);
+            }
+
+            wp_send_json_success($results);
+        } catch (Exception $e) {
+            wp_send_json_error(sprintf(
+                __('Scan failed: %s (Line %d in %s)', 'kura-ai'),
+                $e->getMessage(),
+                $e->getLine(),
+                basename($e->getFile()),
+            ));
         }
-
-        wp_send_json_success($results);
     }
 
     /**
