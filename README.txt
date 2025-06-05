@@ -102,6 +102,6 @@ Initial release of KuraAI Security Plugin.
 │   └── uninstall.php
 │
 └── documentation/
-    ├── Installation-Guide.mod
-    ├── Admin-Walkthrough.mod
-    └── API-Integration-Guide.mod
+    ├── Installation-Guide.md
+    ├── Admin-Walkthrough.md
+    └── API-Integration-Guide.md
