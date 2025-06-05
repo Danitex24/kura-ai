@@ -61,3 +61,47 @@ We recommend daily scans for most sites. High-traffic or e-commerce sites may wa
 
 = 1.0.0 =
 Initial release of KuraAI Security Plugin.
+
+├── kura-ai/
+│   ├── admin/
+│   │   ├── css/
+│   │   │   └── kura-ai-admin.css
+│   │   ├── js/
+│   │   │   └── kura-ai-admin.js
+│   │   ├── partials/
+│   │   │   ├── kura-ai-admin-display.php
+│   │   │   ├── kura-ai-logs-display.php
+│   │   │   ├── kura-ai-reports-display.php
+│   │   │   ├── kura-ai-settings-display.php
+│   │   │   └── kura-ai-suggestions-display.php
+│   │   └── class-kura-ai-admin.php
+│   ├── includes/
+│   │   ├── ai-integrations/
+│   │   ├── class-kura-ai-activator.php
+│   │   ├── class-kura-ai-deactivator.php
+│   │   ├── class-kura-ai-i18n.php
+│   │   ├── class-kura-ai-loader.php
+│   │   ├── class-kura-ai-security-scanner.php
+│   │   ├── class-kura-ai-ai-handler.php
+│   │   ├── class-kura-ai-logger.php
+│   │   ├── class-kura-ai-notifier.php
+│   │   └── class-kura-ai.php
+│   ├── languages/
+│   │   └── kura-ai.pot
+│   ├── public/
+│   │   └── class-kura-ai-public.php
+│   ├── assets/
+│   │   ├── js/
+│   │   ├── css/
+│   │   └── images/
+│   ├── vendor/
+│   ├── index.php
+│   ├── kura-ai.php
+│   ├── LICENSE.txt
+│   ├── README.txt
+│   └── uninstall.php
+│
+└── documentation/
+    ├── Installation-Guide.mod
+    ├── Admin-Walkthrough.mod
+    └── API-Integration-Guide.mod
