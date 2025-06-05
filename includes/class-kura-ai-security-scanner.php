@@ -88,13 +88,37 @@ class Kura_AI_Security_Scanner
             );
         }
 
-        // Check core file integrity
+        // Check core file integrity - UPDATED VERSION
         if (!function_exists('get_core_checksums')) {
             require_once ABSPATH . 'wp-admin/includes/update.php';
         }
 
-        $checksums = get_core_checksums(wp_version(), 'en_US');
+        // Get current WordPress version
+        $wp_version = get_bloginfo('version');
+
+        // Get checksums for this version
+        $checksums = get_core_checksums($wp_version, 'en_US');
+        if (!$checksums) {
+            $issues[] = array(
+                'type' => 'checksum_fail',
+                'severity' => 'high',
+                'message' => __('Could not verify core file integrity - checksums unavailable', 'kura-ai'),
+                'fix' => __('Check WordPress.org availability or try again later', 'kura-ai')
+            );
+            return $issues;
+        }
+
+        // Get core files list
         $core_files = get_core_files(ABSPATH);
+        if (!$core_files) {
+            $issues[] = array(
+                'type' => 'core_files_fail',
+                'severity' => 'high',
+                'message' => __('Could not retrieve core files list', 'kura-ai'),
+                'fix' => __('Check file permissions or WordPress installation', 'kura-ai')
+            );
+            return $issues;
+        }
 
         foreach ($core_files as $file) {
             if (!isset($checksums[$file])) {
