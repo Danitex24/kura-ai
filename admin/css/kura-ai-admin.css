@@ -345,3 +345,16 @@
 .kura-ai-alert-link:visited:hover {
     text-decoration: underline;
 }
+
+.kura-ai-quick-links {
+    border: 2px solid;
+    border-top-color: currentcolor;
+    border-right-color: currentcolor;
+    border-bottom-color: currentcolor;
+    border-left-color: currentcolor;
+    border-color: #0d0d0d;
+    background-color: darkseagreen;
+    padding: 30px;
+    border-radius: 25px;
+    margin-top: 20px;
+}
