@@ -40,7 +40,28 @@ register_deactivation_hook(__FILE__, array('Kura_AI_Deactivator', 'deactivate'))
  * admin-specific hooks, and public-facing site hooks.
  */
 require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai.php';
+// add helper functions
+function get_core_files($directory)
+{
+    $wp_files = array();
+    $wp_dir = @dir($directory);
 
+    if ($wp_dir) {
+        while (($file = $wp_dir->read()) !== false) {
+            if ('.' === $file[0]) {
+                continue;
+            }
+            if (is_dir($directory . $file)) {
+                $wp_files = array_merge($wp_files, get_core_files($directory . $file . '/'));
+            } else {
+                $wp_files[] = $file;
+            }
+        }
+        $wp_dir->close();
+    }
+
+    return $wp_files;
+}
 /**
  * Begins execution of the plugin.
  *
