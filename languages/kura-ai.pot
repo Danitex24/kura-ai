@@ -1,1 +1,658 @@
-// Placeholder for kura-ai.pot
+# Copyright (C) 2023 Daniel Abughdyer
+# This file is distributed under the same license as the KuraAI package.
+msgid ""
+msgstr ""
+"Project-Id-Version: KuraAI 1.0.0\n"
+"Report-Msgid-Bugs-To: https://www.danovatesolutions.org\n"
+"POT-Creation-Date: 2023-11-15 12:00-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0.1\n"
+
+#: admin/class-kura-ai-admin.php:50
+msgid "KuraAI Security"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:51
+msgid "Dashboard"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:57
+msgid "Vulnerability Reports"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:58
+msgid "Reports"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:64
+msgid "AI Fix Suggestions"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:65
+msgid "AI Suggestions"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:71
+msgid "Activity Logs"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:77
+msgid "Settings"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:15
+msgid "Run Scan Now"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:31
+msgid "Secure"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:33
+msgid "%d issue"
+msgid_plural "%d issues"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/partials/kura-ai-admin-display.php:42
+msgid "Disabled"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:44
+msgid "Enabled"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:48
+msgid "Configure"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:56
+msgid "Preparing scan..."
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:60
+msgid "Scan Results"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:70
+msgid "View Vulnerability Reports"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:71
+msgid "Get AI Fix Suggestions"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:72
+msgid "View Activity Logs"
+msgstr ""
+
+#: admin/partials/kura-ai-admin-display.php:73
+msgid "Plugin Settings"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:15
+msgid "Run New Scan"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:21
+msgid "No scan results available. Run a scan to check for vulnerabilities."
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:26
+msgid "Scan Summary"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:68
+msgid "Last scanned: %s"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:72
+msgid "Detailed Results"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:81
+msgid "Core Integrity"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:85
+msgid "Plugin Vulnerabilities"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:89
+msgid "Theme Vulnerabilities"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:93
+msgid "File Permissions"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:97
+msgid "Sensitive Data Exposure"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:101
+msgid "Malware Detection"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:105
+msgid "Database Security"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:109
+msgid "User Security"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:117
+msgid "Issue"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:118
+msgid "Severity"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:119
+msgid "Suggested Fix"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:120
+msgid "Actions"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:134
+msgid "No automatic fix available"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:138
+msgid "Apply Fix"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:142
+msgid "AI Suggestion"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:153
+msgid "AI Security Suggestion"
+msgstr ""
+
+#: admin/partials/kura-ai-reports-display.php:160
+msgid "Close"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:15
+msgid "AI suggestions are currently disabled. Please enable AI and provide an API key in the"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:16
+msgid "plugin settings"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:24
+msgid "Request AI Security Assistance"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:27
+msgid "Issue Type"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:28
+msgid "Select an issue type"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:29
+msgid "General Security Advice"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:30
+msgid "Specific Vulnerability"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:31
+msgid "Performance Optimization"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:32
+msgid "Security Hardening"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:33
+msgid "Other"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:36
+msgid "Describe your issue or question"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:40
+msgid "Get AI Suggestion"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:48
+msgid "AI Response"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:52
+msgid "Ask Another Question"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:58
+msgid "Suggestions for Recent Scan Issues"
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:72
+msgid "No AI suggestions have been generated for recent scan issues."
+msgstr ""
+
+#: admin/partials/kura-ai-suggestions-display.php:79
+msgid "Generating AI suggestion..."
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:15
+msgid "Log Type"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:16
+msgid "All Types"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:17
+msgid "Scans"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:18
+msgid "Applied Fixes"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:19
+msgid "AI Suggestions"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:20
+msgid "Exports"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:23
+msgid "Severity"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:24
+msgid "All Levels"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:25
+msgid "Critical"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:26
+msgid "High"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:27
+msgid "Medium"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:28
+msgid "Low"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:29
+msgid "Info"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:32
+msgid "Search"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:38
+msgid "Filter"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:39
+msgid "Export to CSV"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:40
+msgid "Clear Logs"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:62
+msgid "No log entries found."
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:69
+msgid "ID"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:70
+msgid "Date"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:71
+msgid "Type"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:74
+msgid "Message"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:75
+msgid "Details"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:82
+msgid "View Details"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:109
+msgid "Log Details"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:122
+msgid "Confirm Clear Logs"
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:126
+msgid "Are you sure you want to clear all logs? This action cannot be undone."
+msgstr ""
+
+#: admin/partials/kura-ai-logs-display.php:130
+msgid "Cancel"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:23
+msgid "Reset Plugin Settings"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:24
+msgid "This will reset all plugin settings to their default values."
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:25
+msgid "Reset Settings"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:28
+msgid "Debug Information"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:29
+msgid "View system information and debug data for troubleshooting."
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:30
+msgid "View Debug Info"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:34
+msgid "Copy to Clipboard"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:42
+msgid "Confirm Reset Settings"
+msgstr ""
+
+#: admin/partials/kura-ai-settings-display.php:46
+msgid "Are you sure you want to reset all settings to default? This action cannot be undone."
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:25
+msgid "WordPress debug mode is enabled"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:26
+msgid "Disable WP_DEBUG in wp-config.php"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:34
+msgid "Core file modified: %s"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:35
+msgid "Replace with original WordPress file"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:45
+msgid "Outdated plugin: %s (%s)"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:46
+msgid "Update to latest version"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:55
+msgid "Potentially abandoned plugin: %s (last updated %s)"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:56
+msgid "Consider replacing with an actively maintained alternative"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:66
+msgid "Outdated theme: %s (%s)"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:77
+msgid "Insecure file permission: %s (current: %o)"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:78
+msgid "Set permissions to 644 for files, 755 for directories"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:86
+msgid "Git repository exposed in web root"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:87
+msgid "Remove .git directory or restrict access via .htaccess"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:95
+msgid "Backup file exposed: %s"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:96
+msgid "Remove backup file from web directory"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:112
+msgid "Suspicious code found in: %s"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:113
+msgid "Inspect and clean the file"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:121
+msgid "Using default database table prefix (wp_)"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:122
+msgid "Change database table prefix"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:130
+msgid "Multiple administrator accounts detected"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:131
+msgid "Review administrator accounts and remove unnecessary ones"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:139
+msgid "Default \"admin\" user account exists"
+msgstr ""
+
+#: includes/class-kura-ai-security-scanner.php:140
+msgid "Create new admin account and delete the \"admin\" account"
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:25
+msgid "AI suggestions are disabled. Please enable AI and provide an API key in settings."
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:33
+msgid "Selected AI service is not supported."
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:42
+msgid "No suggestion was returned by the AI."
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:62
+msgid "Your WordPress site security scan completed successfully with no issues detected."
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:68
+msgid "Security Scan Results"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:69
+msgid "Scan completed on %s with the following results:"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:72
+msgid "Critical issues: %d"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:73
+msgid "High severity issues: %d"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:74
+msgid "Medium severity issues: %d"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:75
+msgid "Low severity issues: %d"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:79
+msgid "Please log in to your WordPress dashboard to view detailed scan results and apply fixes."
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:80
+msgid "View Full Report"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:88
+msgid "Critical Security Alert"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:89
+msgid "A critical security issue has been detected on your WordPress site:"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:93
+msgid "Issue Type"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:94
+msgid "Severity"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:95
+msgid "Message"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:97
+msgid "Recommended Fix"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:103
+msgid "Immediate action is recommended to secure your website."
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:104
+msgid "View Details and Apply Fixes"
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:112
+msgid "This email was sent by the %s plugin on %s."
+msgstr ""
+
+#: includes/class-kura-ai-notifier.php:113
+msgid "To change your notification settings, visit the KuraAI settings page in your WordPress dashboard."
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-interface.php:12
+msgid "AI Integration Interface"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-openai.php:12
+msgid "OpenAI Integration"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-openai.php:62
+msgid "No suggestion was returned by the AI."
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-openai.php:70
+msgid "Error getting AI suggestion: %s"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-openai.php:82
+msgid "Invalid API key or connection failed"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-claude.php:12
+msgid "Claude Integration (Coming Soon)"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-claude.php:22
+msgid "Claude AI integration is coming in a future update."
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-claude.php:26
+msgid "Claude integration not yet available"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-gemini.php:12
+msgid "Gemini Integration (Coming Soon)"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-gemini.php:22
+msgid "Gemini AI integration is coming in a future update."
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-gemini.php:26
+msgid "Gemini integration not yet available"
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:25
+msgid "AI suggestions are disabled. Please enable AI and provide an API key in settings."
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:33
+msgid "Selected AI service is not supported."
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:42
+msgid "No suggestion was returned by the AI."
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:50
+msgid "Error getting AI suggestion: %s"
+msgstr ""
+
+#: includes/class-kura-ai-ai-handler.php:58
+msgid "Error verifying connection: %s"
+msgstr ""
+
+# [Previous entries from your original file remain unchanged below this point]
+#: admin/class-kura-ai-admin.php:50
+msgid "KuraAI Security"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:51
+msgid "Dashboard"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:57
+msgid "Vulnerability Reports"
+msgstr ""
