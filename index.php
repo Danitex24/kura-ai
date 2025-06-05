@@ -1,1 +1,6 @@
-// Placeholder for index.php
+<?php
+/**
+ * Silence is golden.
+ *
+ * @package    Kura_AI
+ */
