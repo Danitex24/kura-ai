@@ -153,6 +153,40 @@ class Kura_AI_Admin
             'kura-ai-settings',
             array($this, 'display_settings_page'),
         );
+
+        // ───────────── Documentation Links ─────────────
+        // add_submenu_page(
+        //     'kura-ai',
+        //     __('Installation Guide', 'kura-ai'),
+        //     __('Installation Guide', 'kura-ai'),
+        //     'manage_options',
+        //     'kura-ai-doc-installation',
+        //     function () {
+        //         echo '<div class="wrap"><iframe src="' . plugins_url('../documentation/Installation-Guide.md', __FILE__) . '" style="width:100%; height:80vh;"></iframe></div>';
+        //     }
+        // );
+
+        // add_submenu_page(
+        //     'kura-ai',
+        //     __('Admin Walkthrough', 'kura-ai'),
+        //     __('Admin Walkthrough', 'kura-ai'),
+        //     'manage_options',
+        //     'kura-ai-doc-admin',
+        //     function () {
+        //         echo '<div class="wrap"><iframe src="' . plugins_url('../documentation/Admin-Walkthrough.md', __FILE__) . '" style="width:100%; height:80vh;"></iframe></div>';
+        //     }
+        // );
+
+        // add_submenu_page(
+        //     'kura-ai',
+        //     __('API Integration Guide', 'kura-ai'),
+        //     __('API Guide', 'kura-ai'),
+        //     'manage_options',
+        //     'kura-ai-doc-api',
+        //     function () {
+        //         echo '<div class="wrap"><iframe src="' . plugins_url('../documentation/API-Integration-Guide.md', __FILE__) . '" style="width:100%; height:80vh;"></iframe></div>';
+        //     }
+        // );
     }
 
     /**
