@@ -537,7 +537,6 @@ class Kura_AI_Admin
      *
      * @since    1.0.0
      */
-    // Add this to your ajax_clear_logs() method:
     public function ajax_clear_logs()
     {
         check_ajax_referer('kura_ai_nonce', 'nonce'); // Verify nonce
@@ -562,6 +561,32 @@ class Kura_AI_Admin
         } else {
             wp_send_json_error(__('Failed to clear logs.', 'kura-ai'), 500);
         }
+    }
+    /**
+     * reset plugin settings.
+     *
+     * @since    1.0.0
+     */
+    public function ajax_reset_settings()
+    {
+        check_ajax_referer('kura_ai_nonce', '_wpnonce'); // Verify nonce
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('You do not have permission to reset settings.', 403);
+        }
+
+        // Reset to defaults
+        $defaults = array(
+            'scan_frequency' => 'daily',
+            'email_notifications' => 1,
+            'notification_email' => get_option('admin_email'),
+            'enable_ai' => 0,
+            'ai_service' => 'openai',
+            'api_key' => ''
+        );
+
+        update_option('kura_ai_settings', $defaults);
+        wp_send_json_success('Settings reset successfully.');
     }
 
     /**

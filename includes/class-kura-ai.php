@@ -139,6 +139,8 @@ class Kura_AI
         $this->loader->add_action('wp_ajax_kura_ai_get_suggestions', $plugin_admin, 'ajax_get_suggestions');
         $this->loader->add_action('wp_ajax_kura_ai_apply_fix', $plugin_admin, 'ajax_apply_fix');
         $this->loader->add_action('wp_ajax_kura_ai_export_logs', $plugin_admin, 'ajax_export_logs');
+        $this->loader->add_action('wp_ajax_kura_ai_clear_logs', $plugin_admin, 'ajax_clear_logs');
+        $this->loader->add_action('wp_ajax_kura_ai_reset_settings', $this, 'ajax_reset_settings');
     }
 
     /**
