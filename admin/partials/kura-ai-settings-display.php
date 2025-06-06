@@ -28,9 +28,15 @@
             </button>
 
             <div id="kura-ai-debug-info" style="display: none; margin-top: 20px;">
-                <textarea readonly rows="10"
-                    style="width: 100%; font-family: monospace;"><?php echo esc_textarea($this->get_debug_info()); ?></textarea>
-                <button id="kura-ai-copy-debug" class="button" style="margin-top: 10px;">
+                <textarea readonly rows="10" style="width: 100%; font-family: monospace;"><?php
+                    if (method_exists($this, 'get_debug_info')) {
+                        echo esc_textarea($this->get_debug_info());
+                    } else {
+                        echo esc_textarea(__('Debug information is currently unavailable.', 'kura-ai'));
+                    }?>
+                </textarea>
+
+                    <button id="kura-ai-copy-debug" class="button" style="margin-top: 10px;">
                     <?php _e('Copy to Clipboard', 'kura-ai'); ?>
                 </button>
             </div>
