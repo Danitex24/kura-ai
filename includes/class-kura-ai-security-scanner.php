@@ -169,15 +169,21 @@ class Kura_AI_Security_Scanner
             }
 
             // Check for abandoned plugins (no updates in 2 years)
-            $last_updated = strtotime($plugin_data['LastUpdated']);
-            if ($last_updated && (time() - $last_updated) > (2 * YEAR_IN_SECONDS)) {
-                $issues[] = array(
-                    'type' => 'abandoned_plugin',
-                    'severity' => 'medium',
-                    'message' => sprintf(__('Potentially abandoned plugin: %s (last updated %s)', 'kura-ai'), $plugin_data['Name'], date_i18n(get_option('date_format'), $last_updated)),
-                    'fix' => __('Consider replacing with an actively maintained alternative', 'kura-ai'),
-                    'plugin' => $plugin_path
-                );
+            if (isset($plugin_data['LastUpdated'])) {
+                $last_updated = strtotime($plugin_data['LastUpdated']);
+                if ($last_updated && (time() - $last_updated) > (2 * YEAR_IN_SECONDS)) {
+                    $issues[] = array(
+                        'type' => 'abandoned_plugin',
+                        'severity' => 'medium',
+                        'message' => sprintf(
+                            __('Potentially abandoned plugin: %s (last updated %s)', 'kura-ai'),
+                            $plugin_data['Name'],
+                            date_i18n(get_option('date_format'), $last_updated),
+                        ),
+                        'fix' => __('Consider replacing with an actively maintained alternative', 'kura-ai'),
+                        'plugin' => $plugin_path
+                    );
+                }
             }
         }
 
