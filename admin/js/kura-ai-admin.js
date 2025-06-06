@@ -424,6 +424,41 @@ jQuery(document).ready(function ($) {
     });
   });
 
+  // reset plugin settings 
+  $("#kura-ai-reset-settings").on("click", function (e) {
+    e.preventDefault();
+
+    $.ajax({
+      url: kura_ai_ajax.ajax_url,
+      type: "POST",
+      data: {
+        action: "kura_ai_reset_settings",
+        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
+      },
+      beforeSend: function () {
+        // Show loading indicator
+        $("#kura-ai-reset-settings")
+          .text("Resetting...")
+          .prop("disabled", true);
+      },
+      success: function (response) {
+        if (response.success) {
+          window.location.reload(); // Refresh to show default settings
+        } else {
+          alert("Error: " + response.data);
+        }
+      },
+      error: function (xhr) {
+        alert("Error: " + xhr.responseText);
+      },
+      complete: function () {
+        $("#kura-ai-reset-settings")
+          .text("Reset Settings")
+          .prop("disabled", false);
+      },
+    });
+  });
+
   // View Log Details
   $(document).on("click", ".kura-ai-view-details", function () {
     var logData = $(this).data("log-data");
