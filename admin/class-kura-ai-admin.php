@@ -414,6 +414,46 @@ class Kura_AI_Admin
     }
 
     /**
+     * Get debug information for the plugin
+     *
+     * @since    1.0.0
+     * @return   string    Debug information
+     */
+    public function get_debug_info()
+    {
+        global $wpdb;
+
+        $debug_info = "=== KuraAI Debug Information ===\n\n";
+
+        // Basic WordPress info
+        $debug_info .= "WordPress Version: " . get_bloginfo('version') . "\n";
+        $debug_info .= "PHP Version: " . phpversion() . "\n";
+        $debug_info .= "MySQL Version: " . $wpdb->db_version() . "\n";
+
+        // Plugin info
+        $debug_info .= "\n=== Plugin Information ===\n";
+        $debug_info .= "KuraAI Version: " . KURA_AI_VERSION . "\n";
+
+        // Settings
+        $settings = get_option('kura_ai_settings');
+        $debug_info .= "\n=== Settings ===\n";
+        $debug_info .= print_r($settings, true) . "\n";
+
+        // Database tables
+        $debug_info .= "\n=== Database ===\n";
+        $table_name = $wpdb->prefix . 'kura_ai_logs';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+        $debug_info .= "Logs table exists: " . ($table_exists ? 'Yes' : 'No') . "\n";
+
+        if ($table_exists) {
+            $log_count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            $debug_info .= "Log entries: " . $log_count . "\n";
+        }
+
+        return $debug_info;
+    }
+
+    /**
      * Display the reports page.
      *
      * @since    1.0.0
