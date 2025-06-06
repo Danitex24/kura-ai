@@ -533,6 +533,38 @@ class Kura_AI_Admin
     }
 
     /**
+     * Clear Log reports.
+     *
+     * @since    1.0.0
+     */
+    // Add this to your ajax_clear_logs() method:
+    public function ajax_clear_logs()
+    {
+        check_ajax_referer('kura_ai_nonce', 'nonce'); // Verify nonce
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('You do not have permission to clear logs.', 'kura-ai'), 403);
+        }
+
+        $args = array();
+        if (!empty($_POST['type'])) {
+            $args['type'] = sanitize_text_field($_POST['type']);
+        }
+        if (!empty($_POST['severity'])) {
+            $args['severity'] = sanitize_text_field($_POST['severity']);
+        }
+
+        $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
+        $result = $logger->clear_logs($args);
+
+        if ($result !== false) {
+            wp_send_json_success(__('Logs cleared successfully.', 'kura-ai'));
+        } else {
+            wp_send_json_error(__('Failed to clear logs.', 'kura-ai'), 500);
+        }
+    }
+
+    /**
      * AJAX handler for getting AI suggestions.
      *
      * @since    1.0.0
