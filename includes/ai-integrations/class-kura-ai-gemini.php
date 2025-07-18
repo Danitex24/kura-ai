@@ -16,12 +16,18 @@ class Kura_AI_Gemini implements Kura_AI_Interface
     private $model;
     private $max_tokens;
 
-    public function __construct($oauth_tokens)
+    public function __construct()
     {
-        $this->access_token = $oauth_tokens['access_token'] ?? '';
-        $this->refresh_token = $oauth_tokens['refresh_token'] ?? '';
-        $this->expires_in = $oauth_tokens['expires_in'] ?? 3600;
-        $this->token_created = $oauth_tokens['created'] ?? time();
+        $oauth_handler = new Kura_AI_OAuth_Handler();
+        $oauth_tokens = $oauth_handler->get_tokens('gemini');
+
+        if ($oauth_tokens) {
+            $this->access_token = $oauth_tokens['access_token'] ?? '';
+            $this->refresh_token = $oauth_tokens['refresh_token'] ?? '';
+            $this->expires_in = $oauth_tokens['expires_in'] ?? 3600;
+            $this->token_created = $oauth_tokens['created'] ?? time();
+        }
+
         $this->model = 'gemini-pro'; // Gemini's model name
         $this->max_tokens = 1000; // Gemini allows larger responses
     }
@@ -165,14 +171,12 @@ class Kura_AI_Gemini implements Kura_AI_Interface
         $this->expires_in = $new_tokens['expires_in'] ?? $this->expires_in;
         $this->token_created = time();
 
-        // Update the stored tokens in settings
-        $settings = get_option('kura_ai_settings');
-        $settings['ai_oauth_tokens']['gemini'] = array(
+        // Update the stored tokens in user meta
+        $oauth_handler->store_tokens('gemini', [
             'access_token' => $this->access_token,
             'refresh_token' => $this->refresh_token,
             'expires_in' => $this->expires_in,
             'created' => $this->token_created
-        );
-        update_option('kura_ai_settings', $settings);
+        ]);
     }
 }

@@ -38,6 +38,14 @@ class Kura_AI_Admin
     {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+
+        add_action('show_user_profile', array($this, 'display_user_profile_oauth_connections'));
+        add_action('edit_user_profile', array($this, 'display_user_profile_oauth_connections'));
+    }
+
+    public function display_user_profile_oauth_connections($user)
+    {
+        include_once 'partials/kura-ai-user-profile.php';
     }
 
     /**
@@ -356,9 +364,7 @@ class Kura_AI_Admin
                 throw new Exception('Route Error (400 Invalid Session): "' . $result->get_error_message() . '"');
             }
 
-            $settings = get_option('kura_ai_settings');
-            $settings['ai_oauth_tokens'][$provider] = $result;
-            update_option('kura_ai_settings', $settings);
+            // The tokens are already stored in the user meta by the OAuth handler
 
             wp_redirect(admin_url('admin.php?page=kura-ai-settings&oauth_success=1'));
             exit;
@@ -381,11 +387,13 @@ class Kura_AI_Admin
         }
 
         $provider = sanitize_text_field($_POST['provider']);
-        $settings = get_option('kura_ai_settings');
+        $user_id = get_current_user_id();
 
-        if (isset($settings['ai_oauth_tokens'][$provider])) {
-            unset($settings['ai_oauth_tokens'][$provider]);
-            update_option('kura_ai_settings', $settings);
+        if ($user_id) {
+            delete_user_meta($user_id, 'kura_ai_' . $provider . '_access_token');
+            delete_user_meta($user_id, 'kura_ai_' . $provider . '_refresh_token');
+            delete_user_meta($user_id, 'kura_ai_' . $provider . '_token_created');
+            delete_user_meta($user_id, 'kura_ai_' . $provider . '_expires_in');
             wp_send_json_success();
         }
 

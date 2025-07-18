@@ -56,9 +56,11 @@ class Kura_AI_OAuth_Handler
     public function handle_callback($provider, $code, $state)
     {
         // Validate state/nonce first
-        if (!wp_verify_nonce($state, 'kura_ai_oauth_' . $provider)) {
-            return new WP_Error('invalid_nonce', __('Invalid OAuth state', 'kura-ai'));
+        $expected_provider = get_transient('kura_ai_oauth_state_' . $state);
+        if ($expected_provider !== $provider) {
+            return new WP_Error('invalid_state', __('Invalid OAuth state', 'kura-ai'));
         }
+        delete_transient('kura_ai_oauth_state_' . $state);
 
         $token_params = [
             'grant_type' => 'authorization_code',
@@ -154,6 +156,8 @@ class Kura_AI_OAuth_Handler
             $tokens['id_token'] = sanitize_text_field($body['id_token']);
         }
 
+        $this->store_tokens($provider, $tokens);
+
         return $tokens;
     }
 
@@ -168,6 +172,41 @@ class Kura_AI_OAuth_Handler
             default:
                 return '';
         }
+    }
+
+    private function store_tokens($provider, $tokens)
+    {
+        $user_id = get_current_user_id();
+        if (!$user_id) {
+            return new WP_Error('user_not_logged_in', __('User not logged in', 'kura-ai'));
+        }
+
+        update_user_meta($user_id, 'kura_ai_' . $provider . '_access_token', $tokens['access_token']);
+        update_user_meta($user_id, 'kura_ai_' . $provider . '_refresh_token', $tokens['refresh_token']);
+        update_user_meta($user_id, 'kura_ai_' . $provider . '_token_created', $tokens['created']);
+        update_user_meta($user_id, 'kura_ai_' . $provider . '_expires_in', $tokens['expires_in']);
+
+        return true;
+    }
+
+    private function get_tokens($provider)
+    {
+        $user_id = get_current_user_id();
+        if (!$user_id) {
+            return null;
+        }
+
+        $access_token = get_user_meta($user_id, 'kura_ai_' . $provider . '_access_token', true);
+        if (empty($access_token)) {
+            return null;
+        }
+
+        return [
+            'access_token' => $access_token,
+            'refresh_token' => get_user_meta($user_id, 'kura_ai_' . $provider . '_refresh_token', true),
+            'created' => get_user_meta($user_id, 'kura_ai_' . $provider . '_token_created', true),
+            'expires_in' => get_user_meta($user_id, 'kura_ai_' . $provider . '_expires_in', true),
+        ];
     }
 
     public function get_provider_config($provider)
