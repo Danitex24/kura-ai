@@ -24,10 +24,10 @@ define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KURA_AI_BASENAME', plugin_basename(__FILE__));
 
 // AI Integrations constants
-define('KURA_AI_OPENAI_CLIENT_ID', 'proj_csBHYYdgryVM69btmSrXy8yn');
-define('KURA_AI_OPENAI_CLIENT_SECRET', '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');
-define('KURA_AI_GEMINI_CLIENT_ID', 'google-client-id');
-define('KURA_AI_GEMINI_CLIENT_SECRET', 'google-client-secret');
+define('KURA_AI_OPENAI_CLIENT_ID', 'your_client_id_here');
+define('KURA_AI_OPENAI_CLIENT_SECRET', 'your_client_secret_here');
+define('KURA_AI_GEMINI_CLIENT_ID', 'your_client_id_here');
+define('KURA_AI_GEMINI_CLIENT_SECRET', 'your_client_secret_here');
 
 /**
  * The code that runs during plugin activation.
@@ -83,12 +83,3 @@ function run_kura_ai()
     $plugin->run();
 }
 run_kura_ai();
-
-// This file is OpenAI API Keys.
-// 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
-
-
-// KuraAI Security Plugin OpenAI Project ID: proj_csBHYYdgryVM69btmSrXy8yn
-
-// KuraAI Security Plugin OpenAI API Keys:
-// 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

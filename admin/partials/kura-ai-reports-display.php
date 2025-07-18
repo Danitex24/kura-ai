@@ -2,8 +2,17 @@
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
     
     <?php
-    $settings = get_option('kura_ai_settings');
-    $scan_results = !empty($settings['scan_results']) ? $settings['scan_results'] : array();
+    $settings = get_option('kura_ai_settings', array());
+    
+    // Validate and prepare scan results
+    $scan_results = array();
+    if (is_array($settings)) {
+        $scan_results = !empty($settings['scan_results']) && is_array($settings['scan_results']) 
+            ? $settings['scan_results'] 
+            : array();
+    }
+    
+    $last_scan = !empty($settings['last_scan']) ? (int)$settings['last_scan'] : 0;
     ?>
     
     <div class="kura-ai-scan-actions">
@@ -12,7 +21,7 @@
         </button>
     </div>
     
-    <?php if (empty($scan_results)) : ?>
+    <?php if (empty($scan_results) || !is_array($scan_results)) : ?>
         <div class="kura-ai-no-results">
             <p><?php _e('No scan results available. Run a scan to check for vulnerabilities.', 'kura-ai'); ?></p>
         </div>
@@ -29,9 +38,15 @@
             );
             
             foreach ($scan_results as $category => $issues) {
+                if (!is_array($issues)) continue;
+                
                 foreach ($issues as $issue) {
-                    $severity = $issue['severity'] ?? 'medium';
-                    $issue_counts[$severity]++;
+                    if (!is_array($issue)) continue;
+                    
+                    $severity = isset($issue['severity']) ? strtolower($issue['severity']) : 'medium';
+                    if (array_key_exists($severity, $issue_counts)) {
+                        $issue_counts[$severity]++;
+                    }
                 }
             }
             
@@ -57,16 +72,18 @@
                 </div>
             </div>
             
-            <p class="kura-ai-scan-timestamp">
-                <?php printf(__('Last scanned: %s', 'kura-ai'), date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $settings['last_scan'])); ?>
-            </p>
+            <?php if ($last_scan > 0) : ?>
+                <p class="kura-ai-scan-timestamp">
+                    <?php printf(__('Last scanned: %s', 'kura-ai'), date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $last_scan)); ?>
+                </p>
+            <?php endif; ?>
         </div>
         
         <div class="kura-ai-results-details">
             <h2><?php _e('Detailed Results', 'kura-ai'); ?></h2>
             
             <?php foreach ($scan_results as $category => $issues) : ?>
-                <?php if (!empty($issues)) : ?>
+                <?php if (is_array($issues) && !empty($issues)) : ?>
                     <div class="kura-ai-result-category">
                         <h3>
                             <?php 
@@ -96,7 +113,7 @@
                                     _e('User Security', 'kura-ai');
                                     break;
                                 default:
-                                    echo ucwords(str_replace('_', ' ', $category));
+                                    echo esc_html(ucwords(str_replace('_', ' ', $category)));
                             }
                             ?>
                             <span class="count">(<?php echo count($issues); ?>)</span>
@@ -113,30 +130,32 @@
                             </thead>
                             <tbody>
                                 <?php foreach ($issues as $issue) : ?>
-                                    <tr>
-                                        <td><?php echo esc_html($issue['message']); ?></td>
-                                        <td>
-                                            <span class="kura-ai-severity-badge <?php echo esc_attr($issue['severity']); ?>">
-                                                <?php echo esc_html(ucfirst($issue['severity'])); ?>
-                                            </span>
-                                        </td>
-                                        <td><?php echo esc_html($issue['fix'] ?? __('No automatic fix available', 'kura-ai')); ?></td>
-                                        <td>
-                                            <?php if (!empty($issue['fix']) && !empty($issue['type'])) : ?>
-                                                <button class="button kura-ai-apply-fix" 
-                                                        data-issue-type="<?php echo esc_attr($issue['type']); ?>"
-                                                        <?php if (!empty($issue['plugin'])) echo 'data-plugin="' . esc_attr($issue['plugin']) . '"'; ?>
-                                                        <?php if (!empty($issue['theme'])) echo 'data-theme="' . esc_attr($issue['theme']) . '"'; ?>
-                                                        <?php if (!empty($issue['file'])) echo 'data-file="' . esc_attr($issue['file']) . '"'; ?>>
-                                                    <?php _e('Apply Fix', 'kura-ai'); ?>
+                                    <?php if (is_array($issue)) : ?>
+                                        <tr>
+                                            <td><?php echo esc_html($issue['message'] ?? __('No description available', 'kura-ai')); ?></td>
+                                            <td>
+                                                <span class="kura-ai-severity-badge <?php echo esc_attr($issue['severity'] ?? 'medium'); ?>">
+                                                    <?php echo esc_html(ucfirst($issue['severity'] ?? 'medium')); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo esc_html($issue['fix'] ?? __('No automatic fix available', 'kura-ai')); ?></td>
+                                            <td>
+                                                <?php if (!empty($issue['fix']) && !empty($issue['type'])) : ?>
+                                                    <button class="button kura-ai-apply-fix" 
+                                                            data-issue-type="<?php echo esc_attr($issue['type']); ?>"
+                                                            <?php if (!empty($issue['plugin'])) echo 'data-plugin="' . esc_attr($issue['plugin']) . '"'; ?>
+                                                            <?php if (!empty($issue['theme'])) echo 'data-theme="' . esc_attr($issue['theme']) . '"'; ?>
+                                                            <?php if (!empty($issue['file'])) echo 'data-file="' . esc_attr($issue['file']) . '"'; ?>>
+                                                        <?php _e('Apply Fix', 'kura-ai'); ?>
+                                                    </button>
+                                                <?php endif; ?>
+                                                <button class="button kura-ai-get-suggestion" 
+                                                        data-issue="<?php echo esc_attr(json_encode($issue)); ?>">
+                                                    <?php _e('AI Suggestion', 'kura-ai'); ?>
                                                 </button>
-                                            <?php endif; ?>
-                                            <button class="button kura-ai-get-suggestion" 
-                                                    data-issue="<?php echo esc_attr(json_encode($issue)); ?>">
-                                                <?php _e('AI Suggestion', 'kura-ai'); ?>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>

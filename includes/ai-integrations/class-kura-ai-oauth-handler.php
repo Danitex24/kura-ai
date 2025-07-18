@@ -5,16 +5,23 @@ class Kura_AI_OAuth_Handler
         'openai' => [
             'auth_url' => 'https://auth0.openai.com/authorize',
             'token_url' => 'https://auth0.openai.com/oauth/token',
-            'scopes' => 'danieladasho@gmail.com',
+            'scopes' => 'openid profile email offline_access',
             'client_id' => 'proj_csBHYYdgryVM69btmSrXy8yn',
-            'redirect_uri' => ''
+            'redirect_uri' => '',
+            'auth_params' => [
+                'audience' => 'https://api.openai.com/v1'
+            ]
         ],
         'gemini' => [
             'auth_url' => 'https://accounts.google.com/o/oauth2/auth',
             'token_url' => 'https://oauth2.googleapis.com/token',
             'scopes' => 'https://www.googleapis.com/auth/cloud-platform',
             'client_id' => 'YOUR_GOOGLE_CLIENT_ID',
-            'redirect_uri' => ''
+            'redirect_uri' => '',
+            'auth_params' => [
+                'access_type' => 'offline',
+                'prompt' => 'consent'
+            ]
         ]
     ];
 
@@ -24,10 +31,10 @@ class Kura_AI_OAuth_Handler
         $this->providers['gemini']['redirect_uri'] = admin_url('admin-ajax.php?action=kura_ai_oauth_callback&provider=gemini');
     }
 
-    public function get_auth_url($provider)
+    public function get_auth_url($provider, $state)
     {
         if (!isset($this->providers[$provider])) {
-            return false;
+            return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
         }
 
         $params = [
@@ -35,35 +42,136 @@ class Kura_AI_OAuth_Handler
             'client_id' => $this->providers[$provider]['client_id'],
             'redirect_uri' => $this->providers[$provider]['redirect_uri'],
             'scope' => $this->providers[$provider]['scopes'],
-            'state' => wp_create_nonce('kura_ai_oauth_' . $provider)
+            'state' => $state
         ];
+
+        // Add provider-specific auth parameters
+        if (!empty($this->providers[$provider]['auth_params'])) {
+            $params = array_merge($params, $this->providers[$provider]['auth_params']);
+        }
 
         return $this->providers[$provider]['auth_url'] . '?' . http_build_query($params);
     }
 
-    public function handle_callback($provider, $code)
+    public function handle_callback($provider, $code, $state)
     {
         // Validate state/nonce first
-        if (!wp_verify_nonce($_GET['state'], 'kura_ai_oauth_' . $provider)) {
-            return new WP_Error('invalid_nonce', 'Invalid OAuth state');
+        if (!wp_verify_nonce($state, 'kura_ai_oauth_' . $provider)) {
+            return new WP_Error('invalid_nonce', __('Invalid OAuth state', 'kura-ai'));
+        }
+
+        $token_params = [
+            'grant_type' => 'authorization_code',
+            'client_id' => $this->providers[$provider]['client_id'],
+            'client_secret' => $this->get_client_secret($provider),
+            'code' => $code,
+            'redirect_uri' => $this->providers[$provider]['redirect_uri']
+        ];
+
+        // Add provider-specific token parameters
+        if ($provider === 'openai') {
+            $token_params['audience'] = 'https://api.openai.com/v1';
         }
 
         $response = wp_remote_post($this->providers[$provider]['token_url'], [
-            'body' => [
-                'grant_type' => 'authorization_code',
-                'client_id' => $this->providers[$provider]['client_id'],
-                'client_secret' => $this->get_client_secret($provider),
-                'code' => $code,
-                'redirect_uri' => $this->providers[$provider]['redirect_uri']
-            ]
+            'headers' => [
+                'Accept' => 'application/json'
+            ],
+            'body' => $token_params,
+            'timeout' => 30
         ]);
 
-        // Process and store tokens
+        return $this->process_token_response($provider, $response);
+    }
+
+    public function refresh_token($provider, $refresh_token)
+    {
+        if (!isset($this->providers[$provider])) {
+            return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
+        }
+
+        if (empty($refresh_token)) {
+            return new WP_Error('missing_refresh_token', __('No refresh token available', 'kura-ai'));
+        }
+
+        $token_params = [
+            'grant_type' => 'refresh_token',
+            'client_id' => $this->providers[$provider]['client_id'],
+            'client_secret' => $this->get_client_secret($provider),
+            'refresh_token' => $refresh_token
+        ];
+
+        $response = wp_remote_post($this->providers[$provider]['token_url'], [
+            'headers' => [
+                'Accept' => 'application/json'
+            ],
+            'body' => $token_params,
+            'timeout' => 30
+        ]);
+
         return $this->process_token_response($provider, $response);
     }
 
     private function process_token_response($provider, $response)
     {
-        // Implementation for token processing
+        if (is_wp_error($response)) {
+            return new WP_Error('oauth_error', __('Failed to get access token', 'kura-ai'), $response->get_error_message());
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status_code !== 200) {
+            $error_message = __('OAuth token request failed', 'kura-ai');
+            if (isset($body['error'])) {
+                $error_message = $body['error_description'] ?? $body['error'];
+                if (is_array($error_message)) {
+                    $error_message = implode(', ', $error_message);
+                }
+            }
+            return new WP_Error('oauth_error', $error_message, [
+                'status_code' => $status_code,
+                'response' => $body
+            ]);
+        }
+
+        if (empty($body['access_token'])) {
+            return new WP_Error('oauth_error', __('Invalid token response - no access token', 'kura-ai'));
+        }
+
+        // Store the relevant tokens
+        $tokens = [
+            'access_token' => sanitize_text_field($body['access_token']),
+            'refresh_token' => isset($body['refresh_token']) ? sanitize_text_field($body['refresh_token']) : '',
+            'expires_in' => isset($body['expires_in']) ? absint($body['expires_in']) : 3600,
+            'token_type' => isset($body['token_type']) ? sanitize_text_field($body['token_type']) : 'Bearer',
+            'scope' => isset($body['scope']) ? sanitize_text_field($body['scope']) : '',
+            'created' => time()
+        ];
+
+        // For Google, we might get an id_token as well
+        if ($provider === 'gemini' && !empty($body['id_token'])) {
+            $tokens['id_token'] = sanitize_text_field($body['id_token']);
+        }
+
+        return $tokens;
+    }
+
+    private function get_client_secret($provider)
+    {
+        $settings = get_option('kura_ai_settings');
+        switch ($provider) {
+            case 'openai':
+                return isset($settings['openai_client_secret']) ? sanitize_text_field($settings['openai_client_secret']) : '';
+            case 'gemini':
+                return isset($settings['gemini_client_secret']) ? sanitize_text_field($settings['gemini_client_secret']) : '';
+            default:
+                return '';
+        }
+    }
+
+    public function get_provider_config($provider)
+    {
+        return isset($this->providers[$provider]) ? $this->providers[$provider] : null;
     }
 }

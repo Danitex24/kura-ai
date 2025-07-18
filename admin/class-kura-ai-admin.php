@@ -48,6 +48,15 @@ class Kura_AI_Admin
     public function enqueue_styles($hook)
     {
         if (strpos($hook, 'kura-ai') !== false) {
+
+            // Enqueue Font Awesome from CDN
+            wp_enqueue_style(
+                'font-awesome',
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
+                array(),
+                '5.15.4',
+            );
+
             wp_enqueue_style(
                 $this->plugin_name,
                 plugin_dir_url(__FILE__) . 'css/kura-ai-admin.css',
@@ -82,7 +91,7 @@ class Kura_AI_Admin
                 'kura_ai_ajax',
                 array(
                     'ajax_url' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('kura_ai_nonce'),
+                    'nonce' => wp_create_nonce('kura_ai_oauth_nonce'),
                     'scan_in_progress' => __('Scan in progress...', 'kura-ai'),
                     'getting_suggestions' => __('Getting AI suggestions...', 'kura-ai'),
                     'applying_fix' => __('Applying fix...', 'kura-ai'),
@@ -194,56 +203,27 @@ class Kura_AI_Admin
      *
      * @since    1.0.0
      */
+    /**
+     * Register plugin settings with OAuth focus
+     */
     public function register_settings()
     {
-        register_setting('kura_ai_settings_group', 'kura_ai_settings', array($this, 'sanitize_settings'));
+        register_setting('kura_ai_settings_group', 'kura_ai_settings', [$this, 'sanitize_settings']);
 
         // General Settings Section
         add_settings_section(
             'kura_ai_general_settings',
             __('General Settings', 'kura-ai'),
-            array($this, 'general_settings_section_callback'),
+            [$this, 'general_settings_section_callback'],
             'kura-ai-settings',
-        );
-
-        add_settings_field(
-            'scan_frequency',
-            __('Scan Frequency', 'kura-ai'),
-            array($this, 'scan_frequency_callback'),
-            'kura-ai-settings',
-            'kura_ai_general_settings',
-        );
-
-        add_settings_field(
-            'email_notifications',
-            __('Email Notifications', 'kura-ai'),
-            array($this, 'email_notifications_callback'),
-            'kura-ai-settings',
-            'kura_ai_general_settings',
-        );
-
-        add_settings_field(
-            'notification_email',
-            __('Notification Email', 'kura-ai'),
-            array($this, 'notification_email_callback'),
-            'kura-ai-settings',
-            'kura_ai_general_settings',
         );
 
         // AI Settings Section
         add_settings_section(
             'kura_ai_ai_settings',
-            __('AI Integration Settings', 'kura-ai'),
+            __('AI Integration', 'kura-ai'),
             array($this, 'ai_settings_section_callback'),
             'kura-ai-settings',
-        );
-
-        add_settings_field(
-            'enable_ai',
-            __('Enable AI Suggestions', 'kura-ai'),
-            array($this, 'enable_ai_callback'),
-            'kura-ai-settings',
-            'kura_ai_ai_settings',
         );
 
         add_settings_field(
@@ -254,13 +234,197 @@ class Kura_AI_Admin
             'kura_ai_ai_settings',
         );
 
-        add_settings_field(
-            'api_key',
-            __('API Key', 'kura-ai'),
-            array($this, 'api_key_callback'),
-            'kura-ai-settings',
-            'kura_ai_ai_settings',
-        );
+
+        // Provider credential fields
+        $providers = [
+            'openai' => 'OpenAI',
+            'gemini' => 'Google Gemini'
+        ];
+
+        foreach ($providers as $id => $name) {
+            add_settings_field(
+                $id . '_client_id',
+                __("$name Client ID", 'kura-ai'),
+                [$this, 'text_field_callback'],
+                'kura-ai-settings',
+                'kura_ai_oauth_settings',
+                [
+                    'name' => $id . '_client_id',
+                    'description' => __("Client ID from your $name application", 'kura-ai')
+                ],
+            );
+
+            add_settings_field(
+                $id . '_client_secret',
+                __("$name Client Secret", 'kura-ai'),
+                [$this, 'password_field_callback'],
+                'kura-ai-settings',
+                'kura_ai_oauth_settings',
+                [
+                    'name' => $id . '_client_secret',
+                    'description' => __("Client secret from your $name application", 'kura-ai')
+                ],
+            );
+        }
+    }
+
+    /**
+     * Generic text field callback
+     */
+    public function text_field_callback($args)
+    {
+        $options = get_option('kura_ai_settings');
+        $value = $options[$args['name']] ?? '';
+        echo '<input type="text" id="' . esc_attr($args['name']) . '" name="kura_ai_settings[' . esc_attr($args['name']) . ']" value="' . esc_attr($value) . '" class="regular-text">';
+        if (!empty($args['description'])) {
+            echo '<p class="description">' . esc_html($args['description']) . '</p>';
+        }
+    }
+
+    /**
+     * Generic password field callback
+     */
+    public function password_field_callback($args)
+    {
+        $options = get_option('kura_ai_settings');
+        $value = $options[$args['name']] ?? '';
+        echo '<input type="password" id="' . esc_attr($args['name']) . '" name="kura_ai_settings[' . esc_attr($args['name']) . ']" value="' . esc_attr($value) . '" class="regular-text">';
+        if (!empty($args['description'])) {
+            echo '<p class="description">' . esc_html($args['description']) . '</p>';
+        }
+    }
+
+    /**
+     * Register OAuth AJAX handlers
+     */
+    public function register_oauth_handlers()
+    {
+        add_action('wp_ajax_kura_ai_oauth_init', [$this, 'handle_oauth_init']);
+        add_action('wp_ajax_kura_ai_oauth_callback', [$this, 'handle_oauth_callback']);
+        add_action('wp_ajax_kura_ai_oauth_disconnect', [$this, 'handle_oauth_disconnect']);
+        add_action('wp_ajax_kura_ai_check_oauth_connection', [$this, 'check_oauth_connection']);
+    }
+    
+    public function handle_oauth_init()
+    {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('kura_ai_oauth_nonce', '_wpnonce', false)) {
+                throw new Exception('Invalid nonce');
+            }
+
+            if (!current_user_can('manage_options')) {
+                throw new Exception('Insufficient permissions');
+            }
+
+            $provider = sanitize_text_field($_POST['provider']);
+            $state = bin2hex(random_bytes(16));
+
+            // DEBUG: Log initialization
+            error_log("OAuth Init - Provider: $provider, State: $state");
+
+            set_transient('kura_ai_oauth_state_' . $state, $provider, 15 * MINUTE_IN_SECONDS);
+
+            $oauth_handler = new Kura_AI_OAuth_Handler();
+            $auth_url = $oauth_handler->get_auth_url($provider, $state);
+
+            if (is_wp_error($auth_url)) {
+                throw new Exception($auth_url->get_error_message());
+            }
+
+            wp_send_json_success(['redirect_url' => $auth_url]);
+        } catch (Exception $e) {
+            error_log('OAuth Init Error: ' . $e->getMessage());
+            wp_send_json_error($e->getMessage(), 403);
+        }
+    }
+    
+    public function handle_oauth_callback()
+    {
+        try {
+            $provider = sanitize_text_field($_GET['provider'] ?? '');
+            $code = sanitize_text_field($_GET['code'] ?? '');
+            $state = sanitize_text_field($_GET['state'] ?? '');
+
+            // DEBUG: Log callback parameters
+            error_log("OAuth Callback - Provider: $provider, State: $state, Code: $code");
+
+            $expected_provider = get_transient('kura_ai_oauth_state_' . $state);
+
+            // DEBUG: Log expected provider
+            error_log("Expected provider from state: " . print_r($expected_provider, true));
+
+            if ($expected_provider === false) {
+                throw new Exception('State expired or not found');
+            }
+
+            if ($expected_provider !== $provider) {
+                throw new Exception('Invalid OAuth state');
+            }
+
+            delete_transient('kura_ai_oauth_state_' . $state);
+
+            $oauth_handler = new Kura_AI_OAuth_Handler();
+            $result = $oauth_handler->handle_callback($provider, $code);
+
+            if (is_wp_error($result)) {
+                throw new Exception($result->get_error_message());
+            }
+
+            $settings = get_option('kura_ai_settings');
+            $settings['ai_oauth_tokens'][$provider] = $result;
+            update_option('kura_ai_settings', $settings);
+
+            wp_redirect(admin_url('admin.php?page=kura-ai-settings&oauth_success=1'));
+            exit;
+        } catch (Exception $e) {
+            error_log('OAuth Callback Error: ' . $e->getMessage());
+            wp_redirect(admin_url('admin.php?page=kura-ai-settings&oauth_error=' . urlencode($e->getMessage())));
+            exit;
+        }
+    }
+
+    /**
+     * Handle OAuth disconnection
+     */
+    public function handle_oauth_disconnect()
+    {
+        check_ajax_referer('kura_ai_oauth_disconnect', '_wpnonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized', 'kura-ai'), 403);
+        }
+
+        $provider = sanitize_text_field($_POST['provider']);
+        $settings = get_option('kura_ai_settings');
+
+        if (isset($settings['ai_oauth_tokens'][$provider])) {
+            unset($settings['ai_oauth_tokens'][$provider]);
+            update_option('kura_ai_settings', $settings);
+            wp_send_json_success();
+        }
+
+        wp_send_json_error(__('No active connection found', 'kura-ai'));
+    }
+
+
+    /**
+     * Check OAuth connection status
+     */
+    public function check_oauth_connection()
+    {
+        check_ajax_referer('kura_ai_oauth_init', '_wpnonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized', 'kura-ai'), 403);
+        }
+
+        $provider = sanitize_text_field($_POST['provider']);
+        $settings = get_option('kura_ai_settings');
+
+        wp_send_json_success([
+            'connected' => !empty($settings['ai_oauth_tokens'][$provider])
+        ]);
     }
 
     /**
@@ -269,6 +433,9 @@ class Kura_AI_Admin
      * @since    1.0.0
      * @param    array    $input    The settings to sanitize
      * @return   array              The sanitized settings
+     */
+    /**
+     * Sanitize plugin settings with OAuth focus
      */
     public function sanitize_settings($input)
     {
@@ -290,21 +457,14 @@ class Kura_AI_Admin
             }
         }
 
-        // AI settings
-        if (isset($input['enable_ai'])) {
-            $output['enable_ai'] = (int) $input['enable_ai'];
-        }
-
+        // AI service selection
         if (isset($input['ai_service'])) {
             $output['ai_service'] = sanitize_text_field($input['ai_service']);
         }
 
-        if (isset($input['api_key'])) {
-            $output['api_key'] = sanitize_text_field($input['api_key']);
-        }
-
         return $output;
     }
+
 
     /**
      * Callback for general settings section.
@@ -379,7 +539,8 @@ class Kura_AI_Admin
      */
     public function ai_settings_section_callback()
     {
-        echo '<p>' . __('Configure AI integration settings for intelligent security suggestions.', 'kura-ai') . '</p>';
+        echo '<p>' . __('Connect to your preferred AI service using OAuth authentication.', 'kura-ai') . '</p>';
+        echo '<p class="description">' . __('Click "Connect" below to authenticate with your chosen provider.', 'kura-ai') . '</p>';
     }
 
     /**
@@ -390,13 +551,13 @@ class Kura_AI_Admin
     public function enable_ai_callback()
     {
         $options = get_option('kura_ai_settings');
-        $enabled = isset($options['enable_ai']) ? $options['enable_ai'] : 0;
+        $enabled = isset($options['enable_ai']) ? $options['enable_ai'] : 1; // Default to enabled
 
         echo '<label>';
         echo '<input type="checkbox" id="enable_ai" name="kura_ai_settings[enable_ai]" value="1" ' . checked(1, $enabled, false) . '>';
         echo __('Enable AI-powered security suggestions', 'kura-ai');
         echo '</label>';
-        echo '<p class="description">' . __('Requires API key for your chosen AI service.', 'kura-ai') . '</p>';
+        echo '<p class="description">' . __('Uses OAuth for authentication with your selected AI provider.', 'kura-ai') . '</p>';
     }
 
     /**
@@ -407,13 +568,12 @@ class Kura_AI_Admin
     public function ai_service_callback()
     {
         $options = get_option('kura_ai_settings');
-        $service = isset($options['ai_service']) ? $options['ai_service'] : 'openai';
+        $service = $options['ai_service'] ?? 'openai';
 
-        $services = array(
+        $services = [
             'openai' => __('OpenAI', 'kura-ai'),
-            'claude' => __('Claude (Coming Soon)', 'kura-ai'),
-            'gemini' => __('Gemini (Coming Soon)', 'kura-ai')
-        );
+            'gemini' => __('Google Gemini', 'kura-ai')
+        ];
 
         echo '<select id="ai_service" name="kura_ai_settings[ai_service]">';
         foreach ($services as $value => $label) {
@@ -421,20 +581,6 @@ class Kura_AI_Admin
         }
         echo '</select>';
         echo '<p class="description">' . __('Select which AI service to use for security suggestions.', 'kura-ai') . '</p>';
-    }
-
-    /**
-     * Callback for API key setting.
-     *
-     * @since    1.0.0
-     */
-    public function api_key_callback()
-    {
-        $options = get_option('kura_ai_settings');
-        $api_key = isset($options['api_key']) ? $options['api_key'] : '';
-
-        echo '<input type="password" id="api_key" name="kura_ai_settings[api_key]" value="' . esc_attr($api_key) . '" class="regular-text">';
-        echo '<p class="description">' . __('Enter your API key for the selected AI service.', 'kura-ai') . '</p>';
     }
 
     /**
@@ -534,7 +680,7 @@ class Kura_AI_Admin
      */
     public function ajax_run_scan()
     {
-        check_ajax_referer('kura_ai_nonce', 'nonce');
+        check_ajax_referer('kura_ai_oauth_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(__('You do not have sufficient permissions to perform this action.', 'kura-ai'));
@@ -573,28 +719,66 @@ class Kura_AI_Admin
      */
     public function ajax_clear_logs()
     {
-        check_ajax_referer('kura_ai_nonce', 'nonce'); // Verify nonce
+        try {
+            // Use the same nonce verification as OAuth
+            if (!check_ajax_referer('kura_ai_oauth_nonce', '_wpnonce', false)) {
+                throw new Exception(__('Security check failed.', 'kura-ai'), 403);
+            }
 
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('You do not have permission to clear logs.', 'kura-ai'), 403);
-        }
+            if (!current_user_can('manage_options')) {
+                throw new Exception(__('Permission denied.', 'kura-ai'), 403);
+            }
 
-        $args = array();
-        if (!empty($_POST['type'])) {
-            $args['type'] = sanitize_text_field($_POST['type']);
-        }
-        if (!empty($_POST['severity'])) {
-            $args['severity'] = sanitize_text_field($_POST['severity']);
-        }
+            $args = array();
+            if (!empty($_POST['type'])) {
+                $args['type'] = sanitize_text_field($_POST['type']);
+            }
+            if (!empty($_POST['severity'])) {
+                $args['severity'] = sanitize_text_field($_POST['severity']);
+            }
 
-        $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
-        $result = $logger->clear_logs($args);
+            $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
+            $result = $logger->clear_logs($args);
 
-        if ($result !== false) {
-            wp_send_json_success(__('Logs cleared successfully.', 'kura-ai'));
-        } else {
-            wp_send_json_error(__('Failed to clear logs.', 'kura-ai'), 500);
+            if ($result === false) {
+                throw new Exception(__('Database error occurred.', 'kura-ai'), 500);
+            }
+
+            wp_send_json_success(
+                __('Logs cleared successfully.', 'kura-ai'),
+                200,
+            );
+
+        } catch (Exception $e) {
+            wp_send_json_error($e->getMessage(), $e->getCode());
         }
+    }
+
+
+    /**
+     * Callback for OAuth settings section
+     */
+    public function oauth_settings_section_callback()
+    {
+        echo '<p>' . __('Configure OAuth credentials for your selected AI provider.', 'kura-ai') . '</p>';
+        echo '<p class="description">';
+        echo __('You must register your application with each provider and enter the credentials below.', 'kura-ai');
+        echo '</p>';
+    }
+
+    /**
+     * Callback for enable OAuth setting
+     */
+    public function enable_oauth_callback()
+    {
+        $options = get_option('kura_ai_settings');
+        $enabled = isset($options['enable_oauth']) ? $options['enable_oauth'] : 0;
+
+        echo '<label>';
+        echo '<input type="checkbox" id="enable_oauth" name="kura_ai_settings[enable_oauth]" value="1" ' . checked(1, $enabled, false) . '>';
+        echo __('Enable OAuth authentication', 'kura-ai');
+        echo '</label>';
+        echo '<p class="description">' . __('Use OAuth instead of API keys for authentication', 'kura-ai') . '</p>';
     }
     /**
      * reset plugin settings.
@@ -603,20 +787,24 @@ class Kura_AI_Admin
      */
     public function ajax_reset_settings()
     {
-        check_ajax_referer('kura_ai_nonce', '_wpnonce'); // Verify nonce
+        check_ajax_referer('kura_ai_oauth_nonce', '_wpnonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('You do not have permission to reset settings.', 403);
         }
 
-        // Reset to defaults
+        // Reset to defaults - 
         $defaults = array(
             'scan_frequency' => 'daily',
             'email_notifications' => 1,
             'notification_email' => get_option('admin_email'),
-            'enable_ai' => 0,
+            'enable_ai' => 1, // Default to enabled
             'ai_service' => 'openai',
-            'api_key' => ''
+            // OAuth fields reset to empty
+            'openai_client_id' => '',
+            'openai_client_secret' => '',
+            'gemini_client_id' => '',
+            'gemini_client_secret' => ''
         );
 
         update_option('kura_ai_settings', $defaults);
@@ -630,7 +818,7 @@ class Kura_AI_Admin
      */
     public function ajax_get_suggestions()
     {
-        check_ajax_referer('kura_ai_nonce', 'nonce');
+        check_ajax_referer('kura_ai_oauth_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(__('You do not have sufficient permissions to perform this action.', 'kura-ai'));
@@ -667,7 +855,7 @@ class Kura_AI_Admin
      */
     public function ajax_apply_fix()
     {
-        check_ajax_referer('kura_ai_nonce', 'nonce');
+        check_ajax_referer('kura_ai_oauth_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(__('You do not have sufficient permissions to perform this action.', 'kura-ai'));
@@ -838,7 +1026,7 @@ class Kura_AI_Admin
      */
     public function ajax_export_logs()
     {
-        check_ajax_referer('kura_ai_nonce', 'nonce');
+        check_ajax_referer('kura_ai_oauth_nonce', '_wpnonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(__('You do not have sufficient permissions to perform this action.', 'kura-ai'));

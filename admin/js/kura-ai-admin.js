@@ -27,7 +27,7 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: {
         action: "kura_ai_run_scan",
-        nonce: kura_ai_ajax.nonce,
+        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
       },
       beforeSend: function () {
         $progressMessage.text(kura_ai_ajax.scan_in_progress);
@@ -202,7 +202,7 @@ jQuery(document).ready(function ($) {
     var issueType = $button.data("issue-type");
     var data = {
       action: "kura_ai_apply_fix",
-      nonce: kura_ai_ajax.nonce,
+      _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
       issue_type: issueType,
     };
 
@@ -264,7 +264,7 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: {
         action: "kura_ai_get_suggestions",
-        nonce: kura_ai_ajax.nonce,
+        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
         issue: issue,
       },
       success: function (response) {
@@ -313,7 +313,7 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: {
         action: "kura_ai_get_suggestions",
-        nonce: kura_ai_ajax.nonce,
+        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
         issue: issue,
       },
       success: function (response) {
@@ -354,7 +354,7 @@ jQuery(document).ready(function ($) {
 
     var data = {
       action: "kura_ai_export_logs",
-      nonce: kura_ai_ajax.nonce,
+      _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
     };
 
     if (type) data.type = type;
@@ -387,31 +387,41 @@ jQuery(document).ready(function ($) {
   });
 
   // Clear Logs
-  $("#kura-ai-clear-logs").on("click", function () {
+  // Clear Logs button handler
+  $("#kura-ai-clear-logs").on("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
     $("#kura-ai-confirm-clear-modal").show();
   });
 
-  $("#kura-ai-confirm-clear").on("click", function () {
+  // Confirm Clear handler
+  $("#kura-ai-confirm-clear").on("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
     var $button = $(this);
     var type = $("#kura-ai-log-type").val();
     var severity = $("#kura-ai-log-severity").val();
 
-    $button.prop("disabled", true).text("Clearing...");
+    $button.prop("disabled", true).text("Clearing..."); // Hardcoded or use existing string
+    $(".kura-ai-clear-loading").show();
 
     $.ajax({
       url: kura_ai_ajax.ajax_url,
       type: "POST",
+      dataType: "json",
       data: {
         action: "kura_ai_clear_logs",
-        nonce: kura_ai_ajax.nonce,
+        _wpnonce: kura_ai_ajax.nonce, // Using the existing oauth nonce
         type: type,
         severity: severity,
       },
       success: function (response) {
-        if (response.success) {
+        if (response && response.success) {
+          alert("Logs cleared successfully"); // Simple alert or use your existing UI
           window.location.reload();
         } else {
-          alert("Error: " + response.data);
+          alert("Error: " + (response.data || "Failed to clear logs"));
         }
       },
       error: function (xhr, status, error) {
@@ -420,43 +430,158 @@ jQuery(document).ready(function ($) {
       complete: function () {
         $button.prop("disabled", false).text("Clear Logs");
         $("#kura-ai-confirm-clear-modal").hide();
+        $(".kura-ai-clear-loading").hide();
       },
     });
   });
 
-  // reset plugin settings 
-  $("#kura-ai-reset-settings").on("click", function (e) {
+  // reset plugin settings
+  $("#kura-ai-confirm-clear").on("click", function (e) {
     e.preventDefault();
+    e.stopPropagation();
+
+    var $button = $(this);
+    var type = $("#kura-ai-log-type").val();
+    var severity = $("#kura-ai-log-severity").val();
+
+    $button.prop("disabled", true).text(kura_ai_ajax.clearing_logs);
+    $(".kura-ai-clear-loading").show();
+
+    $.ajax({
+      url: kura_ai_ajax.ajax_url,
+      type: "POST",
+      dataType: "json",
+      data: {
+        action: "kura_ai_clear_logs",
+        _wpnonce: kura_ai_ajax.nonce, // Using the localized nonce
+        type: type,
+        severity: severity,
+      },
+      success: function (response) {
+        if (response && response.success) {
+          $("#kura-ai-clear-message")
+            .removeClass("error")
+            .addClass("updated")
+            .text(kura_ai_ajax.logs_cleared)
+            .show();
+
+          setTimeout(function () {
+            window.location.reload();
+          }, 1500);
+        } else {
+          var errorMsg =
+            response && response.data
+              ? response.data
+              : "Unknown error occurred";
+          $("#kura-ai-clear-message")
+            .removeClass("updated")
+            .addClass("error")
+            .text("Error: " + errorMsg)
+            .show();
+        }
+      },
+      error: function (xhr, status, error) {
+        $("#kura-ai-clear-message")
+          .removeClass("updated")
+          .addClass("error")
+          .text("Error: " + error)
+          .show();
+      },
+      complete: function () {
+        $button.prop("disabled", false).text("Clear Logs");
+        $("#kura-ai-confirm-clear-modal").hide();
+        $(".kura-ai-clear-loading").hide();
+      },
+    });
+  });
+
+  // Handle OAuth connection
+  // Ensure click handler has proper error handling:
+  $(document).on("click", ".kura-ai-oauth-connect", function (e) {
+    e.preventDefault();
+    const $button = $(this);
+    const provider = $button.data("provider");
+
+    $button.prop("disabled", true).text("Connecting...");
 
     $.ajax({
       url: kura_ai_ajax.ajax_url,
       type: "POST",
       data: {
-        action: "kura_ai_reset_settings",
-        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
-      },
-      beforeSend: function () {
-        // Show loading indicator
-        $("#kura-ai-reset-settings")
-          .text("Resetting...")
-          .prop("disabled", true);
+        action: "kura_ai_oauth_init",
+        provider: provider,
+        _wpnonce: kura_ai_ajax.nonce,
       },
       success: function (response) {
         if (response.success) {
-          window.location.reload(); // Refresh to show default settings
+          window.location.href = response.data.redirect_url;
         } else {
           alert("Error: " + response.data);
+          $button.prop("disabled", false).text("Connect Account");
         }
       },
       error: function (xhr) {
         alert("Error: " + xhr.responseText);
-      },
-      complete: function () {
-        $("#kura-ai-reset-settings")
-          .text("Reset Settings")
-          .prop("disabled", false);
+        $button.prop("disabled", false).text("Connect Account");
       },
     });
+  });
+
+  // Handle OAuth disconnection
+  $(document).on("click", ".kura-ai-oauth-disconnect", function (e) {
+    e.preventDefault();
+    const provider = $(this).data("provider");
+
+    if (
+      confirm(
+        "Are you sure you want to disconnect your " + provider + " account?"
+      )
+    ) {
+      $.ajax({
+        url: kura_ai_ajax.ajax_url,
+        type: "POST",
+        data: {
+          action: "kura_ai_oauth_disconnect",
+          provider: provider,
+          _wpnonce: kura_ai_ajax.nonce,
+        },
+        success: function () {
+          window.location.reload();
+        },
+        error: function (xhr) {
+          alert("Error: " + xhr.responseText);
+        },
+      });
+    }
+  });
+  // Handle OAuth reconnection
+  $(document).on("click", ".kura-ai-oauth-reconnect", function (e) {
+    e.preventDefault();
+    const provider = $(this).data("provider");
+    const redirectUrl = $(this).data("redirect-url");
+
+    if (
+      confirm(
+        "Are you sure you want to reconnect your " + provider + " account?"
+      )
+    ) {
+      $.post(
+        kura_ai_ajax.ajax_url, // Use the proper ajax URL
+        {
+          action: "kura_ai_oauth_reconnect",
+          provider: provider,
+          redirect_url: redirectUrl,
+          _wpnonce: kura_ai_ajax.nonce, // Fixed to use consistent nonce
+        },
+        function (response) {
+          if (response.success) {
+            window.location.href = response.data.redirect_url;
+          } else {
+            alert("Error reconnecting to " + provider + ": " + response.data);
+          }
+        }
+      );
+    }
   });
 
   // View Log Details
@@ -492,36 +617,57 @@ jQuery(document).ready(function ($) {
   });
 
   // Reset Settings
-  $("#kura-ai-reset-settings").on("click", function () {
-    $("#kura-ai-confirm-reset-modal").show();
-  });
+  jQuery(document).ready(function ($) {
+    // Show reset confirmation modal
+    $("#kura-ai-reset-settings").on("click", function (e) {
+      e.preventDefault();
+      $("#kura-ai-confirm-reset-modal").show();
+    });
 
-  $("#kura-ai-confirm-reset").on("click", function () {
-    var $button = $(this);
+    // Handle actual reset confirmation
+    $("#kura-ai-confirm-reset").on("click", function (e) {
+      e.preventDefault();
+      var $button = $(this);
 
-    $button.prop("disabled", true).text("Resetting...");
+      $button.prop("disabled", true).text("Resetting...");
 
-    $.ajax({
-      url: kura_ai_ajax.ajax_url,
-      type: "POST",
-      data: {
-        action: "kura_ai_reset_settings",
-        nonce: kura_ai_ajax.nonce,
-      },
-      success: function (response) {
-        if (response.success) {
-          window.location.reload();
-        } else {
-          alert("Error: " + response.data);
-        }
-      },
-      error: function (xhr, status, error) {
-        alert("Error: " + error);
-      },
-      complete: function () {
-        $button.prop("disabled", false).text("Reset Settings");
+      $.ajax({
+        url: kura_ai_ajax.ajax_url,
+        type: "POST",
+        data: {
+          action: "kura_ai_reset_settings",
+          _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
+        },
+        success: function (response) {
+          if (response.success) {
+            window.location.reload();
+          } else {
+            alert("Error: " + response.data);
+          }
+        },
+        error: function (xhr, status, error) {
+          alert("Error: " + error);
+        },
+        complete: function () {
+          $button.prop("disabled", false).text("Reset Settings");
+          $("#kura-ai-confirm-reset-modal").hide();
+        },
+      });
+    });
+
+    // Modal close handlers
+    $(".kura-ai-modal-close, .kura-ai-modal-close-btn").on(
+      "click",
+      function (e) {
+        e.preventDefault();
         $("#kura-ai-confirm-reset-modal").hide();
-      },
+      }
+    );
+
+    // Close modal when clicking outside
+    $(".kura-ai-modal-overlay").on("click", function (e) {
+      e.preventDefault();
+      $("#kura-ai-confirm-reset-modal").hide();
     });
   });
 

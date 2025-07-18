@@ -48,7 +48,11 @@
             </button>
         </form>
     </div>
-
+        <!-- Clearing log display  -->
+<div id="kura-ai-clear-message" class="notice" style="display: none;"></div>
+<div class="kura-ai-clear-loading" style="display: none;">
+    <span class="spinner is-active"></span> Clearing logs...
+</div>
     <?php
     $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
 
