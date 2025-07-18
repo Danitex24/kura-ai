@@ -406,17 +406,17 @@ class Kura_AI_Admin
      */
     public function check_oauth_connection()
     {
-        check_ajax_referer('kura_ai_oauth_init', '_wpnonce');
+        check_ajax_referer('kura_ai_oauth_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error(__('Unauthorized', 'kura-ai'), 403);
         }
 
         $provider = sanitize_text_field($_POST['provider']);
-        $settings = get_option('kura_ai_settings');
+        $user_id = get_current_user_id();
 
         wp_send_json_success([
-            'connected' => !empty($settings['ai_oauth_tokens'][$provider])
+            'connected' => !empty(get_user_meta($user_id, 'kura_ai_' . $provider . '_access_token', true))
         ]);
     }
 
