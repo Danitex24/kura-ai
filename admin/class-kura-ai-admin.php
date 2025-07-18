@@ -318,15 +318,13 @@ class Kura_AI_Admin
             }
 
             $provider = sanitize_text_field($_POST['provider']);
-            $state = bin2hex(random_bytes(16));
+            $nonce = wp_create_nonce('kura_ai_oauth_' . $provider);
 
-            // DEBUG: Log initialization
-            error_log("OAuth Init - Provider: $provider, State: $state");
-
-            set_transient('kura_ai_oauth_state_' . $state, $provider, 15 * MINUTE_IN_SECONDS);
+            // Store the nonce in a transient for later verification
+            set_transient('kura_ai_oauth_nonce_' . $provider, $nonce, 15 * MINUTE_IN_SECONDS);
 
             $oauth_handler = new Kura_AI_OAuth_Handler();
-            $auth_url = $oauth_handler->get_auth_url($provider, $state);
+            $auth_url = $oauth_handler->get_auth_url($provider, $nonce);
 
             if (is_wp_error($auth_url)) {
                 throw new Exception($auth_url->get_error_message());
@@ -346,29 +344,24 @@ class Kura_AI_Admin
             $code = sanitize_text_field($_GET['code'] ?? '');
             $state = sanitize_text_field($_GET['state'] ?? '');
 
-            // DEBUG: Log callback parameters
-            error_log("OAuth Callback - Provider: $provider, State: $state, Code: $code");
-
-            $expected_provider = get_transient('kura_ai_oauth_state_' . $state);
-
-            // DEBUG: Log expected provider
-            error_log("Expected provider from state: " . print_r($expected_provider, true));
-
-            if ($expected_provider === false) {
-                throw new Exception('State expired or not found');
+            if (empty($provider) || empty($code) || empty($state)) {
+                throw new Exception('Invalid callback parameters');
             }
 
-            if ($expected_provider !== $provider) {
-                throw new Exception('Invalid OAuth state');
+            // Verify the nonce
+            $nonce = get_transient('kura_ai_oauth_nonce_' . $provider);
+            if (!$nonce || !wp_verify_nonce($state, 'kura_ai_oauth_' . $provider)) {
+                throw new Exception('Your authorization session was not initialized or has expired.');
             }
 
-            delete_transient('kura_ai_oauth_state_' . $state);
+            // Delete the transient
+            delete_transient('kura_ai_oauth_nonce_' . $provider);
 
             $oauth_handler = new Kura_AI_OAuth_Handler();
-            $result = $oauth_handler->handle_callback($provider, $code);
+            $result = $oauth_handler->handle_callback($provider, $code, $state);
 
             if (is_wp_error($result)) {
-                throw new Exception($result->get_error_message());
+                throw new Exception('Route Error (400 Invalid Session): "' . $result->get_error_message() . '"');
             }
 
             $settings = get_option('kura_ai_settings');
