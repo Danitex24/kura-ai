@@ -326,9 +326,7 @@ class Kura_AI_Admin
             }
 
             $provider = sanitize_text_field($_POST['provider']);
-            $state = wp_generate_uuid4();
-
-            set_transient('kura_ai_oauth_state_' . $state, $provider, 15 * MINUTE_IN_SECONDS);
+            $state = wp_create_nonce('kura_ai_oauth_state_' . $provider);
 
             $oauth_handler = new Kura_AI_OAuth_Handler();
             $auth_url = $oauth_handler->get_auth_url($provider, $state);
@@ -355,7 +353,9 @@ class Kura_AI_Admin
                 throw new Exception('Invalid callback parameters');
             }
 
-            // The state is now verified in the Kura_AI_OAuth_Handler class
+            if (!wp_verify_nonce($state, 'kura_ai_oauth_state_' . $provider)) {
+                throw new Exception('Your authorization session was not initialized or has expired.');
+            }
 
             $oauth_handler = new Kura_AI_OAuth_Handler();
             $result = $oauth_handler->handle_callback($provider, $code, $state);

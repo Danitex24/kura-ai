@@ -55,12 +55,7 @@ class Kura_AI_OAuth_Handler
 
     public function handle_callback($provider, $code, $state)
     {
-        // Validate state/nonce first
-        $expected_provider = get_transient('kura_ai_oauth_state_' . $state);
-        if ($expected_provider !== $provider) {
-            return new WP_Error('invalid_state', __('Invalid OAuth state', 'kura-ai'));
-        }
-        delete_transient('kura_ai_oauth_state_' . $state);
+        // State is validated in the admin class
 
         $token_params = [
             'grant_type' => 'authorization_code',
