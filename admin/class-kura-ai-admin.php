@@ -645,6 +645,11 @@ class Kura_AI_Admin
         include_once 'partials/kura-ai-logs-display.php';
     }
 
+    public function display_settings_page()
+    {
+        include_once 'partials/kura-ai-settings-display.php';
+    }
+
     /**
      * Display the settings page.
      *
