@@ -554,35 +554,6 @@ jQuery(document).ready(function ($) {
       });
     }
   });
-  // Handle OAuth reconnection
-  $(document).on("click", ".kura-ai-oauth-reconnect", function (e) {
-    e.preventDefault();
-    const provider = $(this).data("provider");
-    const redirectUrl = $(this).data("redirect-url");
-
-    if (
-      confirm(
-        "Are you sure you want to reconnect your " + provider + " account?"
-      )
-    ) {
-      $.post(
-        kura_ai_ajax.ajax_url, // Use the proper ajax URL
-        {
-          action: "kura_ai_oauth_reconnect",
-          provider: provider,
-          redirect_url: redirectUrl,
-          _wpnonce: kura_ai_ajax.nonce, // Fixed to use consistent nonce
-        },
-        function (response) {
-          if (response.success) {
-            window.location.href = response.data.redirect_url;
-          } else {
-            alert("Error reconnecting to " + provider + ": " + response.data);
-          }
-        }
-      );
-    }
-  });
 
   // View Log Details
   $(document).on("click", ".kura-ai-view-details", function () {
