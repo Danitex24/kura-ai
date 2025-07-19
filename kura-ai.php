@@ -68,6 +68,11 @@ function get_core_files($directory)
 
     return $wp_files;
 }
+// catch all plugin errors in one file
+require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-error-handler.php';
+// Register the error handler
+set_error_handler(array('Kura_AI_Error_Handler', 'handle_error'));
+
 /**
  * Begins execution of the plugin.
  *
