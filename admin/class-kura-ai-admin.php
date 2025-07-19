@@ -39,13 +39,68 @@ class Kura_AI_Admin
         $this->plugin_name = $plugin_name;
         $this->version = $version;
 
-        add_action('show_user_profile', array($this, 'display_user_profile_oauth_connections'));
-        add_action('edit_user_profile', array($this, 'display_user_profile_oauth_connections'));
+        add_action('admin_init', array($this, 'register_settings'));
     }
 
-    public function display_user_profile_oauth_connections($user)
+    public function register_settings()
     {
-        include_once 'partials/kura-ai-user-profile.php';
+        register_setting('kura_ai_settings_group', 'kura_ai_settings', array($this, 'sanitize_settings'));
+
+        add_settings_section(
+            'kura_ai_oauth_settings',
+            __('OAuth Credentials', 'kura-ai'),
+            null,
+            'kura-ai-settings'
+        );
+
+        add_settings_field(
+            'kura_ai_openai_client_id',
+            __('OpenAI Client ID', 'kura-ai'),
+            array($this, 'text_field_callback'),
+            'kura-ai-settings',
+            'kura_ai_oauth_settings',
+            ['name' => 'kura_ai_openai_client_id']
+        );
+
+        add_settings_field(
+            'kura_ai_openai_client_secret',
+            __('OpenAI Client Secret', 'kura-ai'),
+            array($this, 'password_field_callback'),
+            'kura-ai-settings',
+            'kura_ai_oauth_settings',
+            ['name' => 'kura_ai_openai_client_secret']
+        );
+
+        add_settings_field(
+            'kura_ai_gemini_client_id',
+            __('Gemini Client ID', 'kura-ai'),
+            array($this, 'text_field_callback'),
+            'kura-ai-settings',
+            'kura_ai_oauth_settings',
+            ['name' => 'kura_ai_gemini_client_id']
+        );
+
+        add_settings_field(
+            'kura_ai_gemini_client_secret',
+            __('Gemini Client Secret', 'kura-ai'),
+            array($this, 'password_field_callback'),
+            'kura-ai-settings',
+            'kura_ai_oauth_settings',
+            ['name' => 'kura_ai_gemini_client_secret']
+        );
+
+        add_settings_section(
+            'kura_ai_redirect_uri_section',
+            __('Redirect URI', 'kura-ai'),
+            array($this, 'redirect_uri_section_callback'),
+            'kura-ai-settings'
+        );
+    }
+
+    public function redirect_uri_section_callback()
+    {
+        echo '<p>' . __('Copy the following redirect URI and paste it into your OAuth app settings.', 'kura-ai') . '</p>';
+        echo '<input type="text" class="large-text" readonly value="' . esc_url(admin_url('admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback')) . '">';
     }
 
     /**
@@ -214,67 +269,6 @@ class Kura_AI_Admin
     /**
      * Register plugin settings with OAuth focus
      */
-    public function register_settings()
-    {
-        register_setting('kura_ai_settings_group', 'kura_ai_settings', [$this, 'sanitize_settings']);
-
-        // General Settings Section
-        add_settings_section(
-            'kura_ai_general_settings',
-            __('General Settings', 'kura-ai'),
-            [$this, 'general_settings_section_callback'],
-            'kura-ai-settings',
-        );
-
-        // AI Settings Section
-        add_settings_section(
-            'kura_ai_ai_settings',
-            __('AI Integration', 'kura-ai'),
-            array($this, 'ai_settings_section_callback'),
-            'kura-ai-settings',
-        );
-
-        add_settings_field(
-            'ai_service',
-            __('AI Service', 'kura-ai'),
-            array($this, 'ai_service_callback'),
-            'kura-ai-settings',
-            'kura_ai_ai_settings',
-        );
-
-
-        // Provider credential fields
-        $providers = [
-            'openai' => 'OpenAI',
-            'gemini' => 'Google Gemini'
-        ];
-
-        foreach ($providers as $id => $name) {
-            add_settings_field(
-                $id . '_client_id',
-                __("$name Client ID", 'kura-ai'),
-                [$this, 'text_field_callback'],
-                'kura-ai-settings',
-                'kura_ai_oauth_settings',
-                [
-                    'name' => $id . '_client_id',
-                    'description' => __("Client ID from your $name application", 'kura-ai')
-                ],
-            );
-
-            add_settings_field(
-                $id . '_client_secret',
-                __("$name Client Secret", 'kura-ai'),
-                [$this, 'password_field_callback'],
-                'kura-ai-settings',
-                'kura_ai_oauth_settings',
-                [
-                    'name' => $id . '_client_secret',
-                    'description' => __("Client secret from your $name application", 'kura-ai')
-                ],
-            );
-        }
-    }
 
     /**
      * Generic text field callback
@@ -434,25 +428,20 @@ class Kura_AI_Admin
     {
         $output = get_option('kura_ai_settings');
 
-        // General settings
-        if (isset($input['scan_frequency'])) {
-            $output['scan_frequency'] = sanitize_text_field($input['scan_frequency']);
+        if (isset($input['kura_ai_openai_client_id'])) {
+            $output['kura_ai_openai_client_id'] = sanitize_text_field($input['kura_ai_openai_client_id']);
         }
 
-        if (isset($input['email_notifications'])) {
-            $output['email_notifications'] = (int) $input['email_notifications'];
+        if (isset($input['kura_ai_openai_client_secret'])) {
+            $output['kura_ai_openai_client_secret'] = sanitize_text_field($input['kura_ai_openai_client_secret']);
         }
 
-        if (isset($input['notification_email'])) {
-            $output['notification_email'] = sanitize_email($input['notification_email']);
-            if (!is_email($output['notification_email'])) {
-                $output['notification_email'] = get_option('admin_email');
-            }
+        if (isset($input['kura_ai_gemini_client_id'])) {
+            $output['kura_ai_gemini_client_id'] = sanitize_text_field($input['kura_ai_gemini_client_id']);
         }
 
-        // AI service selection
-        if (isset($input['ai_service'])) {
-            $output['ai_service'] = sanitize_text_field($input['ai_service']);
+        if (isset($input['kura_ai_gemini_client_secret'])) {
+            $output['kura_ai_gemini_client_secret'] = sanitize_text_field($input['kura_ai_gemini_client_secret']);
         }
 
         return $output;
@@ -661,10 +650,6 @@ class Kura_AI_Admin
      *
      * @since    1.0.0
      */
-    public function display_settings_page()
-    {
-        include_once 'partials/kura-ai-settings-display.php';
-    }
 
     /**
      * AJAX handler for running a security scan.
