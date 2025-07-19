@@ -6,7 +6,6 @@ class Kura_AI_OAuth_Handler
             'auth_url' => 'https://auth0.openai.com/authorize',
             'token_url' => 'https://auth0.openai.com/oauth/token',
             'scopes' => 'openid profile email offline_access',
-            'client_id' => 'proj_csBHYYdgryVM69btmSrXy8yn',
             'redirect_uri' => '',
             'auth_params' => [
                 'audience' => 'https://api.openai.com/v1'
@@ -16,7 +15,6 @@ class Kura_AI_OAuth_Handler
             'auth_url' => 'https://accounts.google.com/o/oauth2/auth',
             'token_url' => 'https://oauth2.googleapis.com/token',
             'scopes' => 'https://www.googleapis.com/auth/cloud-platform',
-            'client_id' => 'YOUR_GOOGLE_CLIENT_ID',
             'redirect_uri' => '',
             'auth_params' => [
                 'access_type' => 'offline',
@@ -37,9 +35,16 @@ class Kura_AI_OAuth_Handler
             return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
         }
 
+        $settings = get_option('kura_ai_settings');
+        $client_id = $settings['kura_ai_' . $provider . '_client_id'] ?? '';
+
+        if (empty($client_id)) {
+            return new WP_Error('missing_client_id', __('Client ID is not configured', 'kura-ai'));
+        }
+
         $params = [
             'response_type' => 'code',
-            'client_id' => $this->providers[$provider]['client_id'],
+            'client_id' => $client_id,
             'redirect_uri' => $this->providers[$provider]['redirect_uri'],
             'scope' => $this->providers[$provider]['scopes'],
             'state' => $state
@@ -57,10 +62,18 @@ class Kura_AI_OAuth_Handler
     {
         // State is validated in the admin class
 
+        $settings = get_option('kura_ai_settings');
+        $client_id = $settings['kura_ai_' . $provider . '_client_id'] ?? '';
+        $client_secret = $settings['kura_ai_' . $provider . '_client_secret'] ?? '';
+
+        if (empty($client_id) || empty($client_secret)) {
+            return new WP_Error('missing_credentials', __('Client ID or Client Secret is not configured', 'kura-ai'));
+        }
+
         $token_params = [
             'grant_type' => 'authorization_code',
-            'client_id' => $this->providers[$provider]['client_id'],
-            'client_secret' => $this->get_client_secret($provider),
+            'client_id' => $client_id,
+            'client_secret' => $client_secret,
             'code' => $code,
             'redirect_uri' => $this->providers[$provider]['redirect_uri']
         ];
@@ -91,10 +104,18 @@ class Kura_AI_OAuth_Handler
             return new WP_Error('missing_refresh_token', __('No refresh token available', 'kura-ai'));
         }
 
+        $settings = get_option('kura_ai_settings');
+        $client_id = $settings['kura_ai_' . $provider . '_client_id'] ?? '';
+        $client_secret = $settings['kura_ai_' . $provider . '_client_secret'] ?? '';
+
+        if (empty($client_id) || empty($client_secret)) {
+            return new WP_Error('missing_credentials', __('Client ID or Client Secret is not configured', 'kura-ai'));
+        }
+
         $token_params = [
             'grant_type' => 'refresh_token',
-            'client_id' => $this->providers[$provider]['client_id'],
-            'client_secret' => $this->get_client_secret($provider),
+            'client_id' => $client_id,
+            'client_secret' => $client_secret,
             'refresh_token' => $refresh_token
         ];
 
