@@ -79,6 +79,12 @@ class Kura_AI {
         if ( class_exists( 'WooCommerce' ) ) {
             $plugin_woocommerce_admin = new Kura_AI_WooCommerce_Admin( $this->get_plugin_name(), $this->get_version() );
             $this->loader->add_action( 'admin_menu', $plugin_woocommerce_admin, 'add_admin_menu' );
+        }
+
+        // WooCommerce admin hooks
+        if ( class_exists( 'WooCommerce' ) ) {
+            $plugin_woocommerce_admin = new Kura_AI_WooCommerce_Admin( $this->get_plugin_name(), $this->get_version() );
+            $this->loader->add_action( 'admin_menu', $plugin_woocommerce_admin, 'add_admin_menu' );
 
             $plugin_woocommerce_cron = new Kura_AI_WooCommerce_Cron( $this->get_plugin_name(), $this->get_version() );
             $this->loader->add_action( 'init', $plugin_woocommerce_cron, 'schedule_cron' );
