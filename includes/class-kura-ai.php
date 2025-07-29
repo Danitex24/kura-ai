@@ -45,10 +45,18 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-openai.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-gemini.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-oauth-handler.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-helper.php';
         
         // Admin and public interfaces
         require_once KURA_AI_PLUGIN_DIR . 'admin/class-kura-ai-admin.php';
         require_once KURA_AI_PLUGIN_DIR . 'public/class-kura-ai-public.php';
+
+        // WooCommerce admin interface
+        if ( class_exists( 'WooCommerce' ) ) {
+            require_once KURA_AI_PLUGIN_DIR . 'admin/class-kura-ai-woocommerce-admin.php';
+            require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-woocommerce-cron.php';
+            require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-woocommerce-hooks.php';
+        }
 
         $this->loader = new Kura_AI_Loader();
     }
@@ -66,6 +74,21 @@ class Kura_AI {
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
         $this->loader->add_action('admin_menu', $plugin_admin, 'add_admin_menu');
         $this->loader->add_action('admin_init', $plugin_admin, 'register_settings');
+
+        // WooCommerce admin hooks
+        if ( class_exists( 'WooCommerce' ) ) {
+            $plugin_woocommerce_admin = new Kura_AI_WooCommerce_Admin( $this->get_plugin_name(), $this->get_version() );
+            $this->loader->add_action( 'admin_menu', $plugin_woocommerce_admin, 'add_admin_menu' );
+
+            $plugin_woocommerce_cron = new Kura_AI_WooCommerce_Cron( $this->get_plugin_name(), $this->get_version() );
+            $this->loader->add_action( 'init', $plugin_woocommerce_cron, 'schedule_cron' );
+            $this->loader->add_action( 'kura_ai_woocommerce_checkup', $plugin_woocommerce_cron, 'run_checkup' );
+
+            $plugin_woocommerce_hooks = new Kura_AI_WooCommerce_Hooks( $this->get_plugin_name(), $this->get_version() );
+            $this->loader->add_action( 'woocommerce_new_order', $plugin_woocommerce_hooks, 'new_order' );
+            $this->loader->add_action( 'woocommerce_update_product', $plugin_woocommerce_hooks, 'update_product' );
+            $this->loader->add_action( 'woocommerce_order_status_changed', $plugin_woocommerce_hooks, 'order_status_changed', 10, 3 );
+        }
 
         // Security scan and fix handlers
         $this->loader->add_action('wp_ajax_kura_ai_run_scan', $plugin_admin, 'ajax_run_scan');

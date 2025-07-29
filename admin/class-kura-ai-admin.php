@@ -95,12 +95,46 @@ class Kura_AI_Admin
             array($this, 'redirect_uri_section_callback'),
             'kura-ai-settings'
         );
+
+        add_settings_section(
+            'kura_ai_woocommerce_settings',
+            __( 'WooCommerce Settings', 'kura-ai' ),
+            null,
+            'kura-ai-settings'
+        );
+
+        add_settings_field(
+            'kura_ai_woocommerce_schedule',
+            __( 'Scheduled Checkup Frequency', 'kura-ai' ),
+            array( $this, 'schedule_select_callback' ),
+            'kura-ai-settings',
+            'kura_ai_woocommerce_settings'
+        );
     }
 
     public function redirect_uri_section_callback()
     {
         echo '<p>' . __('Copy the following redirect URI and paste it into your OAuth app settings.', 'kura-ai') . '</p>';
         echo '<input type="text" class="large-text" readonly value="' . esc_url(admin_url('admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback')) . '">';
+    }
+
+    /**
+     * Callback for the schedule select field.
+     *
+     * @since    1.0.0
+     */
+    public function schedule_select_callback() {
+        $options = get_option( 'kura_ai_settings' );
+        $schedule = isset( $options['woocommerce_schedule'] ) ? $options['woocommerce_schedule'] : 'disabled';
+        ?>
+        <select name="kura_ai_settings[woocommerce_schedule]">
+            <option value="disabled" <?php selected( $schedule, 'disabled' ); ?>><?php esc_html_e( 'Disabled', 'kura-ai' ); ?></option>
+            <option value="hourly" <?php selected( $schedule, 'hourly' ); ?>><?php esc_html_e( 'Hourly', 'kura-ai' ); ?></option>
+            <option value="daily" <?php selected( $schedule, 'daily' ); ?>><?php esc_html_e( 'Daily', 'kura-ai' ); ?></option>
+            <option value="weekly" <?php selected( $schedule, 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'kura-ai' ); ?></option>
+            <option value="monthly" <?php selected( $schedule, 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'kura-ai' ); ?></option>
+        </select>
+        <?php
     }
 
     /**
@@ -442,6 +476,10 @@ class Kura_AI_Admin
 
         if (isset($input['kura_ai_gemini_client_secret'])) {
             $output['kura_ai_gemini_client_secret'] = sanitize_text_field($input['kura_ai_gemini_client_secret']);
+        }
+
+        if ( isset( $input['woocommerce_schedule'] ) ) {
+            $output['woocommerce_schedule'] = sanitize_text_field( $input['woocommerce_schedule'] );
         }
 
         return $output;
