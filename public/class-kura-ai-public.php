@@ -47,13 +47,6 @@ class Kura_AI_Public
      */
     public function enqueue_styles()
     {
-        wp_enqueue_style(
-            $this->plugin_name,
-            plugin_dir_url(__FILE__) . '../assets/css/kura-ai-public.css',
-            array(),
-            $this->version,
-            'all',
-        );
     }
 
     /**
@@ -65,7 +58,7 @@ class Kura_AI_Public
     {
         wp_enqueue_script(
             $this->plugin_name,
-            plugin_dir_url(__FILE__) . '../assets/js/kura-ai-public.js',
+            plugin_dir_url(__FILE__) . 'js/kura-ai-public.js',
             array('jquery'),
             $this->version,
             false,
