@@ -97,30 +97,6 @@ class Kura_AI_WooCommerce_Admin {
         );
     }
 
-    /**
-     * Enqueue the JavaScript for the admin area.
-     *
-     * @since    1.0.0
-     */
-    public function enqueue_scripts() {
-        wp_enqueue_script(
-            $this->plugin_name . '-woocommerce-admin',
-            plugin_dir_url( __FILE__ ) . 'js/kura-ai-woocommerce-admin.js',
-            array( 'jquery' ),
-            $this->version,
-            false
-        );
-
-        wp_localize_script(
-            $this->plugin_name . '-woocommerce-admin',
-            'kura_ai_woocommerce_admin',
-            array(
-                'nonce' => wp_create_nonce( 'kura_ai_run_store_audit' ),
-                'competitor_nonce' => wp_create_nonce( 'kura_ai_run_competitor_audit' ),
-                'export_nonce' => wp_create_nonce( 'kura_ai_export_audit' ),
-            )
-        );
-    }
 
     /**
      * Add the WooCommerce admin menu.
