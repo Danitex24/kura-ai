@@ -26,6 +26,70 @@ msgstr ""
 msgid "Vulnerability Reports"
 msgstr ""
 
+#: admin/class-kura-ai-woocommerce-admin.php:89
+msgid "AI Store Audit"
+msgstr ""
+
+#: admin/class-kura-ai-woocommerce-admin.php:97
+msgid "Competitor Audit"
+msgstr ""
+
+#: admin/partials/kura-ai-woocommerce-audit-display.php:3
+msgid "Audit your WooCommerce store with the power of AI."
+msgstr ""
+
+#: admin/partials/kura-ai-woocommerce-audit-display.php:4
+msgid "Run AI Audit"
+msgstr ""
+
+#: admin/partials/kura-ai-competitor-audit-display.php:3
+msgid "Audit your competitor's store with the power of AI."
+msgstr ""
+
+#: admin/partials/kura-ai-competitor-audit-display.php:6
+msgid "Competitor URL"
+msgstr ""
+
+#: admin/class-kura-ai-woocommerce-admin.php:143
+msgid "You do not have sufficient permissions to perform this action."
+msgstr ""
+
+#: admin/class-kura-ai-woocommerce-admin.php:147
+msgid "WooCommerce is not installed or activated."
+msgstr ""
+
+#: admin/class-kura-ai-woocommerce-admin.php:191
+msgid "Please enter a competitor URL."
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:111
+msgid "WooCommerce Settings"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:118
+msgid "Scheduled Checkup Frequency"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:129
+msgid "Disabled"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:130
+msgid "Hourly"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:131
+msgid "Daily"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:132
+msgid "Weekly"
+msgstr ""
+
+#: admin/class-kura-ai-admin.php:133
+msgid "Monthly"
+msgstr ""
+
 #: admin/class-kura-ai-admin.php:58
 msgid "Reports"
 msgstr ""

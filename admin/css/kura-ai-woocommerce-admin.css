@@ -1,0 +1,15 @@
+/*
+ * KuraAI WooCommerce Admin CSS
+ *
+ * @package    Kura_AI
+ * @subpackage Kura_AI/admin/css
+ * @author     Your Name <your-email@example.com>
+ */
+
+#kura-ai-audit-results,
+#kura-ai-competitor-audit-results {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 20px;
+    margin-top: 20px;
+}

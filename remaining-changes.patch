@@ -1,0 +1,121 @@
+diff --git a/admin/css/kura-ai-woocommerce-admin.css b/admin/css/kura-ai-woocommerce-admin.css
+new file mode 100644
+index 0000000..483fa4d
+--- /dev/null
++++ b/admin/css/kura-ai-woocommerce-admin.css
+@@ -0,0 +1,15 @@
++/*
++ * KuraAI WooCommerce Admin CSS
++ *
++ * @package    Kura_AI
++ * @subpackage Kura_AI/admin/css
++ * @author     Your Name <your-email@example.com>
++ */
++
++#kura-ai-audit-results,
++#kura-ai-competitor-audit-results {
++    background: #fff;
++    border: 1px solid #ccd0d4;
++    padding: 20px;
++    margin-top: 20px;
++}
+diff --git a/documentation/WooCommerce-Features.md b/documentation/WooCommerce-Features.md
+new file mode 100644
+index 0000000..87daeb7
+--- /dev/null
++++ b/documentation/WooCommerce-Features.md
+@@ -0,0 +1,19 @@
++# KuraAI WooCommerce Features
++
++KuraAI integrates with WooCommerce to provide AI-powered insights and automation for your online store.
++
++## AI Store Audit
++
++The AI Store Audit feature analyzes your WooCommerce store and provides suggestions for improvement. To use this feature, go to **KuraAI Security > AI Store Audit** and click the "Run AI Audit" button. The audit will analyze your products, categories, revenue, and orders to provide suggestions for improving your store's performance.
++
++## Competitor Audit
++
++The Competitor Audit feature allows you to analyze a competitor's website to gain insights into their strategy. To use this feature, go to **KuraAI Security > Competitor Audit**, enter the URL of your competitor's website, and click the "Run AI Audit" button. The audit will provide a summary of your competitor's strategy, including their products, pricing, and marketing.
++
++## Scheduled WooCommerce Checkups
++
++KuraAI can automatically run a store audit on a schedule. To configure the schedule, go to **KuraAI Security > Settings** and select the desired frequency from the "Scheduled Checkup Frequency" dropdown. The audit results will be saved to the database and can be viewed on the AI Store Audit page.
++
++## WooCommerce Hook Integration
++
++KuraAI integrates with WooCommerce hooks to log important events, such as new orders, product updates, and order status changes. This data can be used to provide insights into your store's performance and to power future automation features.
+diff --git a/languages/kura-ai.pot b/languages/kura-ai.pot
+index f5271b6..a4a35ce 100644
+--- a/languages/kura-ai.pot
++++ b/languages/kura-ai.pot
+@@ -26,6 +26,70 @@ msgstr ""
+ msgid "Vulnerability Reports"
+ msgstr ""
+
++#: admin/class-kura-ai-woocommerce-admin.php:89
++msgid "AI Store Audit"
++msgstr ""
++
++#: admin/class-kura-ai-woocommerce-admin.php:97
++msgid "Competitor Audit"
++msgstr ""
++
++#: admin/partials/kura-ai-woocommerce-audit-display.php:3
++msgid "Audit your WooCommerce store with the power of AI."
++msgstr ""
++
++#: admin/partials/kura-ai-woocommerce-audit-display.php:4
++msgid "Run AI Audit"
++msgstr ""
++
++#: admin/partials/kura-ai-competitor-audit-display.php:3
++msgid "Audit your competitor's store with the power of AI."
++msgstr ""
++
++#: admin/partials/kura-ai-competitor-audit-display.php:6
++msgid "Competitor URL"
++msgstr ""
++
++#: admin/class-kura-ai-woocommerce-admin.php:143
++msgid "You do not have sufficient permissions to perform this action."
++msgstr ""
++
++#: admin/class-kura-ai-woocommerce-admin.php:147
++msgid "WooCommerce is not installed or activated."
++msgstr ""
++
++#: admin/class-kura-ai-woocommerce-admin.php:191
++msgid "Please enter a competitor URL."
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:111
++msgid "WooCommerce Settings"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:118
++msgid "Scheduled Checkup Frequency"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:129
++msgid "Disabled"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:130
++msgid "Hourly"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:131
++msgid "Daily"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:132
++msgid "Weekly"
++msgstr ""
++
++#: admin/class-kura-ai-admin.php:133
++msgid "Monthly"
++msgstr ""
++
+ #: admin/class-kura-ai-admin.php:58
+ msgid "Reports"
+ msgstr ""
