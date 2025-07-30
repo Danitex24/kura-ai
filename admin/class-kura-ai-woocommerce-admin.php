@@ -42,6 +42,8 @@ class Kura_AI_WooCommerce_Admin {
         add_action( 'wp_ajax_kura_ai_run_store_audit', array( $this, 'ajax_run_store_audit' ) );
         add_action( 'wp_ajax_kura_ai_run_competitor_audit', array( $this, 'ajax_run_competitor_audit' ) );
         add_action( 'wp_ajax_kura_ai_export_audit', array( $this, 'ajax_export_audit' ) );
+        add_action( 'wp_ajax_kura_ai_export_audit_pdf', array( $this, 'ajax_export_audit_pdf' ) );
+        add_action( 'wp_ajax_kura_ai_get_chart_data', array( $this, 'ajax_get_chart_data' ) );
     }
 
     /**
@@ -56,6 +58,42 @@ class Kura_AI_WooCommerce_Admin {
             array(),
             $this->version,
             'all'
+        );
+    }
+
+    /**
+     * Enqueue the JavaScript for the admin area.
+     *
+     * @since    1.0.0
+     */
+    public function enqueue_scripts() {
+        wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '3.7.0', true );
+        wp_enqueue_script(
+            $this->plugin_name . '-woocommerce-admin',
+            plugin_dir_url( __FILE__ ) . 'js/kura-ai-woocommerce-admin.js',
+            array( 'jquery', 'chartjs' ),
+            $this->version,
+            true
+        );
+
+        wp_enqueue_script(
+            $this->plugin_name . '-charts',
+            plugin_dir_url( __FILE__ ) . 'js/kura-ai-charts.js',
+            array( 'jquery', 'chartjs' ),
+            $this->version,
+            true
+        );
+
+        wp_localize_script(
+            $this->plugin_name . '-woocommerce-admin',
+            'kura_ai_woocommerce_admin',
+            array(
+                'nonce' => wp_create_nonce( 'kura_ai_run_store_audit' ),
+                'competitor_nonce' => wp_create_nonce( 'kura_ai_run_competitor_audit' ),
+                'export_nonce' => wp_create_nonce( 'kura_ai_export_audit' ),
+                'export_pdf_nonce' => wp_create_nonce( 'kura_ai_export_audit_pdf' ),
+                'chart_nonce' => wp_create_nonce( 'kura_ai_get_chart_data' ),
+            )
         );
     }
 
@@ -241,7 +279,7 @@ class Kura_AI_WooCommerce_Admin {
     public function ajax_export_audit() {
         check_ajax_referer( 'kura_ai_export_audit', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! apply_filters( 'kuraai_report_export_allowed', current_user_can( 'manage_options' ) ) ) {
             wp_send_json_error( __( 'You do not have sufficient permissions to perform this action.', 'kura-ai' ) );
         }
 
@@ -251,13 +289,134 @@ class Kura_AI_WooCommerce_Admin {
             wp_send_json_error( __( 'No audit summary found.', 'kura-ai' ) );
         }
 
-        $filename = 'kura-ai-audit-' . date( 'Y-m-d' ) . '.txt';
+        $data = array(
+            array( 'Date', 'Suggestion' ),
+            array( $last_audit['date'], $last_audit['suggestion'] ),
+        );
 
-        header( 'Content-Type: text/plain' );
-        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        Kura_AI_Export::generate_csv( $data, 'kura-ai-audit-' . date( 'Y-m-d' ) . '.csv' );
+    }
 
-        echo $last_audit['suggestion'];
+    /**
+     * AJAX handler for exporting the audit summary to PDF.
+     *
+     * @since    1.0.0
+     */
+    public function ajax_export_audit_pdf() {
+        check_ajax_referer( 'kura_ai_export_audit_pdf', 'nonce' );
 
-        exit;
+        if ( ! apply_filters( 'kuraai_report_export_allowed', current_user_can( 'manage_options' ) ) ) {
+            wp_send_json_error( __( 'You do not have sufficient permissions to perform this action.', 'kura-ai' ) );
+        }
+
+        $last_audit = get_option( 'kura_ai_last_audit' );
+
+        if ( empty( $last_audit ) ) {
+            wp_send_json_error( __( 'No audit summary found.', 'kura-ai' ) );
+        }
+
+        $data = array(
+            array( 'Date', 'Suggestion' ),
+            array( $last_audit['date'], $last_audit['suggestion'] ),
+        );
+
+        Kura_AI_Export::generate_pdf( $data, 'kura-ai-audit-' . date( 'Y-m-d' ) . '.pdf' );
+    }
+
+    /**
+     * AJAX handler for getting chart data.
+     *
+     * @since    1.0.0
+     */
+    public function ajax_get_chart_data() {
+        check_ajax_referer( 'kura_ai_get_chart_data', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'You do not have sufficient permissions to perform this action.', 'kura-ai' ) );
+        }
+
+        if ( ! class_exists( 'WooCommerce' ) ) {
+            wp_send_json_error( __( 'WooCommerce is not installed or activated.', 'kura-ai' ) );
+        }
+
+        // Fetch data for the charts
+        $sales_trend = $this->get_sales_trend_data();
+        $top_selling_products = $this->get_top_selling_products_data();
+        $category_distribution = $this->get_category_distribution_data();
+        $store_health_evolution = $this->get_store_health_evolution_data();
+        $suggestion_frequency = $this->get_suggestion_frequency_data();
+
+        wp_send_json_success( array(
+            'sales_trend' => $sales_trend,
+            'top_selling_products' => $top_selling_products,
+            'category_distribution' => $category_distribution,
+            'store_health_evolution' => $store_health_evolution,
+            'suggestion_frequency' => $suggestion_frequency,
+        ) );
+    }
+
+    /**
+     * Get sales trend data.
+     *
+     * @since    1.0.0
+     */
+    private function get_sales_trend_data() {
+        // This is a placeholder. In a real application, you would query the database for sales data.
+        return array(
+            'labels' => array( 'January', 'February', 'March', 'April', 'May', 'June', 'July' ),
+            'data' => array( 65, 59, 80, 81, 56, 55, 40 ),
+        );
+    }
+
+    /**
+     * Get top selling products data.
+     *
+     * @since    1.0.0
+     */
+    private function get_top_selling_products_data() {
+        // This is a placeholder. In a real application, you would query the database for top selling products.
+        return array(
+            'labels' => array( 'Product A', 'Product B', 'Product C', 'Product D', 'Product E' ),
+            'data' => array( 100, 80, 60, 40, 20 ),
+        );
+    }
+
+    /**
+     * Get category distribution data.
+     *
+     * @since    1.0.0
+     */
+    private function get_category_distribution_data() {
+        // This is a placeholder. In a real application, you would query the database for category distribution.
+        return array(
+            'labels' => array( 'Category A', 'Category B', 'Category C' ),
+            'data' => array( 300, 50, 100 ),
+        );
+    }
+
+    /**
+     * Get store health evolution data.
+     *
+     * @since    1.0.0
+     */
+    private function get_store_health_evolution_data() {
+        // This is a placeholder. In a real application, you would query the database for store health evolution.
+        return array(
+            'labels' => array( 'Week 1', 'Week 2', 'Week 3', 'Week 4' ),
+            'data' => array( 70, 80, 85, 90 ),
+        );
+    }
+
+    /**
+     * Get suggestion frequency data.
+     *
+     * @since    1.0.0
+     */
+    private function get_suggestion_frequency_data() {
+        // This is a placeholder. In a real application, you would query the database for suggestion frequency.
+        return array(
+            'labels' => array( 'SEO', 'CRO', 'UX' ),
+            'data' => array( 10, 5, 3 ),
+        );
     }
 }
