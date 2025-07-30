@@ -110,6 +110,22 @@ class Kura_AI_Admin
             'kura-ai-settings',
             'kura_ai_woocommerce_settings'
         );
+
+        add_settings_field(
+            'kura_ai_woocommerce_email_reports',
+            __( 'Email Reports', 'kura-ai' ),
+            array( $this, 'email_reports_callback' ),
+            'kura-ai-settings',
+            'kura_ai_woocommerce_settings'
+        );
+
+        add_settings_field(
+            'kura_ai_woocommerce_activity_tracking',
+            __( 'Product Activity Tracking', 'kura-ai' ),
+            array( $this, 'activity_tracking_callback' ),
+            'kura-ai-settings',
+            'kura_ai_woocommerce_settings'
+        );
     }
 
     public function redirect_uri_section_callback()
@@ -135,6 +151,32 @@ class Kura_AI_Admin
             <option value="weekly" <?php selected( $schedule, 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'kura-ai' ); ?></option>
             <option value="monthly" <?php selected( $schedule, 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'kura-ai' ); ?></option>
         </select>
+        <?php
+    }
+
+    /**
+     * Callback for the email reports checkbox.
+     *
+     * @since    1.0.0
+     */
+    public function email_reports_callback() {
+        $options = get_option( 'kura_ai_settings' );
+        $email_reports = isset( $options['woocommerce_email_reports'] ) ? $options['woocommerce_email_reports'] : 0;
+        ?>
+        <input type="checkbox" name="kura_ai_settings[woocommerce_email_reports]" value="1" <?php checked( $email_reports, 1 ); ?> />
+        <?php
+    }
+
+    /**
+     * Callback for the activity tracking checkbox.
+     *
+     * @since    1.0.0
+     */
+    public function activity_tracking_callback() {
+        $options = get_option( 'kura_ai_settings' );
+        $activity_tracking = isset( $options['woocommerce_activity_tracking'] ) ? $options['woocommerce_activity_tracking'] : 0;
+        ?>
+        <input type="checkbox" name="kura_ai_settings[woocommerce_activity_tracking]" value="1" <?php checked( $activity_tracking, 1 ); ?> />
         <?php
     }
 
@@ -481,6 +523,18 @@ class Kura_AI_Admin
 
         if ( isset( $input['woocommerce_schedule'] ) ) {
             $output['woocommerce_schedule'] = sanitize_text_field( $input['woocommerce_schedule'] );
+        }
+
+        if ( isset( $input['woocommerce_email_reports'] ) ) {
+            $output['woocommerce_email_reports'] = 1;
+        } else {
+            $output['woocommerce_email_reports'] = 0;
+        }
+
+        if ( isset( $input['woocommerce_activity_tracking'] ) ) {
+            $output['woocommerce_activity_tracking'] = 1;
+        } else {
+            $output['woocommerce_activity_tracking'] = 0;
         }
 
         return $output;

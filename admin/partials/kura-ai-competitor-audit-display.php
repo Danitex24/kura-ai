@@ -11,4 +11,7 @@
         <?php submit_button( __( 'Run AI Audit', 'kura-ai' ), 'primary', 'kura-ai-run-competitor-audit' ); ?>
     </form>
     <div id="kura-ai-competitor-audit-results" style="margin-top: 20px;"></div>
+    <div id="kura-ai-competitor-audit-cta" style="margin-top: 20px; display: none;">
+        <p><?php esc_html_e( 'Upgrade to Pro to audit up to 10 competitors and access detailed product strategy breakdowns.', 'kura-ai' ); ?></p>
+    </div>
 </div>

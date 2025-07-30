@@ -25,8 +25,14 @@ jQuery(document).ready(function ($) {
             },
             complete: function () {
                 $button.prop('disabled', false).text('Run AI Audit');
+                $('#kura-ai-audit-cta').show();
             }
         });
+    });
+
+    $('#kura-ai-export-audit').on('click', function (e) {
+        e.preventDefault();
+        window.location.href = ajaxurl + '?action=kura_ai_export_audit&nonce=' + kura_ai_woocommerce_admin.export_nonce;
     });
 
     $('#kura-ai-competitor-audit-form').on('submit', function (e) {
@@ -60,6 +66,7 @@ jQuery(document).ready(function ($) {
             },
             complete: function () {
                 $button.prop('disabled', false).text('Run AI Audit');
+                $('#kura-ai-competitor-audit-cta').show();
             }
         });
     });

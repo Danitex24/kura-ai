@@ -36,6 +36,52 @@ class Kura_AI_WooCommerce_Hooks {
     public function __construct( $plugin_name, $version ) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+
+        $options = get_option( 'kura_ai_settings' );
+        if ( ! empty( $options['woocommerce_activity_tracking'] ) ) {
+            add_action( 'wp_head', array( $this, 'track_product_page_view' ) );
+            add_action( 'woocommerce_add_to_cart', array( $this, 'track_add_to_cart' ), 10, 6 );
+        }
+    }
+
+    /**
+     * Track product page views.
+     *
+     * @since    1.0.0
+     */
+    public function track_product_page_view() {
+        if ( is_product() ) {
+            $product_id = get_the_ID();
+            $this->log_activity( 'product_view', $product_id );
+        }
+    }
+
+    /**
+     * Track add to cart events.
+     *
+     * @since    1.0.0
+     */
+    public function track_add_to_cart( $cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data ) {
+        $this->log_activity( 'add_to_cart', $product_id, array( 'quantity' => $quantity ) );
+    }
+
+    /**
+     * Log activity to the database.
+     *
+     * @since    1.0.0
+     */
+    private function log_activity( $type, $product_id, $data = array() ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_activity_logs';
+        $wpdb->insert(
+            $table_name,
+            array(
+                'type' => $type,
+                'product_id' => $product_id,
+                'data' => json_encode( $data ),
+                'date' => current_time( 'mysql' ),
+            )
+        );
     }
 
     /**

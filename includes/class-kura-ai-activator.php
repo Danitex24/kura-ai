@@ -58,6 +58,32 @@ class Kura_AI_Activator
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
+
+        $table_name = $wpdb->prefix . 'kura_ai_audit_history';
+
+        $sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            date datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            suggestion longtext NOT NULL,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+
+        dbDelta($sql);
+
+        $table_name = $wpdb->prefix . 'kura_ai_activity_logs';
+
+        $sql = "CREATE TABLE $table_name (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            type varchar(50) NOT NULL,
+            product_id bigint(20) NOT NULL,
+            data longtext,
+            date datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY type (type),
+            KEY product_id (product_id)
+        ) $charset_collate;";
+
+        dbDelta($sql);
     }
 
     /**

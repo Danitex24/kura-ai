@@ -41,6 +41,7 @@ class Kura_AI_WooCommerce_Admin {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
         add_action( 'wp_ajax_kura_ai_run_store_audit', array( $this, 'ajax_run_store_audit' ) );
         add_action( 'wp_ajax_kura_ai_run_competitor_audit', array( $this, 'ajax_run_competitor_audit' ) );
+        add_action( 'wp_ajax_kura_ai_export_audit', array( $this, 'ajax_export_audit' ) );
     }
 
     /**
@@ -78,6 +79,7 @@ class Kura_AI_WooCommerce_Admin {
             array(
                 'nonce' => wp_create_nonce( 'kura_ai_run_store_audit' ),
                 'competitor_nonce' => wp_create_nonce( 'kura_ai_run_competitor_audit' ),
+                'export_nonce' => wp_create_nonce( 'kura_ai_export_audit' ),
             )
         );
     }
@@ -177,6 +179,11 @@ class Kura_AI_WooCommerce_Admin {
         // Send the prompt to the AI
         $suggestion = KuraAI_Helper::run_ai_prompt( $prompt );
 
+        // Limit the response to 10 suggestions
+        $suggestions = explode( "\n", $suggestion );
+        $suggestions = array_slice( $suggestions, 0, 10 );
+        $suggestion = implode( "\n", $suggestions );
+
         wp_send_json_success( array( 'suggestion' => $suggestion ) );
     }
 
@@ -205,5 +212,33 @@ class Kura_AI_WooCommerce_Admin {
         $suggestion = KuraAI_Helper::run_ai_prompt( $prompt );
 
         wp_send_json_success( array( 'suggestion' => $suggestion ) );
+    }
+
+    /**
+     * AJAX handler for exporting the audit summary.
+     *
+     * @since    1.0.0
+     */
+    public function ajax_export_audit() {
+        check_ajax_referer( 'kura_ai_export_audit', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'You do not have sufficient permissions to perform this action.', 'kura-ai' ) );
+        }
+
+        $last_audit = get_option( 'kura_ai_last_audit' );
+
+        if ( empty( $last_audit ) ) {
+            wp_send_json_error( __( 'No audit summary found.', 'kura-ai' ) );
+        }
+
+        $filename = 'kura-ai-audit-' . date( 'Y-m-d' ) . '.txt';
+
+        header( 'Content-Type: text/plain' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+        echo $last_audit['suggestion'];
+
+        exit;
     }
 }
