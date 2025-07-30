@@ -118,24 +118,6 @@ class Kura_AI_Admin
         echo '<input type="text" class="large-text" readonly value="' . esc_url(admin_url('admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback')) . '">';
     }
 
-    /**
-     * Callback for the schedule select field.
-     *
-     * @since    1.0.0
-     */
-    public function schedule_select_callback() {
-        $options = get_option( 'kura_ai_settings' );
-        $schedule = isset( $options['woocommerce_schedule'] ) ? $options['woocommerce_schedule'] : 'disabled';
-        ?>
-        <select name="kura_ai_settings[woocommerce_schedule]">
-            <option value="disabled" <?php selected( $schedule, 'disabled' ); ?>><?php esc_html_e( 'Disabled', 'kura-ai' ); ?></option>
-            <option value="hourly" <?php selected( $schedule, 'hourly' ); ?>><?php esc_html_e( 'Hourly', 'kura-ai' ); ?></option>
-            <option value="daily" <?php selected( $schedule, 'daily' ); ?>><?php esc_html_e( 'Daily', 'kura-ai' ); ?></option>
-            <option value="weekly" <?php selected( $schedule, 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'kura-ai' ); ?></option>
-            <option value="monthly" <?php selected( $schedule, 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'kura-ai' ); ?></option>
-        </select>
-        <?php
-    }
 
     /**
      * Callback for the schedule select field.
