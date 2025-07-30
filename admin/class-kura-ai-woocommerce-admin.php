@@ -44,15 +44,6 @@ class Kura_AI_WooCommerce_Admin {
     }
 
     /**
-     * Display the Competitor Audit page.
-     *
-     * @since    1.0.0
-     */
-    public function display_competitor_audit_page() {
-        include_once 'partials/kura-ai-competitor-audit-display.php';
-    }
-
-    /**
      * Enqueue the stylesheets for the admin area.
      *
      * @since    1.0.0
@@ -65,15 +56,6 @@ class Kura_AI_WooCommerce_Admin {
             $this->version,
             'all'
         );
-    }
-
-    /**
-     * Display the Competitor Audit page.
-     *
-     * @since    1.0.0
-     */
-    public function display_competitor_audit_page() {
-        include_once 'partials/kura-ai-competitor-audit-display.php';
     }
 
     /**
@@ -124,15 +106,6 @@ class Kura_AI_WooCommerce_Admin {
                 'kura-ai-competitor-audit',
                 array( $this, 'display_competitor_audit_page' )
             );
-
-            add_submenu_page(
-                'kura-ai',
-                __( 'Competitor Audit', 'kura-ai' ),
-                __( 'Competitor Audit', 'kura-ai' ),
-                'manage_options',
-                'kura-ai-competitor-audit',
-                array( $this, 'display_competitor_audit_page' )
-            );
         }
     }
 
@@ -143,6 +116,15 @@ class Kura_AI_WooCommerce_Admin {
      */
     public function display_store_audit_page() {
         include_once 'partials/kura-ai-woocommerce-audit-display.php';
+    }
+
+    /**
+     * Display the Competitor Audit page.
+     *
+     * @since    1.0.0
+     */
+    public function display_competitor_audit_page() {
+        include_once 'partials/kura-ai-competitor-audit-display.php';
     }
 
     /**
