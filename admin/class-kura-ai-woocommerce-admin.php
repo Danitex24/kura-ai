@@ -4,7 +4,7 @@
  *
  * @package    Kura_AI
  * @subpackage Kura_AI/admin
- * @author     Your Name <your-email@example.com>
+ * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
 class Kura_AI_WooCommerce_Admin {
 
