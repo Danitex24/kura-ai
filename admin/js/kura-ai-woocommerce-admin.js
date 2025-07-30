@@ -30,9 +30,18 @@ jQuery(document).ready(function ($) {
         });
     });
 
-    $('#kura-ai-export-audit').on('click', function (e) {
+    $('#kura-ai-export-audit-csv').on('click', function (e) {
         e.preventDefault();
-        window.location.href = ajaxurl + '?action=kura_ai_export_audit&nonce=' + kura_ai_woocommerce_admin.export_nonce;
+        if ( confirm( 'Are you sure you want to export the audit summary to CSV?' ) ) {
+            window.location.href = ajaxurl + '?action=kura_ai_export_audit&nonce=' + kura_ai_woocommerce_admin.export_nonce;
+        }
+    });
+
+    $('#kura-ai-export-audit-pdf').on('click', function (e) {
+        e.preventDefault();
+        if ( confirm( 'Are you sure you want to export the audit summary to PDF?' ) ) {
+            window.location.href = ajaxurl + '?action=kura_ai_export_audit_pdf&nonce=' + kura_ai_woocommerce_admin.export_pdf_nonce;
+        }
     });
 
     $('#kura-ai-competitor-audit-form').on('submit', function (e) {

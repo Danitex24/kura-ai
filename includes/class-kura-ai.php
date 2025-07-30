@@ -56,6 +56,7 @@ class Kura_AI {
             require_once KURA_AI_PLUGIN_DIR . 'admin/class-kura-ai-woocommerce-admin.php';
             require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-woocommerce-cron.php';
             require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-woocommerce-hooks.php';
+            require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-export.php';
         }
 
         $this->loader = new Kura_AI_Loader();
