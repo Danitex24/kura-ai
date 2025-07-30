@@ -101,10 +101,23 @@ class Kura_AI_WooCommerce_Cron {
         $suggestion = KuraAI_Helper::run_ai_prompt( $prompt );
 
         // Save the audit to the database
-        // In a real application, you would save this to a custom table.
-        update_option( 'kura_ai_last_audit', array(
-            'date' => current_time( 'mysql' ),
-            'suggestion' => $suggestion,
-        ) );
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_audit_history';
+        $wpdb->insert(
+            $table_name,
+            array(
+                'date' => current_time( 'mysql' ),
+                'suggestion' => $suggestion,
+            )
+        );
+
+        // Send an email report if enabled
+        $options = get_option( 'kura_ai_settings' );
+        if ( ! empty( $options['woocommerce_email_reports'] ) ) {
+            $to = get_option( 'admin_email' );
+            $subject = __( 'KuraAI WooCommerce Store Audit', 'kura-ai' );
+            $body = __( 'Your scheduled WooCommerce store audit is complete. Here are the suggestions:', 'kura-ai' ) . "\n\n" . $suggestion;
+            wp_mail( $to, $subject, $body );
+        }
     }
 }
