@@ -78,7 +78,7 @@ class Kura_AI {
         // WooCommerce admin hooks
         if ( class_exists( 'WooCommerce' ) ) {
             $plugin_woocommerce_admin = new Kura_AI_WooCommerce_Admin( $this->get_plugin_name(), $this->get_version() );
-            $this->loader->add_action( 'admin_menu', $plugin_woocommerce_admin, 'add_admin_menu' );
+            $this->loader->add_action( 'admin_menu', $plugin_woocommerce_admin, 'add_admin_menu', 99 );
         }
 
         // WooCommerce admin hooks

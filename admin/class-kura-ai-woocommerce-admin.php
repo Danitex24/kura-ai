@@ -93,6 +93,15 @@ class Kura_AI_WooCommerce_Admin {
         if ( class_exists( 'WooCommerce' ) ) {
             add_submenu_page(
                 'kura-ai',
+                __( 'WooCommerce', 'kura-ai' ),
+                __( 'WooCommerce', 'kura-ai' ),
+                'manage_options',
+                'kura-ai-woocommerce',
+                array( $this, 'display_woocommerce_page' )
+            );
+
+            add_submenu_page(
+                'kura-ai-woocommerce',
                 __( 'AI Store Audit', 'kura-ai' ),
                 __( 'AI Store Audit', 'kura-ai' ),
                 'manage_options',
@@ -101,7 +110,7 @@ class Kura_AI_WooCommerce_Admin {
             );
 
             add_submenu_page(
-                'kura-ai',
+                'kura-ai-woocommerce',
                 __( 'Competitor Audit', 'kura-ai' ),
                 __( 'Competitor Audit', 'kura-ai' ),
                 'manage_options',
@@ -109,6 +118,16 @@ class Kura_AI_WooCommerce_Admin {
                 array( $this, 'display_competitor_audit_page' )
             );
         }
+    }
+
+    /**
+     * Display the WooCommerce page.
+     *
+     * @since    1.0.0
+     */
+    public function display_woocommerce_page() {
+        // This page can be used as a dashboard for all WooCommerce features.
+        include_once 'partials/kura-ai-woocommerce-display.php';
     }
 
     /**
