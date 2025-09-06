@@ -44,6 +44,11 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-logger.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-notifier.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-malware-detector.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-file-monitor.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-compliance.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-analyzer.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-hardening.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-monitor.php';
         
         // AI Integration
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-ai-handler.php';

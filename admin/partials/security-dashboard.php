@@ -11,8 +11,19 @@ if (!defined('WPINC')) {
     die;
 }
 
+// Ensure WordPress functions are available
+if (!function_exists('human_time_diff')) {
+    require_once ABSPATH . 'wp-includes/formatting.php';
+}
+if (!function_exists('current_time')) {
+    require_once ABSPATH . 'wp-includes/functions.php';
+}
+if (!function_exists('esc_html__')) {
+    require_once ABSPATH . 'wp-includes/l10n.php';
+}
+
 // Initialize the monitor
-$monitor = new Kura_AI_Monitor();
+$monitor = new \Kura_AI\Kura_AI_Monitor();
 $metrics = $monitor->get_security_metrics();
 $recent_events = $monitor->get_recent_events();
 ?>

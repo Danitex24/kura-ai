@@ -945,6 +945,42 @@ class Kura_AI_Admin {
 
         add_submenu_page(
             'kura-ai',
+            esc_html__('AI Analysis', 'kura-ai'),
+            esc_html__('AI Analysis', 'kura-ai'),
+            'manage_options',
+            'kura-ai-analysis',
+            array($this, 'display_analysis_page')
+        );
+
+        add_submenu_page(
+            'kura-ai',
+            esc_html__('File Monitor', 'kura-ai'),
+            esc_html__('File Monitor', 'kura-ai'),
+            'manage_options',
+            'kura-ai-file-monitor',
+            array($this, 'display_file_monitor_page')
+        );
+
+        add_submenu_page(
+            'kura-ai',
+            esc_html__('Compliance', 'kura-ai'),
+            esc_html__('Compliance', 'kura-ai'),
+            'manage_options',
+            'kura-ai-compliance',
+            array($this, 'display_compliance_page')
+        );
+
+        add_submenu_page(
+            'kura-ai',
+            esc_html__('Security Hardening', 'kura-ai'),
+            esc_html__('Hardening', 'kura-ai'),
+            'manage_options',
+            'kura-ai-hardening',
+            array($this, 'display_hardening_page')
+        );
+
+        add_submenu_page(
+            'kura-ai',
             esc_html__('Settings', 'kura-ai'),
             esc_html__('Settings', 'kura-ai'),
             'manage_options',
@@ -1026,6 +1062,66 @@ class Kura_AI_Admin {
     }
 
     /**
+     * Display AI Analysis page.
+     *
+     * @since    1.0.0
+     */
+    public function display_analysis_page() {
+        $template_path = trailingslashit($this->template_path) . 'ai-analysis.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('AI Analysis', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+
+    /**
+     * Display File Monitor page.
+     *
+     * @since    1.0.0
+     */
+    public function display_file_monitor_page() {
+        $template_path = trailingslashit($this->template_path) . 'file-monitor.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('File Monitor', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+
+    /**
+     * Display Compliance page.
+     *
+     * @since    1.0.0
+     */
+    public function display_compliance_page() {
+        $template_path = trailingslashit($this->template_path) . 'compliance.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('Compliance', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+
+    /**
+     * Display Security Hardening page.
+     *
+     * @since    1.0.0
+     */
+    public function display_hardening_page() {
+        $template_path = trailingslashit($this->template_path) . 'security-hardening.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('Security Hardening', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+
+    /**
      * Display settings page.
      *
      * @since    1.0.0
@@ -1067,15 +1163,24 @@ class Kura_AI_Admin {
                 array(),
                 '11.0.0'
             );
+            
+            // Enqueue SweetAlert2 configuration script
+            wp_enqueue_script(
+                'kura-ai-sweetalert-config',
+                $this->assets_url . 'js/sweetalert-config.js',
+                array('sweetalert2'),
+                $this->version,
+                false
+            );
         }
 
         // Main admin script
         wp_enqueue_script(
             'kura-ai-admin',
             $this->assets_url . 'js/kura-ai-admin.js',
-            array('jquery', 'sweetalert2'),
+            array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
             $this->version,
-            false
+            true
         );
 
         // Page-specific scripts
@@ -1083,7 +1188,7 @@ class Kura_AI_Admin {
             wp_enqueue_script(
                 'kura-ai-compliance',
                 $this->assets_url . 'js/compliance.js',
-                array('jquery', 'sweetalert2'),
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
                 $this->version,
                 true
             );
@@ -1093,7 +1198,7 @@ class Kura_AI_Admin {
             wp_enqueue_script(
                 'kura-ai-file-monitor',
                 $this->assets_url . 'js/file-monitor.js',
-                array('jquery', 'sweetalert2'),
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
                 $this->version,
                 true
             );
@@ -1103,7 +1208,7 @@ class Kura_AI_Admin {
             wp_enqueue_script(
                 'kura-ai-security-hardening',
                 $this->assets_url . 'js/security-hardening.js',
-                array('jquery', 'sweetalert2'),
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
                 $this->version,
                 true
             );

@@ -1,10 +1,42 @@
 <?php
+/**
+ * Provide a admin area view for the plugin
+ *
+ * This file is used to markup the admin-facing aspects of the plugin.
+ *
+ * @link       https://danovatesolutions.org
+ * @since      1.0.0
+ *
+ * @package    Kura_AI
+ * @subpackage Kura_AI/admin/partials
+ */
+
+// This file should primarily consist of HTML with a little bit of PHP.
+// Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="wrap kura-ai-monitor">
-    <h1><?php echo esc_html__('File Integrity Monitor', 'kura-ai'); ?></h1>
+
+<div class="wrap">
+    <h1><?php echo esc_html__("File Monitor", "kura-ai"); ?></h1>
+    
+    <div class="kura-ai-file-monitor">
+        <div class="file-monitor-header">
+            <h2><?php echo esc_html__("Monitored Files", "kura-ai"); ?></h2>
+            <button class="button button-primary" id="add-file-btn">
+                <?php echo esc_html__("Add File", "kura-ai"); ?>
+            </button>
+        </div>
+        
+        <?php
+        $monitor = new \Kura_AI\Kura_AI_File_Monitor();
+        $monitored_files = $monitor->get_monitored_files();
+        ?>
+        
+        <div class="file-monitor-stats">
+            <div class="stat-box">
+                <h3><?php echo esc_html__("Total Files", "kura-ai"); ?></h3>
 
     <div class="kura-ai-monitor-actions">
         <button type="button" id="kura-ai-add-file" class="button button-primary">
@@ -17,7 +49,7 @@ if (!defined('ABSPATH')) {
         <h2><?php echo esc_html__('Monitored Files', 'kura-ai'); ?></h2>
         <div id="kura-ai-file-list" class="kura-ai-file-list">
             <?php
-            $monitor = new Kura_AI_File_Monitor();
+            $monitor = new \Kura_AI\Kura_AI_File_Monitor();
             $files = $monitor->get_monitored_files();
             
             if (empty($files)) :

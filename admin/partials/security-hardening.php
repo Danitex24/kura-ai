@@ -9,8 +9,21 @@
  * @subpackage Kura_AI/admin/partials
  */
 
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Ensure WordPress functions are available
+if (!function_exists('admin_url')) {
+    require_once ABSPATH . 'wp-includes/link-template.php';
+}
+if (!function_exists('esc_html__')) {
+    require_once ABSPATH . 'wp-includes/l10n.php';
+}
+
 // Initialize the hardening class
-$hardening = new Kura_AI_Hardening();
+$hardening = new \Kura_AI\Kura_AI_Hardening();
 $status = $hardening->get_security_status();
 ?>
 

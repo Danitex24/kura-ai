@@ -7,6 +7,25 @@
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
 
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Import WordPress functions
+use function get_option;
+use function update_option;
+use function esc_html__;
+use function current_time;
+use function human_time_diff;
+use function get_current_user_id;
+use function wp_get_current_user;
+use function get_attached_file;
+use function basename;
+use function sprintf;
+
 class Kura_AI_Monitor {
 
     /**

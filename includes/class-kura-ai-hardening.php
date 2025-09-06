@@ -9,6 +9,24 @@
  * @subpackage Kura_AI/includes
  */
 
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Import WordPress constants
+if (!defined('ARRAY_N')) {
+    define('ARRAY_N', 'ARRAY_N');
+}
+
+// Import WordPress functions
+use function get_option;
+use function update_option;
+use function esc_html__;
+use function wp_kses_post;
+
 /**
  * The security hardening class.
  *
@@ -156,7 +174,7 @@ class Kura_AI_Hardening {
         }
 
         // Optimize tables
-        $tables = $wpdb->get_results('SHOW TABLES', ARRAY_N);
+        $tables = $wpdb->get_results('SHOW TABLES', \ARRAY_N);
         foreach ($tables as $table) {
             $wpdb->query("OPTIMIZE TABLE {$table[0]}");
         }
