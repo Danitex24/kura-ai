@@ -121,7 +121,10 @@ class Kura_AI_Admin
                     'scan_in_progress' => __('Scan in progress...', 'kura-ai'),
                     'getting_suggestions' => __('Getting AI suggestions...', 'kura-ai'),
                     'applying_fix' => __('Applying fix...', 'kura-ai'),
-                    'exporting_logs' => __('Exporting logs...', 'kura-ai')
+                    'exporting_logs' => __('Exporting logs...', 'kura-ai'),
+                    'fix_applied' => __('Fix applied successfully!', 'kura-ai'),
+                    'fix_failed' => __('Failed to apply fix', 'kura-ai'),
+                    'apply_fix' => __('Apply Fix', 'kura-ai')
                 ),
             );
         }
@@ -234,11 +237,12 @@ class Kura_AI_Admin
             wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'kura-ai')));
         }
 
-        $issue_id = sanitize_text_field($_POST['issue_id']);
-        $fix = sanitize_text_field($_POST['fix']);
+        $issue_id = isset($_POST['issue_id']) ? sanitize_text_field($_POST['issue_id']) : '';
+        $fix = isset($_POST['fix']) ? sanitize_text_field($_POST['fix']) : '';
+        $issue_type = isset($_POST['issue_type']) ? sanitize_text_field($_POST['issue_type']) : '';
 
-        if (empty($issue_id) || empty($fix)) {
-            wp_send_json_error(array('message' => __('Issue ID and fix are required.', 'kura-ai')));
+        if (empty($issue_id) || empty($fix) || empty($issue_type)) {
+            wp_send_json_error(array('message' => __('Required parameters are missing.', 'kura-ai')));
         }
 
         $scanner = new Kura_AI_Security_Scanner($this->plugin_name, $this->version);
@@ -249,8 +253,8 @@ class Kura_AI_Admin
         }
 
         wp_send_json_success(array(
-            'message' => __('Fix applied successfully!', 'kura-ai'),
-            'result' => $result
+            'message' => $result['message'],
+            'result' => $result['result']
         ));
     }
 

@@ -59,6 +59,17 @@ class Kura_AI_Security_Scanner
         $results['database_security'] = $this->check_database_security();
         $results['user_security'] = $this->check_user_security();
 
+        // Add unique IDs to each issue
+        foreach ($results as $category => &$issues) {
+            if (is_array($issues)) {
+                foreach ($issues as &$issue) {
+                    if (is_array($issue)) {
+                        $issue['id'] = wp_generate_uuid4();
+                    }
+                }
+            }
+        }
+
         // Store scan results
         $settings = get_option('kura_ai_settings');
         $settings['last_scan'] = time();
@@ -408,5 +419,196 @@ class Kura_AI_Security_Scanner
         }
 
         return $issues;
+    }
+    /**
+     * Apply a security fix.
+     *
+     * @since    1.0.0
+     * @param    string    $issue_id    The ID of the issue to fix.
+     * @param    string    $fix        The fix to apply.
+     * @return   mixed     Array with success message on success, WP_Error on failure
+     */
+    public function apply_fix($issue_id, $fix) {
+        // Get stored scan results
+        $settings = get_option('kura_ai_settings');
+        $results = isset($settings['scan_results']) ? $settings['scan_results'] : array();
+
+        // Find the issue by ID
+        $found_issue = null;
+        $found_category = null;
+        foreach ($results as $category => $issues) {
+            if (is_array($issues)) {
+                foreach ($issues as $index => $issue) {
+                    if (isset($issue['id']) && $issue['id'] === $issue_id) {
+                        $found_issue = $issue;
+                        $found_category = $category;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if (!$found_issue) {
+            return new WP_Error('issue_not_found', __('Issue not found in scan results.', 'kura-ai'));
+        }
+
+        // Apply the fix based on issue type
+        $result = false;
+        $message = '';
+
+        switch ($found_issue['type']) {
+            case 'debug_mode':
+                $result = $this->fix_debug_mode();
+                $message = __('Debug mode has been disabled successfully.', 'kura-ai');
+                break;
+
+            case 'outdated_plugin':
+                if (!empty($found_issue['plugin'])) {
+                    $result = $this->fix_outdated_plugin($found_issue['plugin']);
+                    $message = sprintf(__('Plugin %s has been updated successfully.', 'kura-ai'), basename($found_issue['plugin']));
+                }
+                break;
+
+            case 'outdated_theme':
+                if (!empty($found_issue['theme'])) {
+                    $result = $this->fix_outdated_theme($found_issue['theme']);
+                    $message = sprintf(__('Theme %s has been updated successfully.', 'kura-ai'), $found_issue['theme']);
+                }
+                break;
+
+            case 'file_permissions':
+                if (!empty($found_issue['file'])) {
+                    $result = $this->fix_file_permissions($found_issue['file']);
+                    $message = sprintf(__('File permissions for %s have been updated successfully.', 'kura-ai'), basename($found_issue['file']));
+                }
+                break;
+
+            default:
+                return new WP_Error('unsupported_fix', __('Automatic fix not supported for this issue type.', 'kura-ai'));
+        }
+
+        if (is_wp_error($result)) {
+            return $result;
+        } elseif ($result === false) {
+            return new WP_Error('fix_failed', __('Could not apply the fix.', 'kura-ai'));
+        }
+
+        // Remove the fixed issue from scan results
+        if (isset($results[$found_category])) {
+            foreach ($results[$found_category] as $key => $issue) {
+                if (isset($issue['id']) && $issue['id'] === $issue_id) {
+                    unset($results[$found_category][$key]);
+                    break;
+                }
+            }
+            // Reindex the array
+            $results[$found_category] = array_values($results[$found_category]);
+            // Update the stored results
+            $settings['scan_results'] = $results;
+            update_option('kura_ai_settings', $settings);
+        }
+
+        return array(
+            'message' => $message,
+            'result' => true
+        );
+    }
+
+    /**
+     * Fix WordPress debug mode.
+     *
+     * @since    1.0.0
+     * @return   mixed     True on success, WP_Error on failure
+     */
+    private function fix_debug_mode() {
+        $config_path = ABSPATH . 'wp-config.php';
+        if (!file_exists($config_path)) {
+            return new WP_Error('config_not_found', __('wp-config.php not found.', 'kura-ai'));
+        }
+
+        $config_content = file_get_contents($config_path);
+        if ($config_content === false) {
+            return new WP_Error('read_failed', __('Could not read wp-config.php.', 'kura-ai'));
+        }
+
+        // Replace debug settings
+        $config_content = preg_replace(
+            "/(define\s*\(\s*'WP_DEBUG'\s*,\s*)true\s*\);/",
+            "define('WP_DEBUG', false);",
+            $config_content
+        );
+
+        if (file_put_contents($config_path, $config_content) === false) {
+            return new WP_Error('write_failed', __('Could not update wp-config.php.', 'kura-ai'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Fix outdated plugin by updating it.
+     *
+     * @since    1.0.0
+     * @param    string    $plugin    The plugin path.
+     * @return   mixed     True on success, WP_Error on failure
+     */
+    private function fix_outdated_plugin($plugin) {
+        require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+        require_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
+        require_once(ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php');
+
+        $upgrader = new Plugin_Upgrader(new Automatic_Upgrader_Skin());
+        $result = $upgrader->upgrade($plugin);
+
+        if (is_wp_error($result)) {
+            return $result;
+        } elseif ($result === false) {
+            return new WP_Error('update_failed', __('Plugin update failed.', 'kura-ai'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Fix outdated theme by updating it.
+     *
+     * @since    1.0.0
+     * @param    string    $theme    The theme stylesheet.
+     * @return   mixed     True on success, WP_Error on failure
+     */
+    private function fix_outdated_theme($theme) {
+        require_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
+        require_once(ABSPATH . 'wp-admin/includes/class-theme-upgrader.php');
+
+        $upgrader = new Theme_Upgrader(new Automatic_Upgrader_Skin());
+        $result = $upgrader->upgrade($theme);
+
+        if (is_wp_error($result)) {
+            return $result;
+        } elseif ($result === false) {
+            return new WP_Error('update_failed', __('Theme update failed.', 'kura-ai'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Fix file permissions.
+     *
+     * @since    1.0.0
+     * @param    string    $file    The file path.
+     * @return   mixed     True on success, WP_Error on failure
+     */
+    private function fix_file_permissions($file) {
+        if (!file_exists($file)) {
+            return new WP_Error('file_not_found', __('File not found.', 'kura-ai'));
+        }
+
+        $mode = is_dir($file) ? 0755 : 0644;
+        if (!@chmod($file, $mode)) {
+            return new WP_Error('chmod_failed', __('Could not change file permissions.', 'kura-ai'));
+        }
+
+        return true;
     }
 }

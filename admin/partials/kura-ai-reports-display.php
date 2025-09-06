@@ -143,6 +143,8 @@
                                                 <?php if (!empty($issue['fix']) && !empty($issue['type'])) : ?>
                                                     <button class="button kura-ai-apply-fix" 
                                                             data-issue-type="<?php echo esc_attr($issue['type']); ?>"
+                                                            data-issue-id="<?php echo esc_attr($issue['id'] ?? ''); ?>"
+                                                            data-fix="<?php echo esc_attr($issue['fix'] ?? ''); ?>"
                                                             <?php if (!empty($issue['plugin'])) echo 'data-plugin="' . esc_attr($issue['plugin']) . '"'; ?>
                                                             <?php if (!empty($issue['theme'])) echo 'data-theme="' . esc_attr($issue['theme']) . '"'; ?>
                                                             <?php if (!empty($issue['file'])) echo 'data-file="' . esc_attr($issue['file']) . '"'; ?>>

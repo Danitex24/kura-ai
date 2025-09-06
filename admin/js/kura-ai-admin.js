@@ -142,6 +142,8 @@ jQuery(document).ready(function ($) {
 
             if (issue.fix && issue.type) {
               detailsHtml += '<button class="button kura-ai-apply-fix" data-issue-type="' + issue.type + '"';
+              detailsHtml += ' data-issue-id="' + (issue.id || '') + '"';
+              detailsHtml += ' data-fix="' + (issue.fix || '') + '"';
               if (issue.plugin) detailsHtml += ' data-plugin="' + issue.plugin + '"';
               if (issue.theme) detailsHtml += ' data-theme="' + issue.theme + '"';
               if (issue.file) detailsHtml += ' data-file="' + issue.file + '"';
@@ -168,8 +170,10 @@ jQuery(document).ready(function ($) {
     var issueType = $button.data("issue-type");
     var data = {
       action: "kura_ai_apply_fix",
-      _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
+      _wpnonce: kura_ai_ajax.nonce,
       issue_type: issueType,
+      issue_id: $button.data("issue-id"),
+      fix: $button.data("fix")
     };
 
     if ($button.data("plugin")) {
@@ -192,20 +196,21 @@ jQuery(document).ready(function ($) {
       data: data,
       success: function (response) {
         if (response.success) {
-          alert(response.data.message);
-          if (window.location.href.indexOf("kura-ai-reports") !== -1) {
+          alert(response.data.message || kura_ai_ajax.fix_applied);
+          if (response.data.result) {
+            // Refresh the page to show updated scan results
             window.location.reload();
           }
         } else {
-          alert("Error: " + response.data.message);
+          alert(response.data.message || kura_ai_ajax.fix_failed);
         }
       },
       error: function (xhr, status, error) {
-        alert("Error: " + error);
+        alert(kura_ai_ajax.fix_failed + ": " + error);
       },
       complete: function () {
-        $button.prop("disabled", false).text("Apply Fix");
-      },
+        $button.prop("disabled", false).text(kura_ai_ajax.apply_fix);
+      }
     });
   });
 
