@@ -266,11 +266,19 @@ class Kura_AI_Admin
             wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'kura-ai')));
         }
 
+        // Validate required fields
+        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';
+        $message = isset($_POST['message']) ? sanitize_text_field($_POST['message']) : '';
+        
+        if (empty($message)) {
+            wp_send_json_error(array('message' => __('Issue message is required.', 'kura-ai')));
+        }
+
         $issue = array(
-            'type' => sanitize_text_field($_POST['type']),
-            'severity' => sanitize_text_field($_POST['severity']),
-            'message' => sanitize_text_field($_POST['message']),
-            'fix' => sanitize_text_field($_POST['fix'])
+            'type' => $type,
+            'severity' => isset($_POST['severity']) ? sanitize_text_field($_POST['severity']) : 'medium',
+            'message' => $message,
+            'fix' => isset($_POST['fix']) ? sanitize_text_field($_POST['fix']) : ''
         );
 
         $ai_handler = new Kura_AI_AI_Handler($this->plugin_name, $this->version);

@@ -214,13 +214,10 @@ jQuery(document).ready(function ($) {
     var $button = $(this);
     var issue = $button.data("issue");
 
-    if (typeof issue === "string") {
-      try {
-        issue = JSON.parse(issue);
-      } catch (e) {
-        console.error("Error parsing issue data:", e);
-        return;
-      }
+    // No need to parse issue as jQuery.data() automatically parses JSON
+    if (!issue || typeof issue !== "object") {
+      console.error("Invalid issue data");
+      return;
     }
 
     $button.prop("disabled", true).text(kura_ai_ajax.getting_suggestions);
@@ -230,8 +227,11 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: {
         action: "kura_ai_get_suggestions",
-        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
-        issue: issue,
+        _wpnonce: kura_ai_ajax.nonce,
+        type: issue.type || "",
+        severity: issue.severity || "medium",
+        message: issue.message || "",
+        fix: issue.fix || ""
       },
       success: function (response) {
         if (response.success) {

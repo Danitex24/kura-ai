@@ -150,7 +150,7 @@
                                                     </button>
                                                 <?php endif; ?>
                                                 <button class="button kura-ai-get-suggestion" 
-                                                        data-issue="<?php echo esc_attr(json_encode($issue)); ?>">
+                                                        data-issue='<?php echo wp_json_encode($issue); ?>'>
                                                     <?php _e('AI Suggestion', 'kura-ai'); ?>
                                                 </button>
                                             </td>
