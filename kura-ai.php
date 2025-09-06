@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: KuraAI - AI-Powered WordPress Security
+ * Plugin Name: KuraAI - AI Security
  * Plugin URI: https://www.danovatesolutions.org/kura-ai
  * Description: An AI-powered WordPress security plugin that monitors vulnerabilities and provides intelligent fixes.
  * Version: 1.0.0

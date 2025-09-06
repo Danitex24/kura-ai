@@ -259,49 +259,44 @@ jQuery(document).ready(function ($) {
 
   // Request AI Suggestion from form
   $("#kura-ai-suggestion-request").on("submit", function (e) {
-    e.preventDefault();
-    var $form = $(this);
-    var issueType = $("#kura-ai-issue-type").val();
-    var issueDescription = $("#kura-ai-issue-description").val();
-
-    var issue = {
-      type: issueType,
-      message: issueDescription,
-      severity: "medium",
-      fix: "",
-    };
-
-    $("#kura-ai-suggestion-loading").show();
-    $form.hide();
-
-    $.ajax({
-      url: kura_ai_ajax.ajax_url,
-      type: "POST",
-      data: {
-        action: "kura_ai_get_suggestions",
-        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
-        issue: issue,
-      },
-      success: function (response) {
-        if (response.success) {
-          var $results = $(".kura-ai-suggestions-results");
-          $("#kura-ai-suggestion-result").html(
-            response.data.suggestion.replace(/\n/g, "<br>")
-          );
-          $results.show();
-        } else {
-          alert("Error: " + response.data);
-          $form.show();
-        }
-      },
-      error: function (xhr, status, error) {
-        alert("Error: " + error);
-        $form.show();
-      },
-      complete: function () {
-        $("#kura-ai-suggestion-loading").hide();
-      },
-    });
+      e.preventDefault();
+      var $form = $(this);
+      var issueType = $("#kura-ai-issue-type").val();
+      var issueDescription = $("#kura-ai-issue-description").val();
+  
+      $("#kura-ai-suggestion-loading").show();
+      $form.hide();
+  
+      $.ajax({
+          url: kura_ai_ajax.ajax_url,
+          type: "POST",
+          data: {
+              action: "kura_ai_get_suggestions",
+              _wpnonce: kura_ai_ajax.nonce,
+              type: issueType,
+              message: issueDescription,
+              severity: "medium"
+          },
+          success: function (response) {
+              if (response.success) {
+                  var $results = $(".kura-ai-suggestions-results");
+                  $("#kura-ai-suggestion-result").html(
+                      response.data.suggestion.replace(/\n/g, "<br>")
+                  );
+                  $results.show();
+              } else {
+                  alert("Error: " + response.data.message);
+                  $form.show();
+              }
+          },
+          error: function (xhr, status, error) {
+              alert("Error: " + error);
+              $form.show();
+          },
+          complete: function () {
+              $("#kura-ai-suggestion-loading").hide();
+          },
+      });
   });
 
   // New AI Request

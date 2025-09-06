@@ -3,22 +3,26 @@
 
     <?php
     $settings = get_option('kura_ai_settings');
-    $ai_enabled = !empty($settings['enable_ai']) && 
-                 !empty($settings['ai_service']) && 
-                 !empty($settings['ai_oauth_tokens'][$settings['ai_service']]);
     $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
+    
+    // Check if API keys are set for the current provider
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'kura_ai_api_keys';
+    $api_key = $wpdb->get_var($wpdb->prepare(
+        "SELECT api_key FROM $table_name WHERE provider = %s AND status = 'active' LIMIT 1",
+        $current_provider
+    ));
+    $has_api_key = !empty($api_key);
     ?>
 
-    <?php if (!$ai_enabled): ?>
-        <div class="kura-ai-ai-disabled">
-            <div class="notice notice-warning">
-                <p>
-                    <?php _e('AI suggestions are currently disabled. Please enable AI and authenticate with your selected provider (', 'kura-ai'); ?>
-                    <?php echo esc_html(ucfirst($current_provider)); ?>
-                    <?php _e(') in the', 'kura-ai'); ?>
-                    <a href="<?php echo admin_url('admin.php?page=kura-ai-settings'); ?>"><?php _e('plugin settings', 'kura-ai'); ?></a>.
-                </p>
-            </div>
+    <?php if (!$has_api_key): ?>
+        <div class="notice notice-warning">
+            <p>
+                <?php _e('Please set up your API key for', 'kura-ai'); ?>
+                <?php echo esc_html(ucfirst($current_provider)); ?>
+                <?php _e('in the', 'kura-ai'); ?>
+                <a href="<?php echo admin_url('admin.php?page=kura-ai-settings'); ?>"><?php _e('plugin settings', 'kura-ai'); ?></a>.
+            </p>
         </div>
     <?php endif; ?>
 
@@ -44,17 +48,17 @@
                     <textarea id="kura-ai-issue-description" name="issue_description" rows="5" required></textarea>
                 </div>
 
-                <button type="submit" class="button button-primary" <?php echo $ai_enabled ? '' : 'disabled'; ?>>
+                <button type="submit" class="button button-primary" <?php echo $has_api_key ? '' : 'disabled'; ?>>
                     <?php _e('Get AI Suggestion', 'kura-ai'); ?>
                 </button>
                 
-                <?php if ($ai_enabled): ?>
+                <?php if ($has_api_key): ?>
                     <div class="kura-ai-auth-status">
                         <span class="dashicons dashicons-yes-alt" style="color: #46b450;"></span>
                         <?php
                         printf(
-                            __('Connected to %s via OAuth', 'kura-ai'),
-                            esc_html(ucfirst($current_provider)),
+                            __('Connected to %s via API', 'kura-ai'),
+                            esc_html(ucfirst($current_provider))
                         );
                         ?>
                     </div>

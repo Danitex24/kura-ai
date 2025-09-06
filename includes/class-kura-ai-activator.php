@@ -84,7 +84,7 @@ class Kura_AI_Activator
             id bigint(20) NOT NULL AUTO_INCREMENT,
             provider varchar(50) NOT NULL,
             api_key text NOT NULL,
-            active tinyint(1) NOT NULL DEFAULT 1,
+            status varchar(20) NOT NULL DEFAULT 'active',
             created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
@@ -94,6 +94,24 @@ class Kura_AI_Activator
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($logs_sql);
         dbDelta($api_keys_sql);
+
+        // Add default API key for OpenAI if not exists
+        $existing_key = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $api_keys_table WHERE provider = %s",
+            'openai'
+        ));
+
+        if ($existing_key == 0) {
+            $wpdb->insert(
+                $api_keys_table,
+                array(
+                    'provider' => 'openai',
+                    'api_key' => '',
+                    'status' => 'inactive'
+                ),
+                array('%s', '%s', '%s')
+            );
+        }
     }
 
     /**
@@ -107,7 +125,6 @@ class Kura_AI_Activator
             'scan_frequency' => 'daily',
             'email_notifications' => 1,
             'notification_email' => get_option('admin_email'),
-            'enable_ai' => 0,
             'ai_service' => 'openai',
             'last_scan' => 0,
             'scan_results' => array()

@@ -163,10 +163,10 @@ class Kura_AI_Admin
                 $table_name,
                 array(
                     'api_key' => $api_key,
-                    'active' => 1
+                    'status' => 'active'
                 ),
                 array('provider' => $provider),
-                array('%s', '%d'),
+                array('%s', '%s'),
                 array('%s')
             );
         } else {
@@ -176,9 +176,9 @@ class Kura_AI_Admin
                 array(
                     'provider' => $provider,
                     'api_key' => $api_key,
-                    'active' => 1
+                    'status' => 'active'
                 ),
-                array('%s', '%s', '%d')
+                array('%s', '%s', '%s')
             );
         }
 
