@@ -108,7 +108,6 @@ class Kura_AI {
         return $this->version;
     }
 }
-
 // Add database table creation for API keys
 register_activation_hook(__FILE__, function() {
     global $wpdb;
