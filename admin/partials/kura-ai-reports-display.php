@@ -178,7 +178,7 @@
                 <h3><?php _e('AI Security Suggestion', 'kura-ai'); ?></h3>
                 <span class="kura-ai-modal-close">&times;</span>
             </div>
-            <div class="kura-ai-modal-body">
+            <div class="kura-ai-modal-body kura-ai-result">
                 <div id="kura-ai-suggestion-content"></div>
             </div>
             <div class="kura-ai-modal-footer">
