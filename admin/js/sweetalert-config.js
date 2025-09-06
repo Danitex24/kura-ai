@@ -60,34 +60,71 @@
             }
         });
         
-        // Override the original Swal.fire to ensure our defaults are always applied
+        // Store original Swal.fire method
         const originalFire = Swal.fire;
-        Swal.fire = function(options) {
-            // Merge with our defaults
-            const defaultOptions = {
-                allowOutsideClick: true,
-                allowEscapeKey: true,
-                allowEnterKey: true,
-                focusConfirm: true
-            };
+        
+        // Override Swal.fire to ensure proper dismissal behavior
+        Swal.fire = function() {
+            let options = {};
             
             // Handle different parameter formats
-            if (typeof options === 'string') {
+            if (arguments.length === 1 && typeof arguments[0] === 'object') {
+                // Swal.fire({...})
+                options = arguments[0];
+            } else if (arguments.length >= 1 && typeof arguments[0] === 'string') {
                 // Swal.fire('title', 'text', 'icon')
-                const mergedOptions = Object.assign({}, defaultOptions, {
+                options = {
                     title: arguments[0],
                     text: arguments[1] || '',
                     icon: arguments[2] || 'info'
-                });
-                return originalFire.call(this, mergedOptions);
-            } else if (typeof options === 'object' && options !== null) {
-                // Swal.fire({...})
-                const mergedOptions = Object.assign({}, defaultOptions, options);
-                return originalFire.call(this, mergedOptions);
-            } else {
-                // Fallback to original behavior
-                return originalFire.apply(this, arguments);
+                };
             }
+            
+            // Apply our default dismissal settings
+            const enhancedOptions = Object.assign({
+                allowOutsideClick: true,
+                allowEscapeKey: true,
+                allowEnterKey: true,
+                focusConfirm: true,
+                buttonsStyling: false,
+                reverseButtons: false,
+                showClass: {
+                    popup: 'swal2-show',
+                    backdrop: 'swal2-backdrop-show'
+                },
+                hideClass: {
+                    popup: 'swal2-hide',
+                    backdrop: 'swal2-backdrop-hide'
+                }
+            }, options);
+            
+            // Call original method and ensure proper promise handling
+            const swalPromise = originalFire.call(this, enhancedOptions);
+            
+            // Add additional cleanup to ensure modal dismisses properly
+            swalPromise.then((result) => {
+                // Force cleanup if modal is still visible
+                setTimeout(() => {
+                    const container = document.querySelector('.swal2-container');
+                    if (container && container.style.display !== 'none') {
+                        container.style.display = 'none';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                }, 100);
+                return result;
+            }).catch((error) => {
+                // Ensure cleanup on error as well
+                setTimeout(() => {
+                    const container = document.querySelector('.swal2-container');
+                    if (container && container.style.display !== 'none') {
+                        container.style.display = 'none';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                }, 100);
+                throw error;
+            });
+            
+            return swalPromise;
         };
         
         // Add keyboard event listeners for better accessibility
@@ -121,20 +158,130 @@
             }
         });
         
+        // Add mutation observer to handle button clicks and ensure proper dismissal
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    const swalContainer = document.querySelector('.swal2-container');
+                    if (swalContainer && swalContainer.style.display !== 'none') {
+                        // Add event listeners to SweetAlert buttons
+                        const confirmBtn = swalContainer.querySelector('.swal2-confirm');
+                        const cancelBtn = swalContainer.querySelector('.swal2-cancel');
+                        const denyBtn = swalContainer.querySelector('.swal2-deny');
+                        const closeBtn = swalContainer.querySelector('.swal2-close');
+                        
+                        // Ensure confirm button properly dismisses modal
+                        if (confirmBtn && !confirmBtn.hasAttribute('data-kura-ai-handled')) {
+                            confirmBtn.setAttribute('data-kura-ai-handled', 'true');
+                            confirmBtn.addEventListener('click', function(e) {
+                                setTimeout(() => {
+                                    const container = document.querySelector('.swal2-container');
+                                    if (container) {
+                                        container.style.display = 'none';
+                                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                                    }
+                                }, 50);
+                            });
+                        }
+                        
+                        // Ensure cancel button properly dismisses modal
+                        if (cancelBtn && !cancelBtn.hasAttribute('data-kura-ai-handled')) {
+                            cancelBtn.setAttribute('data-kura-ai-handled', 'true');
+                            cancelBtn.addEventListener('click', function(e) {
+                                setTimeout(() => {
+                                    const container = document.querySelector('.swal2-container');
+                                    if (container) {
+                                        container.style.display = 'none';
+                                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                                    }
+                                }, 50);
+                            });
+                        }
+                        
+                        // Ensure deny button properly dismisses modal
+                        if (denyBtn && !denyBtn.hasAttribute('data-kura-ai-handled')) {
+                            denyBtn.setAttribute('data-kura-ai-handled', 'true');
+                            denyBtn.addEventListener('click', function(e) {
+                                setTimeout(() => {
+                                    const container = document.querySelector('.swal2-container');
+                                    if (container) {
+                                        container.style.display = 'none';
+                                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                                    }
+                                }, 50);
+                            });
+                        }
+                        
+                        // Ensure close button properly dismisses modal
+                        if (closeBtn && !closeBtn.hasAttribute('data-kura-ai-handled')) {
+                            closeBtn.setAttribute('data-kura-ai-handled', 'true');
+                            closeBtn.addEventListener('click', function(e) {
+                                setTimeout(() => {
+                                    const container = document.querySelector('.swal2-container');
+                                    if (container) {
+                                        container.style.display = 'none';
+                                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                                    }
+                                }, 50);
+                            });
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Start observing DOM changes
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
         console.log('Kura AI: SweetAlert2 configuration initialized');
         
-        // Add a global test function for debugging (can be removed in production)
+        // Global debug function for testing
         window.testKuraAISweetAlert = function() {
+            console.log('Testing Kura AI SweetAlert dismissal...');
             Swal.fire({
-                title: 'SweetAlert Test',
-                text: 'This is a test to verify dismissal functionality. Try clicking outside, pressing ESC, or using the close button.',
+                title: 'Test Alert',
+                text: 'Try dismissing this alert by clicking OK, outside, pressing ESC, or using the close button.',
                 icon: 'info',
+                confirmButtonText: 'OK',
                 showCancelButton: true,
-                confirmButtonText: 'Confirm',
                 cancelButtonText: 'Cancel'
             }).then((result) => {
-                console.log('SweetAlert dismissed:', result);
+                console.log('SweetAlert closed with result:', result);
+                // Force cleanup if modal is still visible
+                setTimeout(() => {
+                    const container = document.querySelector('.swal2-container');
+                    if (container && container.style.display !== 'none') {
+                        console.log('Force closing lingering modal...');
+                        container.style.display = 'none';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                }, 100);
+            }).catch((error) => {
+                console.log('SweetAlert error:', error);
+                // Force cleanup on error
+                const container = document.querySelector('.swal2-container');
+                if (container) {
+                    container.style.display = 'none';
+                    document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                }
             });
+        };
+        
+        // Additional function to force close any lingering modals
+        window.forceCloseSweetAlert = function() {
+            console.log('Force closing all SweetAlert modals...');
+            const containers = document.querySelectorAll('.swal2-container');
+            containers.forEach(container => {
+                container.style.display = 'none';
+                container.style.visibility = 'hidden';
+                container.style.opacity = '0';
+            });
+            document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+            document.body.style.overflow = 'auto';
+            console.log('All SweetAlert modals force closed.');
         };
     }
     

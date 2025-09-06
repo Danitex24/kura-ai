@@ -354,6 +354,38 @@
     z-index: 999997 !important;
 }
 
+/* Force hide when dismissed */
+.swal2-container[style*="display: none"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Ensure buttons are clickable and responsive */
+.swal2-actions button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transition: all 0.1s ease !important;
+}
+
+.swal2-actions button:hover {
+    transform: scale(1.02) !important;
+}
+
+/* Remove any lingering body classes when modal is hidden */
+body:not(.swal2-shown) .swal2-container {
+    display: none !important;
+}
+
+/* Ensure proper cleanup of body styles */
+body.swal2-shown {
+    overflow: hidden !important;
+}
+
+body:not(.swal2-shown) {
+    overflow: auto !important;
+}
+
 .kura-ai-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
