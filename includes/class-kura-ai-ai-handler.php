@@ -15,44 +15,69 @@ class Kura_AI_AI_Handler {
         $this->version = $version;
     }
 
+    /**
+     * Get AI suggestion for a security issue.
+     *
+     * @since    1.0.0
+     * @param    array    $issue    The security issue data
+     * @return   string|WP_Error    The AI suggestion or error
+     */
     public function get_suggestion($issue) {
+        // Get active API key
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_api_keys';
-        
-        // Get active API key for the selected service
-        $settings = get_option('kura_ai_settings');
-        $service = $settings['ai_service'] ?? 'openai';
-        
-        $api_key = $wpdb->get_var($wpdb->prepare(
-            "SELECT api_key FROM $table_name WHERE provider = %s AND active = 1",
-            $service
-        ));
+        $active_key = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT provider, api_key FROM $table_name WHERE active = 1 LIMIT 1"
+            )
+        );
 
-        if (empty($api_key)) {
-            return __('Please connect to an AI provider first.', 'kura-ai');
+        if (!$active_key) {
+            return new WP_Error(
+                'ai_disabled',
+                __('AI suggestions are disabled. Please enable AI and provide an API key in settings.', 'kura-ai')
+            );
         }
 
-        try {
-            return $this->get_ai_suggestion($service, $api_key, $issue);
-        } catch (Exception $e) {
-            return sprintf(__('Error: %s', 'kura-ai'), $e->getMessage());
-        }
-    }
-
-    private function get_ai_suggestion($service, $api_key, $issue) {
-        switch ($service) {
+        // Initialize appropriate AI service
+        switch ($active_key->provider) {
             case 'openai':
-                require_once plugin_dir_path(__FILE__) . 'ai-integrations/class-kura-ai-openai.php';
-                $ai_service = new Kura_AI_OpenAI($api_key);
+                $ai_service = new Kura_AI_OpenAI($active_key->api_key);
+                break;
+            case 'claude':
+                $ai_service = new Kura_AI_Claude($active_key->api_key);
                 break;
             case 'gemini':
-                require_once plugin_dir_path(__FILE__) . 'ai-integrations/class-kura-ai-gemini.php';
-                $ai_service = new Kura_AI_Gemini($api_key);
+                $ai_service = new Kura_AI_Gemini($active_key->api_key);
                 break;
             default:
-                throw new Exception(__('Selected AI service is not supported.', 'kura-ai'));
+                return new WP_Error(
+                    'unsupported_service',
+                    __('Selected AI service is not supported.', 'kura-ai')
+                );
         }
 
-        return $ai_service->get_suggestion($issue);
+        // Get suggestion from AI service
+        $suggestion = $ai_service->get_suggestion($issue);
+
+        if (empty($suggestion)) {
+            return new WP_Error(
+                'no_suggestion',
+                __('No suggestion was returned by the AI.', 'kura-ai')
+            );
+        }
+
+        // Log the suggestion
+        $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
+        $logger->log(
+            'ai_suggestion',
+            sprintf(__('AI suggestion generated for issue: %s', 'kura-ai'), $issue['type']),
+            array(
+                'issue' => $issue,
+                'suggestion' => $suggestion
+            )
+        );
+
+        return $suggestion;
     }
 }

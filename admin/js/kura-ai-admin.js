@@ -67,131 +67,97 @@ jQuery(document).ready(function ($) {
   });
 
   // Display scan results
-  function displayScanResults(results) {
-    var $container = $("#kura-ai-results-container");
+  function displayScanResults(data) {
+    var $container = $('#kura-ai-results-container');
     $container.empty();
+
+    if (!data || !data.results) {
+      $container.append('<p class="notice notice-error">No scan results available.</p>');
+      return;
+    }
+
+    var results = data.results;
 
     // Count issues by severity
     var issueCounts = {
       critical: 0,
       high: 0,
       medium: 0,
-      low: 0,
+      low: 0
     };
 
     for (var category in results) {
-      results[category].forEach(function (issue) {
-        issueCounts[issue.severity]++;
-      });
+      if (Array.isArray(results[category])) {
+        results[category].forEach(function(issue) {
+          if (issue.severity) {
+            issueCounts[issue.severity]++;
+          }
+        });
+      }
     }
 
-    var totalIssues =
-      issueCounts.critical +
-      issueCounts.high +
-      issueCounts.medium +
-      issueCounts.low;
+    var totalIssues = issueCounts.critical + issueCounts.high + issueCounts.medium + issueCounts.low;
 
     // Create summary
     var summaryHtml = '<div class="kura-ai-results-summary">';
-    summaryHtml += "<h3>Scan Summary</h3>";
+    summaryHtml += '<h3>Scan Summary</h3>';
 
     if (totalIssues === 0) {
-      summaryHtml +=
-        '<p class="notice notice-success">No security issues found. Your site appears to be secure.</p>';
+      summaryHtml += '<p class="notice notice-success">No security issues found. Your site appears to be secure.</p>';
     } else {
       summaryHtml += '<div class="kura-ai-issue-counts">';
-      summaryHtml +=
-        '<div class="kura-ai-issue-count critical"><span class="count">' +
-        issueCounts.critical +
-        '</span><span class="label">Critical</span></div>';
-      summaryHtml +=
-        '<div class="kura-ai-issue-count high"><span class="count">' +
-        issueCounts.high +
-        '</span><span class="label">High</span></div>';
-      summaryHtml +=
-        '<div class="kura-ai-issue-count medium"><span class="count">' +
-        issueCounts.medium +
-        '</span><span class="label">Medium</span></div>';
-      summaryHtml +=
-        '<div class="kura-ai-issue-count low"><span class="count">' +
-        issueCounts.low +
-        '</span><span class="label">Low</span></div>';
-      summaryHtml += "</div>";
+      summaryHtml += '<div class="kura-ai-issue-count critical"><span class="count">' + issueCounts.critical + '</span><span class="label">Critical</span></div>';
+      summaryHtml += '<div class="kura-ai-issue-count high"><span class="count">' + issueCounts.high + '</span><span class="label">High</span></div>';
+      summaryHtml += '<div class="kura-ai-issue-count medium"><span class="count">' + issueCounts.medium + '</span><span class="label">Medium</span></div>';
+      summaryHtml += '<div class="kura-ai-issue-count low"><span class="count">' + issueCounts.low + '</span><span class="label">Low</span></div>';
+      summaryHtml += '</div>';
 
-      summaryHtml +=
-        "<p>Found " +
-        totalIssues +
-        " security " +
-        (totalIssues === 1 ? "issue" : "issues") +
-        " across different areas of your site.</p>";
+      summaryHtml += '<p>Found ' + totalIssues + ' security ' + (totalIssues === 1 ? 'issue' : 'issues') + ' across different areas of your site.</p>';
     }
 
-    summaryHtml += "</div>";
+    summaryHtml += '</div>';
     $container.append(summaryHtml);
 
     // Create detailed results
     if (totalIssues > 0) {
-      var detailsHtml =
-        '<div class="kura-ai-results-details"><h3>Detailed Results</h3>';
+      var detailsHtml = '<div class="kura-ai-results-details"><h3>Detailed Results</h3>';
 
       for (var category in results) {
-        if (results[category].length > 0) {
-          var categoryName = category.replace(/_/g, " ");
-          categoryName =
-            categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
+        if (Array.isArray(results[category]) && results[category].length > 0) {
+          var categoryName = category.replace(/_/g, ' ');
+          categoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
 
           detailsHtml += '<div class="kura-ai-result-category">';
-          detailsHtml +=
-            "<h4>" +
-            categoryName +
-            ' <span class="count">(' +
-            results[category].length +
-            ")</span></h4>";
+          detailsHtml += '<h4>' + categoryName + ' <span class="count">(' + results[category].length + ')</span></h4>';
           detailsHtml += '<table class="wp-list-table widefat fixed striped">';
-          detailsHtml +=
-            "<thead><tr><th>Issue</th><th>Severity</th><th>Suggested Fix</th><th>Actions</th></tr></thead>";
-          detailsHtml += "<tbody>";
+          detailsHtml += '<thead><tr><th>Issue</th><th>Severity</th><th>Suggested Fix</th><th>Actions</th></tr></thead>';
+          detailsHtml += '<tbody>';
 
-          results[category].forEach(function (issue) {
-            detailsHtml += "<tr>";
-            detailsHtml += "<td>" + issue.message + "</td>";
-            detailsHtml +=
-              '<td><span class="kura-ai-severity-badge ' +
-              issue.severity +
-              '">' +
-              issue.severity.charAt(0).toUpperCase() +
-              issue.severity.slice(1) +
-              "</span></td>";
-            detailsHtml +=
-              "<td>" + (issue.fix || "No automatic fix available") + "</td>";
-            detailsHtml += "<td>";
+          results[category].forEach(function(issue) {
+            detailsHtml += '<tr>';
+            detailsHtml += '<td>' + issue.message + '</td>';
+            detailsHtml += '<td><span class="kura-ai-severity-badge ' + issue.severity + '">' + issue.severity.charAt(0).toUpperCase() + issue.severity.slice(1) + '</span></td>';
+            detailsHtml += '<td>' + (issue.fix || 'No automatic fix available') + '</td>';
+            detailsHtml += '<td>';
 
             if (issue.fix && issue.type) {
-              detailsHtml +=
-                '<button class="button kura-ai-apply-fix" data-issue-type="' +
-                issue.type +
-                '"';
-              if (issue.plugin)
-                detailsHtml += ' data-plugin="' + issue.plugin + '"';
-              if (issue.theme)
-                detailsHtml += ' data-theme="' + issue.theme + '"';
+              detailsHtml += '<button class="button kura-ai-apply-fix" data-issue-type="' + issue.type + '"';
+              if (issue.plugin) detailsHtml += ' data-plugin="' + issue.plugin + '"';
+              if (issue.theme) detailsHtml += ' data-theme="' + issue.theme + '"';
               if (issue.file) detailsHtml += ' data-file="' + issue.file + '"';
-              detailsHtml += ">Apply Fix</button> ";
+              detailsHtml += '>Apply Fix</button> ';
             }
 
-            detailsHtml +=
-              '<button class="button kura-ai-get-suggestion" data-issue=\'' +
-              JSON.stringify(issue) +
-              "'>AI Suggestion</button>";
-            detailsHtml += "</td>";
-            detailsHtml += "</tr>";
+            detailsHtml += '<button class="button kura-ai-get-suggestion" data-issue=\'' + JSON.stringify(issue) + '">AI Suggestion</button>';
+            detailsHtml += '</td>';
+            detailsHtml += '</tr>';
           });
 
-          detailsHtml += "</tbody></table></div>";
+          detailsHtml += '</tbody></table></div>';
         }
       }
 
-      detailsHtml += "</div>";
+      detailsHtml += '</div>';
       $container.append(detailsHtml);
     }
   }
