@@ -1,0 +1,303 @@
+.kura-ai-analysis .kura-ai-card {
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.kura-ai-analysis .card-header {
+    border-bottom: 1px solid #e2e4e7;
+    padding: 15px 20px;
+}
+
+.kura-ai-analysis .card-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kura-ai-analysis .card-body {
+    padding: 20px;
+}
+
+/* Provider Grid Styles */
+.provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.provider-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border: 1px solid #e2e4e7;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+.provider-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.openai-icon {
+    background-color: #10a37f;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.0264 1.1706a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4929 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0264 1.1706a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1302 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0834-3.0089l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1658a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>');
+}
+
+.claude-icon {
+    background-color: #000000;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.236L19.09 8 12 11.764 4.91 8 12 4.236zM4 9.618v6.764L11.09 20v-6.764L4 9.618zm16 0l-7.09 3.618V20L20 16.382V9.618z"/></svg>');
+}
+
+.gemini-icon {
+    background-color: #1a73e8;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z"/></svg>');
+}
+
+.provider-info {
+    flex: 1;
+}
+
+.provider-info h3 {
+    margin: 0 0 10px;
+    font-size: 1.1em;
+}
+
+/* Confidence Meter Styles */
+.confidence-meter {
+    background: #f0f0f1;
+    border-radius: 10px;
+    height: 8px;
+    position: relative;
+    margin-top: 5px;
+}
+
+.confidence-bar {
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    border-radius: 10px;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.confidence-label {
+    font-size: 0.9em;
+    color: #666;
+    display: block;
+    margin-top: 5px;
+}
+
+/* Analysis Form Styles */
+.analysis-form .form-group {
+    margin-bottom: 20px;
+}
+
+.analysis-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.analysis-form textarea {
+    font-family: monospace;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Analysis Results Styles */
+.analysis-results {
+    margin-top: 30px;
+    border-top: 1px solid #e2e4e7;
+    padding-top: 20px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.overall-confidence {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vulnerabilities-list {
+    margin-bottom: 30px;
+}
+
+.vulnerability-item {
+    border-left: 4px solid #dc3545;
+    background: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0 4px 4px 0;
+}
+
+.vulnerability-item.medium {
+    border-left-color: #ffc107;
+}
+
+.vulnerability-item.low {
+    border-left-color: #17a2b8;
+}
+
+.vulnerability-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.vulnerability-title {
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.vulnerability-severity {
+    font-size: 0.9em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #dc3545;
+    color: #fff;
+}
+
+.vulnerability-severity.medium {
+    background: #ffc107;
+    color: #000;
+}
+
+.vulnerability-severity.low {
+    background: #17a2b8;
+}
+
+.vulnerability-description {
+    color: #50575e;
+    margin-bottom: 10px;
+}
+
+.vulnerability-code {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    margin-bottom: 10px;
+    white-space: pre-wrap;
+}
+
+.vulnerability-recommendation {
+    background: #e8f5e9;
+    padding: 10px;
+    border-radius: 4px;
+    color: #1b5e20;
+}
+
+/* Provider Breakdown Styles */
+.provider-breakdown {
+    margin-bottom: 30px;
+}
+
+.breakdown-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.breakdown-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+/* Feedback Section Styles */
+.feedback-section {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.feedback-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.feedback-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Tips Section Styles */
+.tips-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.tip-item {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.tip-item i {
+    font-size: 1.5em;
+    color: #2271b1;
+    margin-top: 3px;
+}
+
+.tip-item .content h3 {
+    margin: 0 0 5px;
+    font-size: 1.1em;
+}
+
+.tip-item .content p {
+    margin: 0;
+    color: #50575e;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 782px) {
+    .provider-grid,
+    .tips-list {
+        grid-template-columns: 1fr;
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .breakdown-list {
+        grid-template-columns: 1fr;
+    }
+
+    .tip-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .tip-item i {
+        margin: 0 0 10px;
+    }
+}

@@ -13,6 +13,11 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
+// No need to import the admin class with namespace as it's in the same namespace
+
 class Kura_AI {
 
     protected $loader;
@@ -38,6 +43,7 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-security-scanner.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-logger.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-notifier.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-malware-detector.php';
         
         // AI Integration
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-ai-handler.php';
@@ -63,33 +69,17 @@ class Kura_AI {
 
         // Core admin hooks
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
-        $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
         $this->loader->add_action('admin_menu', $plugin_admin, 'add_admin_menu');
 
-        // Security scan and fix handlers
-        $this->loader->add_action('wp_ajax_kura_ai_run_scan', $plugin_admin, 'ajax_run_scan');
-        $this->loader->add_action('wp_ajax_kura_ai_apply_fix', $plugin_admin, 'ajax_apply_fix');
+        // AJAX handlers are registered in the admin class via register_ajax_actions()
         
-        // Log management handlers
-        $this->loader->add_action('wp_ajax_kura_ai_export_logs', $plugin_admin, 'ajax_export_logs');
-        $this->loader->add_action('wp_ajax_kura_ai_clear_logs', $plugin_admin, 'ajax_clear_logs');
-        
-        // Settings management
-        $this->loader->add_action('wp_ajax_kura_ai_reset_settings', $plugin_admin, 'ajax_reset_settings');
-        
-        // AI Suggestion handlers
-        $this->loader->add_action('wp_ajax_kura_ai_get_suggestions', $plugin_admin, 'ajax_get_suggestions');
-        
-        // API key management
-        $this->loader->add_action('wp_ajax_kura_ai_save_api_key', $plugin_admin, 'handle_save_api_key');
-        $this->loader->add_action('wp_ajax_kura_ai_delete_api_key', $plugin_admin, 'handle_delete_api_key');
-        $this->loader->add_action('wp_ajax_kura_ai_verify_api_key', $plugin_admin, 'verify_api_key');
+        // All AJAX handlers are registered in the admin class via register_ajax_actions()
     }
 
     private function define_public_hooks() {
         $plugin_public = new Kura_AI_Public($this->get_plugin_name(), $this->get_version());
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
-        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
+        $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
+        $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
     }
 
     public function run() {
@@ -108,19 +98,3 @@ class Kura_AI {
         return $this->version;
     }
 }
-// Add database table creation for API keys
-register_activation_hook(__FILE__, function() {
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'kura_ai_api_keys';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        provider varchar(50) NOT NULL,
-        api_key text NOT NULL,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
-});

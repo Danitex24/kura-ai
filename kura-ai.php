@@ -18,22 +18,22 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('KURA_AI_VERSION', '1.0.0');
-define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('KURA_AI_BASENAME', plugin_basename(__FILE__));
+define('KURA_AI_VERSION', '1.0.1');
+define('KURA_AI_PLUGIN_DIR', \plugin_dir_path(__FILE__));
+define('KURA_AI_PLUGIN_URL', \plugin_dir_url(__FILE__));
+define('KURA_AI_BASENAME', \plugin_basename(__FILE__));
 
 /**
  * The code that runs during plugin activation.
  */
 require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-activator.php';
-register_activation_hook(__FILE__, array('Kura_AI_Activator', 'activate'));
+\register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'));
 
 /**
  * The code that runs during plugin deactivation.
  */
 require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-deactivator.php';
-register_deactivation_hook(__FILE__, array('Kura_AI_Deactivator', 'deactivate'));
+\register_deactivation_hook(__FILE__, array('Kura_AI\Kura_AI_Deactivator', 'deactivate'));
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -45,15 +45,15 @@ require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai.php';
 function get_core_files($directory)
 {
     $wp_files = array();
-    $wp_dir = @dir($directory);
+    $wp_dir = @\dir($directory);
 
     if ($wp_dir) {
         while (($file = $wp_dir->read()) !== false) {
             if ('.' === $file[0]) {
                 continue;
             }
-            if (is_dir($directory . $file)) {
-                $wp_files = array_merge($wp_files, get_core_files($directory . $file . '/'));
+            if (\is_dir($directory . $file)) {
+                $wp_files = \array_merge($wp_files, \get_core_files($directory . $file . '/'));
             } else {
                 $wp_files[] = $file;
             }
@@ -75,7 +75,7 @@ function get_core_files($directory)
  */
 function run_kura_ai()
 {
-    $plugin = new Kura_AI();
+    $plugin = new Kura_AI\Kura_AI();
     $plugin->run();
 }
-run_kura_ai();
+\run_kura_ai();

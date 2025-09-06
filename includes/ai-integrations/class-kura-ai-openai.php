@@ -7,6 +7,22 @@
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
 
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('\ABSPATH')) {
+    exit;
+}
+
+// WordPress core includes
+require_once \ABSPATH . 'wp-includes/class-wp-error.php';
+require_once \ABSPATH . 'wp-includes/http.php';
+require_once \ABSPATH . 'wp-includes/formatting.php';
+require_once \ABSPATH . 'wp-includes/l10n.php';
+
+use \WP_Error;
+use \Exception;
+
 class Kura_AI_OpenAI implements Kura_AI_Interface {
     private $api_key;
     private $model;
@@ -34,56 +50,50 @@ class Kura_AI_OpenAI implements Kura_AI_Interface {
     public function get_suggestion($issue) {
         $prompt = $this->build_prompt($issue);
 
-        $response = wp_remote_post('https://api.openai.com/v1/chat/completions', array(
+        $response = \wp_remote_post('https://api.openai.com/v1/chat/completions', array(
             'headers' => array(
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $this->api_key
             ),
-            'body' => json_encode(array(
+            'body' => \json_encode(array(
                 'model' => $this->model,
                 'messages' => array(
                     array(
                         'role' => 'system',
-                        'content' => 'You are a WordPress security expert providing detailed, actionable advice.'
+                        'content' => 'You are a WordPress security expert. Provide detailed, actionable advice for fixing WordPress security issues.'
                     ),
                     array(
                         'role' => 'user',
                         'content' => $prompt
                     )
                 ),
-                'temperature' => 0.7,
-                'max_tokens' => $this->max_tokens
+                'max_tokens' => 1000
             )),
             'timeout' => 30
         ));
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
                 'openai_api_error',
-                sprintf(__('OpenAI API Error: %s', 'kura-ai'), $response->get_error_message())
+                \__('OpenAI API Error: ', 'kura-ai') . $response->get_error_message()
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
+
         if ($response_code !== 200) {
-            return new WP_Error(
+            return new \WP_Error(
                 'openai_api_error',
-                sprintf(__('OpenAI API Error: Received response code %d', 'kura-ai'), $response_code)
+                \__('OpenAI API Error: Received response code ', 'kura-ai') . $response_code
             );
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-        if (isset($body['error'])) {
-            return new WP_Error(
-                'openai_api_error',
-                sprintf(__('OpenAI API Error: %s', 'kura-ai'), $body['error']['message'])
-            );
-        }
+        $body = \json_decode(\wp_remote_retrieve_body($response), true);
 
         if (empty($body['choices'][0]['message']['content'])) {
-            return new WP_Error(
+            return new \WP_Error(
                 'openai_api_error',
-                __('Invalid response from OpenAI API', 'kura-ai')
+                \__('No suggestion was returned by the AI.', 'kura-ai')
             );
         }
 
@@ -97,21 +107,21 @@ class Kura_AI_OpenAI implements Kura_AI_Interface {
      * @return   bool|WP_Error    True if connected, WP_Error if not
      */
     public function verify_connection() {
-        $response = wp_remote_get('https://api.openai.com/v1/models', array(
+        $response = \wp_remote_get('https://api.openai.com/v1/models', array(
             'headers' => array(
                 'Authorization' => 'Bearer ' . $this->api_key
             ),
             'timeout' => 15
         ));
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
-                'openai_connection_error',
-                sprintf(__('Could not connect to OpenAI API: %s', 'kura-ai'), $response->get_error_message())
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
+                'openai_api_error',
+                \__('OpenAI API Connection Error: ', 'kura-ai') . $response->get_error_message()
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
         return $response_code === 200;
     }
 

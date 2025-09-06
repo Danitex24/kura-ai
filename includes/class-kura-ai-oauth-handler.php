@@ -1,4 +1,9 @@
 <?php
+
+namespace Kura_AI;
+
+use \WP_Error;
+
 class Kura_AI_OAuth_Handler
 {
     private $providers;
@@ -11,7 +16,7 @@ class Kura_AI_OAuth_Handler
                 'client_id' => defined('KURA_AI_OPENAI_CLIENT_ID') ? KURA_AI_OPENAI_CLIENT_ID : '',
                 'client_secret' => defined('KURA_AI_OPENAI_CLIENT_SECRET') ? KURA_AI_OPENAI_CLIENT_SECRET : '',
                 'scopes' => 'openid email profile',
-                'redirect_uri' => site_url('/wp-admin/admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback&provider=openai')
+                'redirect_uri' => \site_url('/wp-admin/admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback&provider=openai')
             ],
             'gemini' => [
                 'auth_url' => 'https://accounts.google.com/o/oauth2/auth',
@@ -19,7 +24,7 @@ class Kura_AI_OAuth_Handler
                 'client_id' => defined('KURA_AI_GEMINI_CLIENT_ID') ? KURA_AI_GEMINI_CLIENT_ID : '',
                 'client_secret' => defined('KURA_AI_GEMINI_CLIENT_SECRET') ? KURA_AI_GEMINI_CLIENT_SECRET : '',
                 'scopes' => 'https://www.googleapis.com/auth/cloud-platform',
-                'redirect_uri' => admin_url('admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback&provider=gemini'),
+                'redirect_uri' => \admin_url('admin.php?page=kura-ai-settings&action=kura_ai_oauth_callback&provider=gemini'),
                 'access_type' => 'offline',
                 'prompt' => 'consent'
             ]
@@ -31,7 +36,7 @@ class Kura_AI_OAuth_Handler
         error_log("Generating auth URL for $provider with state: $state");
 
         if (!isset($this->providers[$provider])) {
-            return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
+            return new WP_Error('invalid_provider', \__('Invalid OAuth provider', 'kura-ai'));
         }
 
         $config = $this->providers[$provider];
@@ -63,22 +68,22 @@ class Kura_AI_OAuth_Handler
 
         if (!isset($this->providers[$provider])) {
             error_log("Invalid provider: $provider");
-            return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
+            return new WP_Error('invalid_provider', \__('Invalid OAuth provider', 'kura-ai'));
         }
 
         // Verify state
-        $expected_provider = get_transient('kura_ai_oauth_state_' . $state);
+        $expected_provider = \get_transient('kura_ai_oauth_state_' . $state);
         if (!$expected_provider || $expected_provider !== $provider) {
             error_log("State verification failed. Expected: $provider, Got: " . ($expected_provider ?: 'NONE'));
-            return new WP_Error('invalid_state', __('Invalid OAuth state', 'kura-ai'));
+            return new WP_Error('invalid_state', \__('Invalid OAuth state', 'kura-ai'));
         }
 
         // Clean up transient
-        delete_transient('kura_ai_oauth_state_' . $state);
+        \delete_transient('kura_ai_oauth_state_' . $state);
 
         $config = $this->providers[$provider];
 
-        $response = wp_remote_post($config['token_url'], [
+        $response = \wp_remote_post($config['token_url'], [
             'body' => [
                 'code' => $code,
                 'client_id' => $config['client_id'],
@@ -88,12 +93,12 @@ class Kura_AI_OAuth_Handler
             ]
         ]);
 
-        if (is_wp_error($response)) {
+        if (\is_wp_error($response)) {
             error_log("Token request failed: " . $response->get_error_message());
             return $response;
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $body = json_decode(\wp_remote_retrieve_body($response), true);
         error_log("Token response: " . print_r($body, true));
 
         if (isset($body['error'])) {
@@ -113,12 +118,12 @@ class Kura_AI_OAuth_Handler
     public function refresh_token($provider, $refresh_token)
     {
         if (!isset($this->providers[$provider])) {
-            return new WP_Error('invalid_provider', __('Invalid OAuth provider', 'kura-ai'));
+            return new WP_Error('invalid_provider', \__('Invalid OAuth provider', 'kura-ai'));
         }
 
         $config = $this->providers[$provider];
 
-        $response = wp_remote_post($config['token_url'], [
+        $response = \wp_remote_post($config['token_url'], [
             'body' => [
                 'refresh_token' => $refresh_token,
                 'client_id' => $config['client_id'],
@@ -127,11 +132,11 @@ class Kura_AI_OAuth_Handler
             ]
         ]);
 
-        if (is_wp_error($response)) {
+        if (\is_wp_error($response)) {
             return $response;
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $body = \json_decode(\wp_remote_retrieve_body($response), true);
 
         if (isset($body['error'])) {
             return new WP_Error('oauth_error', $body['error_description'] ?? $body['error']);

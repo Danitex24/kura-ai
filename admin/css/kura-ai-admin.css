@@ -1590,3 +1590,184 @@
 .kura-ai-clear-loading {
     margin: 10px 0;
 }
+/* Malware Detection Styles */
+.malware-detection-container {
+    max-width: 1200px;
+    margin: 20px 0;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+.settings-section h3 {
+    margin-top: 0;
+    color: #1d2327;
+    font-size: 1.3em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Confidence Threshold Slider */
+.confidence-slider {
+    width: 100%;
+    max-width: 400px;
+    margin: 20px 0;
+}
+
+.confidence-slider input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.confidence-value {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2271b1;
+}
+
+/* Scan Controls */
+.scan-controls {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    align-items: center;
+}
+
+.scan-progress {
+    margin: 20px 0;
+    background: #f0f0f1;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 24px;
+    background: #2271b1;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    padding: 10px;
+    text-align: center;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+/* Results Section */
+.results-section {
+    margin-top: 30px;
+}
+
+.no-threats {
+    text-align: center;
+    padding: 40px;
+    background: #f0f6fc;
+    border-radius: 6px;
+    color: #2271b1;
+    font-size: 1.1em;
+}
+
+.threat-item {
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.threat-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.threat-item .card-body {
+    padding: 20px;
+}
+
+.threat-item .card-title {
+    margin: 0 0 15px;
+    color: #1d2327;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.threat-item .card-text {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.threat-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Confidence Meter */
+.confidence-meter {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.confidence-high {
+    background-color: #d63638;
+}
+
+.confidence-medium {
+    background-color: #dba617;
+}
+
+.confidence-low {
+    background-color: #2271b1;
+}
+
+/* Modal Styles */
+.code-modal {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.code-modal pre {
+    background: #f6f7f7;
+    padding: 15px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0;
+    font-family: monospace;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 782px) {
+    .scan-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scan-controls button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .threat-actions {
+        flex-direction: column;
+    }
+
+    .threat-actions button {
+        width: 100%;
+    }
+}

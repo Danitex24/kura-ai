@@ -6,6 +6,15 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
+use \WP_Error;
+use \Exception;
+use Kura_AI\Kura_AI_OpenAI;
+use Kura_AI\Kura_AI_Claude;
+use Kura_AI\Kura_AI_Gemini;
+
 class Kura_AI_AI_Handler {
     private $plugin_name;
     private $version;
@@ -24,20 +33,20 @@ class Kura_AI_AI_Handler {
      */
     public function get_suggestion($issue) {
         if (empty($issue['message'])) {
-            return new WP_Error(
+            return new \WP_Error(
                 'invalid_input',
-                __('Issue description is required.', 'kura-ai')
+                \__('Issue description is required.', 'kura-ai')
             );
         }
 
         // Get settings to determine current provider
-        $settings = get_option('kura_ai_settings');
+        $settings = \get_option('kura_ai_settings');
         $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
 
         if (empty($current_provider)) {
-            return new WP_Error(
+            return new \WP_Error(
                 'no_provider',
-                __('No AI provider selected. Please select a provider in settings.', 'kura-ai')
+                \__('No AI provider selected. Please select a provider in settings.', 'kura-ai')
             );
         }
 
@@ -50,9 +59,9 @@ class Kura_AI_AI_Handler {
         ));
 
         if (empty($api_key)) {
-            return new WP_Error(
+            return new \WP_Error(
                 'no_api_key',
-                sprintf(__('No active API key found for %s. Please add your API key in settings.', 'kura-ai'), ucfirst($current_provider))
+                \sprintf(\__('No active API key found for %s. Please add your API key in settings.', 'kura-ai'), \ucfirst($current_provider))
             );
         }
 
@@ -69,9 +78,9 @@ class Kura_AI_AI_Handler {
                     $ai_service = new Kura_AI_Gemini($api_key);
                     break;
                 default:
-                    return new WP_Error(
+                    return new \WP_Error(
                         'unsupported_service',
-                        __('Selected AI service is not supported.', 'kura-ai')
+                        \__('Selected AI service is not supported.', 'kura-ai')
                     );
             }
 
@@ -79,14 +88,14 @@ class Kura_AI_AI_Handler {
             $suggestion = $ai_service->get_suggestion($issue);
 
             if (empty($suggestion)) {
-                throw new Exception(__('No suggestion was returned by the AI.', 'kura-ai'));
+                throw new \Exception(\__('No suggestion was returned by the AI.', 'kura-ai'));
             }
 
             // Log the suggestion
             $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
             $logger->log(
                 'ai_suggestion',
-                sprintf(__('AI suggestion generated for issue: %s', 'kura-ai'), $issue['type']),
+                sprintf(\__('AI suggestion generated for issue: %s', 'kura-ai'), $issue['type']),
                 array(
                     'issue' => $issue,
                     'suggestion' => $suggestion
@@ -96,9 +105,9 @@ class Kura_AI_AI_Handler {
             return $suggestion;
 
         } catch (Exception $e) {
-            return new WP_Error(
+            return new \WP_Error(
                 'ai_error',
-                sprintf(__('Error getting AI suggestion: %s', 'kura-ai'), $e->getMessage())
+                \sprintf(\__('Error getting AI suggestion: %s', 'kura-ai'), $e->getMessage())
             );
         }
     }

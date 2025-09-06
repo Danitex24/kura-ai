@@ -6,6 +6,14 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('\ABSPATH')) {
+    exit;
+}
+
 class Kura_AI_Logger
 {
 
@@ -57,17 +65,17 @@ class Kura_AI_Logger
         $table_name = $wpdb->prefix . 'kura_ai_logs';
 
         $insert_data = array(
-            'log_type' => sanitize_text_field($type),
-            'log_message' => sanitize_text_field($message),
-            'log_data' => maybe_serialize($data),
-            'severity' => in_array($severity, array('info', 'warning', 'error', 'critical')) ? $severity : 'info',
-            'created_at' => current_time('mysql')
+            'log_type' => \sanitize_text_field($type),
+            'log_message' => \sanitize_text_field($message),
+            'log_data' => \maybe_serialize($data),
+            'severity' => \in_array($severity, array('info', 'warning', 'error', 'critical')) ? $severity : 'info',
+            'created_at' => \current_time('mysql')
         );
 
         $result = $wpdb->insert($table_name, $insert_data);
 
         if ($result === false) {
-            error_log('KuraAI: Failed to log message - ' . $wpdb->last_error);
+            \error_log('KuraAI: Failed to log message - ' . $wpdb->last_error);
             return false;
         }
 
@@ -97,7 +105,7 @@ class Kura_AI_Logger
             'order' => 'DESC'
         );
 
-        $args = wp_parse_args($args, $defaults);
+        $args = \wp_parse_args($args, $defaults);
 
         $where = array();
         $query_params = array();
@@ -131,7 +139,7 @@ class Kura_AI_Logger
 
         // Prepare main query
         $offset = ($args['page'] - 1) * $args['per_page'];
-        $orderby = in_array($args['orderby'], array('id', 'log_type', 'severity', 'created_at')) ? $args['orderby'] : 'created_at';
+        $orderby = \in_array($args['orderby'], array('id', 'log_type', 'severity', 'created_at')) ? $args['orderby'] : 'created_at';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
 
         $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
@@ -143,7 +151,7 @@ class Kura_AI_Logger
 
         // Unserialize log data
         foreach ($items as &$item) {
-            $item['log_data'] = maybe_unserialize($item['log_data']);
+            $item['log_data'] = \maybe_unserialize($item['log_data']);
         }
 
         return array(
@@ -173,7 +181,7 @@ class Kura_AI_Logger
             'older_than' => ''
         );
 
-        $args = wp_parse_args($args, $defaults);
+        $args = \wp_parse_args($args, $defaults);
 
         $where = array();
         $query_params = array();
@@ -190,7 +198,7 @@ class Kura_AI_Logger
 
         if (!empty($args['older_than'])) {
             $where[] = 'created_at < %s';
-            $query_params[] = date('Y-m-d H:i:s', strtotime($args['older_than']));
+            $query_params[] = \date('Y-m-d H:i:s', \strtotime($args['older_than']));
         }
 
         if (empty($where)) {
@@ -234,7 +242,7 @@ class Kura_AI_Logger
 
         // Write data
         foreach ($logs['items'] as $log) {
-            $data = is_array($log['log_data']) ? json_encode($log['log_data']) : $log['log_data'];
+            $data = \is_array($log['log_data']) ? \json_encode($log['log_data']) : $log['log_data'];
 
             fputcsv($output, array(
                 $log['id'],

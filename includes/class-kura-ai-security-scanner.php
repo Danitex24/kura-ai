@@ -6,6 +6,126 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// Import WordPress core files
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+require_once ABSPATH . 'wp-admin/includes/file.php';
+require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+require_once ABSPATH . 'wp-admin/includes/update.php';
+require_once ABSPATH . 'wp-includes/pluggable.php';
+
+// Import WordPress core classes
+use \WP_Error;
+use \RecursiveIteratorIterator;
+use \RecursiveDirectoryIterator;
+use \Plugin_Upgrader;
+use \Theme_Upgrader;
+use \Automatic_Upgrader_Skin;
+use \Exception;
+
+// Import WordPress constants
+use const \ABSPATH;
+use const \WP_CONTENT_DIR;
+use const \WP_PLUGIN_DIR;
+use const \WP_DEBUG;
+
+// Import WordPress functions
+use function \add_action;
+use function \current_time;
+use function \count;
+use function \date_i18n;
+use function \define;
+use function \defined;
+use function \esc_html;
+use function \esc_html__;
+use function \file_exists;
+use function \file_get_contents;
+use function \file_put_contents;
+use function \fileperms;
+use function \get_bloginfo;
+use function \get_core_checksums;
+use function \get_core_files;
+use function \get_option;
+use function \get_plugins;
+use function \get_site_transient;
+use function \is_dir;
+use function \is_wp_error;
+use function \md5_file;
+use function \preg_match;
+use function \preg_replace;
+use function \sanitize_text_field;
+use function \sprintf;
+use function \str_replace;
+use function \strtotime;
+use function \time;
+use function \update_option;
+use function \username_exists;
+use function \wp_die;
+use function \wp_generate_uuid4;
+use function \wp_get_themes;
+use function \wp_json_encode;
+use function \wp_remote_get;
+use function \wp_remote_post;
+use function \wp_remote_retrieve_body;
+use function \wp_remote_retrieve_response_code;
+use function \wp_update_plugins;
+use function \wp_update_themes;
+use function \__;
+use function \empty;
+use function \array_merge;
+use function \array_keys;
+use function \array_filter;
+use function \in_array;
+use function \json_decode;
+use function \json_encode;
+use function \is_array;
+use function \is_string;
+use function \is_object;
+use function \is_numeric;
+use function \is_null;
+use function \is_bool;
+use function \is_int;
+use function \is_float;
+use function \wp_get_current_user;
+use function \get_users;
+use function \absint;
+use function \wp_verify_nonce;
+use function \wp_create_nonce;
+use function \wp_enqueue_script;
+use function \wp_enqueue_style;
+use function \wp_localize_script;
+use function \wp_register_script;
+use function \wp_register_style;
+use function \wp_parse_args;
+use function \wp_kses_post;
+use function \wp_kses;
+use function \wp_slash;
+use function \wp_unslash;
+use function \get_user_meta;
+use function \wp_check_password;
+use function \wp_hash_password;
+use function \wp_rand;
+use function \wp_redirect;
+use function \wp_safe_redirect;
+use function \wp_set_password;
+use function \wp_validate_auth_cookie;
+use function \wp_get_attachment_url;
+use function \wp_get_attachment_image;
+use function \wp_get_attachment_image_src;
+use function \wp_update_user;
+
+// WordPress functions are now imported with use statements
+
+// No need to redefine WP_DEBUG as we're importing it with use const
+// Removed redundant WP_DEBUG definition
+
 class Kura_AI_Security_Scanner
 {
 
@@ -67,8 +187,8 @@ class Kura_AI_Security_Scanner
                         $issue['id'] = wp_generate_uuid4();
                     }
                 }
+                }
             }
-        }
 
         // Store scan results
         $settings = get_option('kura_ai_settings');
@@ -90,7 +210,7 @@ class Kura_AI_Security_Scanner
         $issues = array();
 
         // Check if WP_DEBUG is enabled
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        if (defined('\WP_DEBUG') && \WP_DEBUG) {
             $issues[] = array(
                 'type' => 'debug_mode',
                 'severity' => 'medium',
@@ -100,9 +220,7 @@ class Kura_AI_Security_Scanner
         }
 
         // Check core file integrity - UPDATED VERSION
-        if (!function_exists('get_core_checksums')) {
-            require_once ABSPATH . 'wp-admin/includes/update.php';
-        }
+        // get_core_checksums function is now imported with use statement
 
         // Get current WordPress version
         $wp_version = get_bloginfo('version');
@@ -120,7 +238,8 @@ class Kura_AI_Security_Scanner
         }
 
         // Get core files list
-        $core_files = get_core_files(ABSPATH);
+        // get_core_files function is now imported with use statement
+        $core_files = get_core_files(\ABSPATH);
         if (!$core_files) {
             $issues[] = array(
                 'type' => 'core_files_fail',
@@ -136,7 +255,7 @@ class Kura_AI_Security_Scanner
                 continue;
             }
 
-            $file_path = ABSPATH . $file;
+            $file_path = \ABSPATH . $file;
             if (!file_exists($file_path)) {
                 continue;
             }
@@ -182,6 +301,9 @@ class Kura_AI_Security_Scanner
             // Check for abandoned plugins (no updates in 2 years)
             if (isset($plugin_data['LastUpdated'])) {
                 $last_updated = strtotime($plugin_data['LastUpdated']);
+                if (!defined('YEAR_IN_SECONDS')) {
+                    define('YEAR_IN_SECONDS', 31536000); // 365 * 24 * 60 * 60
+                }
                 if ($last_updated && (time() - $last_updated) > (2 * YEAR_IN_SECONDS)) {
                     $issues[] = array(
                         'type' => 'abandoned_plugin',
@@ -241,6 +363,16 @@ class Kura_AI_Security_Scanner
     private function check_file_permissions()
     {
         $issues = array();
+        
+        // Define WordPress content and plugin directories if not defined
+        if (!defined('WP_CONTENT_DIR')) {
+            define('WP_CONTENT_DIR', ABSPATH . 'wp-content');
+        }
+        
+        if (!defined('WP_PLUGIN_DIR')) {
+            define('WP_PLUGIN_DIR', WP_CONTENT_DIR . '/plugins');
+        }
+        
         $critical_files = array(
             ABSPATH . 'wp-config.php',
             ABSPATH . '.htaccess',
@@ -333,7 +465,7 @@ class Kura_AI_Security_Scanner
         );
 
         // Scan PHP files in wp-content
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(WP_CONTENT_DIR));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(WP_CONTENT_DIR));
 
         foreach ($files as $file) {
             if ($file->isDir() || $file->getExtension() !== 'php') {
@@ -449,7 +581,7 @@ class Kura_AI_Security_Scanner
         }
 
         if (!$found_issue) {
-            return new WP_Error('issue_not_found', __('Issue not found in scan results.', 'kura-ai'));
+            return new \WP_Error('issue_not_found', __('Issue not found in scan results.', 'kura-ai'));
         }
 
         // Apply the fix based on issue type
@@ -484,13 +616,13 @@ class Kura_AI_Security_Scanner
                 break;
 
             default:
-                return new WP_Error('unsupported_fix', __('Automatic fix not supported for this issue type.', 'kura-ai'));
+                return new \WP_Error('unsupported_fix', __('Automatic fix not supported for this issue type.', 'kura-ai'));
         }
 
         if (is_wp_error($result)) {
             return $result;
         } elseif ($result === false) {
-            return new WP_Error('fix_failed', __('Could not apply the fix.', 'kura-ai'));
+            return new \WP_Error('fix_failed', __('Could not apply the fix.', 'kura-ai'));
         }
 
         // Remove the fixed issue from scan results
@@ -523,12 +655,12 @@ class Kura_AI_Security_Scanner
     private function fix_debug_mode() {
         $config_path = ABSPATH . 'wp-config.php';
         if (!file_exists($config_path)) {
-            return new WP_Error('config_not_found', __('wp-config.php not found.', 'kura-ai'));
+            return new \WP_Error('config_not_found', __('wp-config.php not found.', 'kura-ai'));
         }
 
         $config_content = file_get_contents($config_path);
         if ($config_content === false) {
-            return new WP_Error('read_failed', __('Could not read wp-config.php.', 'kura-ai'));
+            return new \WP_Error('read_failed', __('Could not read wp-config.php.', 'kura-ai'));
         }
 
         // Replace debug settings
@@ -539,7 +671,7 @@ class Kura_AI_Security_Scanner
         );
 
         if (file_put_contents($config_path, $config_content) === false) {
-            return new WP_Error('write_failed', __('Could not update wp-config.php.', 'kura-ai'));
+            return new \WP_Error('write_failed', __('Could not update wp-config.php.', 'kura-ai'));
         }
 
         return true;
@@ -557,13 +689,13 @@ class Kura_AI_Security_Scanner
         require_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
         require_once(ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php');
 
-        $upgrader = new Plugin_Upgrader(new Automatic_Upgrader_Skin());
+        $upgrader = new \Plugin_Upgrader(new \Automatic_Upgrader_Skin());
         $result = $upgrader->upgrade($plugin);
 
         if (is_wp_error($result)) {
             return $result;
         } elseif ($result === false) {
-            return new WP_Error('update_failed', __('Plugin update failed.', 'kura-ai'));
+            return new \WP_Error('update_failed', __('Plugin update failed.', 'kura-ai'));
         }
 
         return true;
@@ -580,13 +712,13 @@ class Kura_AI_Security_Scanner
         require_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
         require_once(ABSPATH . 'wp-admin/includes/class-theme-upgrader.php');
 
-        $upgrader = new Theme_Upgrader(new Automatic_Upgrader_Skin());
+        $upgrader = new \Theme_Upgrader(new \Automatic_Upgrader_Skin());
         $result = $upgrader->upgrade($theme);
 
         if (is_wp_error($result)) {
             return $result;
         } elseif ($result === false) {
-            return new WP_Error('update_failed', __('Theme update failed.', 'kura-ai'));
+            return new \WP_Error('update_failed', __('Theme update failed.', 'kura-ai'));
         }
 
         return true;
@@ -601,12 +733,12 @@ class Kura_AI_Security_Scanner
      */
     private function fix_file_permissions($file) {
         if (!file_exists($file)) {
-            return new WP_Error('file_not_found', __('File not found.', 'kura-ai'));
+            return new \WP_Error('file_not_found', __('File not found.', 'kura-ai'));
         }
 
         $mode = is_dir($file) ? 0755 : 0644;
         if (!@chmod($file, $mode)) {
-            return new WP_Error('chmod_failed', __('Could not change file permissions.', 'kura-ai'));
+            return new \WP_Error('chmod_failed', __('Could not change file permissions.', 'kura-ai'));
         }
 
         return true;

@@ -26,8 +26,11 @@ jQuery(document).ready(function ($) {
       url: kura_ai_ajax.ajax_url,
       type: "POST",
       data: {
-        action: "kura_ai_run_scan",
-        _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
+        action: "kura_ai_scan",
+        nonce: kura_ai_ajax.nonce,
+        scan_type: "security",
+        target: "website",
+        email: kura_ai_ajax.admin_email || "admin@example.com"
       },
       beforeSend: function () {
         $progressMessage.text(kura_ai_ajax.scan_in_progress);
@@ -60,7 +63,13 @@ jQuery(document).ready(function ($) {
       },
       error: function (xhr, status, error) {
         clearInterval(progressInterval);
-        $progressMessage.text("Scan failed: " + error);
+        console.log('AJAX Error Details:', {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          responseText: xhr.responseText,
+          error: error
+        });
+        $progressMessage.text("Scan failed: " + xhr.status + " - " + (xhr.responseText || error));
         $button.prop("disabled", false);
       },
     });
@@ -996,3 +1005,257 @@ jQuery(document).ready(function ($) {
         });
     });
 })(jQuery);
+
+
+// Malware Detection
+let activeScanId = null;
+let scanProgressInterval = null;
+
+// Initialize malware scan controls
+function initMalwareScan() {
+    const $startScanBtn = $('#start-malware-scan');
+    const $cancelScanBtn = $('#cancel-malware-scan');
+    const $progressBar = $('#scan-progress-bar');
+    const $progressText = $('#scan-progress-text');
+    const $resultsContainer = $('#scan-results');
+    const $confidenceSlider = $('#ai-confidence-threshold');
+    const $confidenceValue = $('#confidence-value');
+
+    // Update confidence threshold display
+    $confidenceSlider.on('input', function() {
+        $confidenceValue.text($(this).val() + '%');
+    });
+
+    // Start malware scan
+    $startScanBtn.on('click', function() {
+        $.ajax({
+            url: kura_ai_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kura_ai_start_malware_scan',
+                nonce: kura_ai_ajax.nonce,
+                confidence_threshold: $confidenceSlider.val()
+            },
+            beforeSend: function() {
+                $startScanBtn.prop('disabled', true);
+                $cancelScanBtn.prop('disabled', false);
+                $progressBar.show();
+                $progressText.text('Starting scan...');
+                $resultsContainer.empty();
+            },
+            success: function(response) {
+                if (response.success) {
+                    activeScanId = response.data.scan_id;
+                    startProgressPolling();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.data.message,
+                        allowOutsideClick: true,
+                        allowEscapeKey: true
+                    });
+                    resetScanControls();
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to start malware scan.',
+                    allowOutsideClick: true,
+                    allowEscapeKey: true
+                });
+                resetScanControls();
+            }
+        });
+    });
+
+    // Cancel malware scan
+    $cancelScanBtn.on('click', function() {
+        if (!activeScanId) return;
+
+        $.ajax({
+            url: kura_ai_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kura_ai_cancel_scan',
+                nonce: kura_ai_ajax.nonce,
+                scan_id: activeScanId
+            },
+            success: function(response) {
+                if (response.success) {
+                    stopProgressPolling();
+                    resetScanControls();
+                    $progressText.text('Scan cancelled.');
+                }
+            }
+        });
+    });
+
+    // Handle quarantine file action
+    $(document).on('click', '.quarantine-file', function(e) {
+        e.preventDefault();
+        const filePath = $(this).data('file-path');
+
+        Swal.fire({
+            title: 'Confirm Quarantine',
+            text: 'Are you sure you want to quarantine this file?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, quarantine it',
+            cancelButtonText: 'No, cancel',
+            allowOutsideClick: true,
+            allowEscapeKey: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: kura_ai_ajax.ajax_url,
+                    type: 'POST',
+                    data: {
+                        action: 'kura_ai_quarantine_file',
+                        nonce: kura_ai_ajax.nonce,
+                        file_path: filePath
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                title: 'Success',
+                                text: response.data.message,
+                                icon: 'success',
+                                allowOutsideClick: true,
+                                allowEscapeKey: true
+                            });
+                            // Remove the quarantined file from the results
+                            $(e.target).closest('.threat-item').fadeOut();
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: response.data.message,
+                                icon: 'error',
+                                allowOutsideClick: true,
+                                allowEscapeKey: true
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to quarantine file.',
+                            icon: 'error',
+                            allowOutsideClick: true,
+                            allowEscapeKey: true
+                        });
+                    }
+                });
+            }
+        });
+    });
+}
+
+// Poll for scan progress
+function startProgressPolling() {
+    scanProgressInterval = setInterval(function() {
+        if (!activeScanId) return;
+
+        $.ajax({
+            url: kura_ai_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kura_ai_get_scan_progress',
+                nonce: kura_ai_ajax.nonce,
+                scan_id: activeScanId
+            },
+            success: function(response) {
+                if (response.success) {
+                    updateProgress(response.data);
+                }
+            }
+        });
+    }, 2000);
+}
+
+// Update progress UI
+function updateProgress(data) {
+    const $progressBar = $('#scan-progress-bar');
+    const $progressText = $('#scan-progress-text');
+    const $resultsContainer = $('#scan-results');
+
+    $progressBar.css('width', data.progress + '%');
+    $progressText.text(data.status);
+
+    if (data.threats && data.threats.length > 0) {
+        displayThreats(data.threats);
+    }
+
+    if (data.completed) {
+        scanCompleted(data);
+    }
+}
+
+// Display detected threats
+function displayThreats(threats) {
+    const $resultsContainer = $('#scan-results');
+    let threatHtml = '';
+
+    threats.forEach(function(threat) {
+        threatHtml += `
+            <div class="threat-item card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">${threat.file_path}</h5>
+                    <p class="card-text">
+                        <strong>Type:</strong> ${threat.type}<br>
+                        <strong>Confidence:</strong> ${threat.confidence}%<br>
+                        <strong>Description:</strong> ${threat.description}
+                    </p>
+                    <div class="threat-actions">
+                        <button class="button button-secondary view-code" data-file-path="${threat.file_path}">View Code</button>
+                        <button class="button button-primary quarantine-file" data-file-path="${threat.file_path}">Quarantine File</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    $resultsContainer.html(threatHtml);
+}
+
+// Handle scan completion
+function scanCompleted(data) {
+    stopProgressPolling();
+    resetScanControls();
+
+    const message = data.threats.length > 0
+        ? `Scan completed. Found ${data.threats.length} potential threats.`
+        : 'Scan completed. No threats detected.';
+
+    Swal.fire({
+        icon: data.threats.length > 0 ? 'warning' : 'success',
+        title: 'Scan Complete',
+        text: message,
+        allowOutsideClick: true,
+        allowEscapeKey: true
+    });
+}
+
+// Stop progress polling
+function stopProgressPolling() {
+    if (scanProgressInterval) {
+        clearInterval(scanProgressInterval);
+        scanProgressInterval = null;
+    }
+    activeScanId = null;
+}
+
+// Reset scan controls
+function resetScanControls() {
+    $('#start-malware-scan').prop('disabled', false);
+    $('#cancel-malware-scan').prop('disabled', true);
+}
+
+// Initialize malware scan when on malware detection page
+jQuery(document).ready(function($) {
+    if ($('#malware-detection-page').length) {
+        initMalwareScan();
+    }
+});

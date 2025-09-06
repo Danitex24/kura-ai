@@ -9,6 +9,14 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class Kura_AI_i18n
 {
 
@@ -19,10 +27,10 @@ class Kura_AI_i18n
      */
     public function load_plugin_textdomain()
     {
-        load_plugin_textdomain(
+        \load_plugin_textdomain(
             'kura-ai',
             false,
-            dirname(dirname(plugin_basename(__FILE__))) . '/languages/'
+            \dirname(\dirname(\plugin_basename(__FILE__))) . '/languages/'
         );
     }
 }

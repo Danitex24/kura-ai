@@ -8,6 +8,9 @@
  * @subpackage Kura_AI/includes
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
+
+namespace Kura_AI;
+
 class Kura_AI_Deactivator
 {
 
@@ -31,9 +34,9 @@ class Kura_AI_Deactivator
      */
     private static function clear_cron_jobs()
     {
-        $timestamp = wp_next_scheduled('kura_ai_daily_scan');
+        $timestamp = \wp_next_scheduled('kura_ai_daily_scan');
         if ($timestamp) {
-            wp_unschedule_event($timestamp, 'kura_ai_daily_scan');
+            \wp_unschedule_event($timestamp, 'kura_ai_daily_scan');
         }
     }
 }

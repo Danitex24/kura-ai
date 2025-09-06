@@ -7,6 +7,33 @@
  * @author     Daniel Abughdyer <daniel@danovatesolutions.org>
  */
 
+namespace Kura_AI;
+
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+// WordPress core includes
+require_once ABSPATH . 'wp-includes/class-wp-error.php';
+require_once ABSPATH . 'wp-includes/http.php';
+require_once ABSPATH . 'wp-includes/formatting.php';
+require_once ABSPATH . 'wp-includes/l10n.php';
+
+use WP_Error;
+use Exception;
+
+// Import WordPress functions
+use function wp_remote_post;
+use function wp_remote_get;
+use function wp_json_encode;
+use function is_wp_error;
+use function wp_remote_retrieve_response_code;
+use function wp_remote_retrieve_body;
+use function __;
+use function sprintf;
+use function json_decode;
+
 class Kura_AI_Claude implements Kura_AI_Interface {
     private $api_key;
 
@@ -25,43 +52,32 @@ class Kura_AI_Claude implements Kura_AI_Interface {
      *
      * @since    1.0.0
      * @param    array    $issue    The security issue data
-     * @return   string|WP_Error   The AI suggestion or error
+     * @return   string|\WP_Error   The AI suggestion or error
      */
     public function get_suggestion($issue) {
-        $api_url = 'https://api.anthropic.com/v1/messages';
+        // Build prompt from issue data
+        $prompt = $this->build_prompt($issue);
         
-        // Prepare the system message
-        $system_message = 'You are a WordPress security expert. Provide detailed, actionable advice for fixing WordPress security issues.';
-        
-        // Prepare the user message based on the issue
-        $user_message = sprintf(
-            "Please provide a detailed solution for this WordPress security issue:\n\nIssue Type: %s\nSeverity: %s\nDescription: %s\n\nProvide step-by-step instructions on how to fix this issue, including any code changes if necessary.",
-            $issue['type'],
-            $issue['severity'],
-            $issue['message']
-        );
-
         $headers = array(
             'Content-Type' => 'application/json',
             'x-api-key' => $this->api_key,
             'anthropic-version' => '2023-06-01'
         );
-
+        
         $body = array(
             'messages' => array(
                 array(
                     'role' => 'user',
-                    'content' => $user_message
+                    'content' => $prompt
                 )
             ),
-            'system' => $system_message,
             'model' => 'claude-3-opus-20240229',
             'max_tokens' => 1000
         );
-
-        $response = wp_remote_post($api_url, array(
+        
+        $response = wp_remote_post('https://api.anthropic.com/v1/messages', array(
             'headers' => $headers,
-            'body' => json_encode($body),
+            'body' => wp_json_encode($body),
             'timeout' => 30
         ));
 
@@ -73,6 +89,7 @@ class Kura_AI_Claude implements Kura_AI_Interface {
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
+
         if ($response_code !== 200) {
             return new WP_Error(
                 'claude_api_error',
@@ -81,10 +98,11 @@ class Kura_AI_Claude implements Kura_AI_Interface {
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
+
         if (empty($body['content'][0]['text'])) {
             return new WP_Error(
                 'claude_api_error',
-                __('Invalid response from Claude API', 'kura-ai')
+                __('No suggestion was returned by the AI.', 'kura-ai')
             );
         }
 
@@ -119,7 +137,7 @@ class Kura_AI_Claude implements Kura_AI_Interface {
 
         $response = wp_remote_post($api_url, array(
             'headers' => $headers,
-            'body' => json_encode($body),
+            'body' => wp_json_encode($body),
             'timeout' => 10
         ));
 
