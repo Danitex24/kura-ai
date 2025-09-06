@@ -21,6 +21,12 @@ if (!function_exists('esc_textarea')) {
 if (!function_exists('__')) {
     function __($text, $domain = 'default') { return $text; }
 }
+if (!function_exists('get_option')) {
+    function get_option($option, $default = false) { return $default; }
+}
+if (!function_exists('esc_attr')) {
+    function esc_attr($text) { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
+}
 ?>
 <div class="wrap kura-ai-settings">
     <div class="kura-ai-header">
@@ -39,6 +45,9 @@ if (!function_exists('__')) {
                     <?php 
                     global $wpdb;
                     $api_keys_table = $wpdb->prefix . 'kura_ai_api_keys';
+                    $settings = get_option('kura_ai_settings', array());
+                    $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
+                    
                     foreach (['openai', 'gemini'] as $provider): 
                         // Get existing API key for this provider
                         $existing_key = $wpdb->get_var($wpdb->prepare(
@@ -48,6 +57,7 @@ if (!function_exists('__')) {
                         ));
                         $has_key = !empty($existing_key);
                         $display_key = $has_key ? str_repeat('*', 20) . substr($existing_key, -4) : '';
+                        $is_selected = ($current_provider === $provider);
                     ?>
                         <div class="kura-ai-provider">
                             <div class="provider-logo <?php echo $provider; ?>-logo"
@@ -67,7 +77,7 @@ if (!function_exists('__')) {
                             </div>
 
                             <label>
-                                <input type="checkbox" class="enable-provider" data-provider="<?php echo $provider; ?>" <?php checked($has_key); ?> />
+                                <input type="checkbox" class="enable-provider" data-provider="<?php echo $provider; ?>" <?php echo $is_selected ? 'checked' : ''; ?> />
                                 <?php \_e('Enable', 'kura-ai'); ?>
                             </label>
                         </div>
@@ -159,6 +169,24 @@ if (!function_exists('__')) {
             const provider = $(this).data('provider');
             const isChecked = $(this).is(':checked');
             $(this).closest('.kura-ai-provider').find('.api-key-section').toggle(isChecked);
+            
+            // If enabling a provider, save it as the selected AI service
+            if (isChecked) {
+                // Uncheck other providers (only one can be active)
+                $('.enable-provider').not(this).prop('checked', false);
+                $('.enable-provider').not(this).closest('.kura-ai-provider').find('.api-key-section').hide();
+                
+                // Save the selected provider to settings
+                $.post(kura_ai_ajax.ajax_url, {
+                    action: 'save_ai_service_provider',
+                    provider: provider,
+                    _wpnonce: $(this).closest('.kura-ai-provider').find('.save-api-key').data('nonce')
+                }, function(response) {
+                    if (response.success) {
+                        console.log('AI service provider updated to: ' + provider);
+                    }
+                });
+            }
         });
 
         // Handle API key input focus (clear masked key)
