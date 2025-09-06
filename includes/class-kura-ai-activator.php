@@ -20,6 +20,9 @@ class Kura_AI_Activator
      */
     public static function activate()
     {
+        // Drop existing tables to ensure clean installation
+        self::drop_existing_tables();
+        
         // Create required database tables
         self::create_database_tables();
 
@@ -28,6 +31,25 @@ class Kura_AI_Activator
 
         // Schedule cron jobs
         self::schedule_cron_jobs();
+    }
+
+    /**
+     * Drop existing tables to ensure clean installation.
+     *
+     * @since    1.0.0
+     */
+    private static function drop_existing_tables()
+    {
+        global $wpdb;
+        
+        $tables = array(
+            $wpdb->prefix . 'kura_ai_logs',
+            $wpdb->prefix . 'kura_ai_api_keys'
+        );
+        
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE IF EXISTS $table");
+        }
     }
 
     /**
@@ -41,9 +63,9 @@ class Kura_AI_Activator
 
         $charset_collate = $wpdb->get_charset_collate();
 
-        $table_name = $wpdb->prefix . 'kura_ai_logs';
-
-        $sql = "CREATE TABLE $table_name (
+        // Create logs table
+        $logs_table = $wpdb->prefix . 'kura_ai_logs';
+        $logs_sql = "CREATE TABLE $logs_table (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             log_type varchar(50) NOT NULL,
             log_message text NOT NULL,
@@ -56,8 +78,22 @@ class Kura_AI_Activator
             KEY created_at (created_at)
         ) $charset_collate;";
 
+        // Create API keys table
+        $api_keys_table = $wpdb->prefix . 'kura_ai_api_keys';
+        $api_keys_sql = "CREATE TABLE $api_keys_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            provider varchar(50) NOT NULL,
+            api_key text NOT NULL,
+            active tinyint(1) NOT NULL DEFAULT 1,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY provider (provider)
+        ) $charset_collate;";
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        dbDelta($logs_sql);
+        dbDelta($api_keys_sql);
     }
 
     /**
@@ -73,7 +109,6 @@ class Kura_AI_Activator
             'notification_email' => get_option('admin_email'),
             'enable_ai' => 0,
             'ai_service' => 'openai',
-            'api_key' => '',
             'last_scan' => 0,
             'scan_results' => array()
         );
