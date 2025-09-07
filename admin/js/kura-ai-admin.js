@@ -1,25 +1,67 @@
 jQuery(document).ready(function ($) {
+  // Dashboard Scan Progress Modal
+  function showScanModal() {
+    $('.scan-progress-modal').css('display', 'flex');
+    $('.progress-fill').css('width', '0%');
+    $('.progress-text').text('Initializing scan...');
+  }
+
+  function hideScanModal() {
+    $('.scan-progress-modal').hide();
+  }
+
+  function updateScanProgress(percent, message) {
+    $('.progress-fill').css('width', percent + '%');
+    $('.progress-text').text(message);
+  }
+
+  function showScanResults(data) {
+    $('#scan-results-section').show();
+    
+    // Display the actual scan results
+    displayScanResults(data);
+    
+    // Update summary items with actual data
+    if (data && data.summary) {
+      $('.summary-item:nth-child(1) .number').text(data.summary.files_scanned || '0');
+      $('.summary-item:nth-child(2) .number').text(data.summary.threats_found || '0');
+      $('.summary-item:nth-child(3) .number').text(data.summary.issues_fixed || '0');
+      $('.summary-item:nth-child(4) .number').text(data.summary.scan_time || '0s');
+    }
+  }
+
+  // Close scan results
+  $('.close-results').on('click', function() {
+    $('#scan-results-section').hide();
+  });
+
   // Run Security Scan
   $("#kura-ai-run-scan").on("click", function (e) {
     e.preventDefault();
     var $button = $(this);
-    var $progress = $(".kura-ai-scan-progress");
-    var $results = $(".kura-ai-scan-results");
-    var $progressBar = $(".kura-ai-progress-bar-fill");
-    var $progressMessage = $(".kura-ai-progress-message");
 
     $button.prop("disabled", true);
-    $progress.show();
-    $results.hide();
+    showScanModal();
 
     // Simulate progress (will be replaced with actual progress from AJAX)
     var progress = 0;
     var progressInterval = setInterval(function () {
       progress += 5;
+      if (progress <= 20) {
+        updateScanProgress(progress, 'Scanning files...');
+      } else if (progress <= 40) {
+        updateScanProgress(progress, 'Checking for malware...');
+      } else if (progress <= 60) {
+        updateScanProgress(progress, 'Analyzing vulnerabilities...');
+      } else if (progress <= 80) {
+        updateScanProgress(progress, 'Checking file permissions...');
+      } else if (progress <= 90) {
+        updateScanProgress(progress, 'Finalizing scan...');
+      }
+      
       if (progress > 90) {
         clearInterval(progressInterval);
       }
-      $progressBar.css("width", progress + "%");
     }, 300);
 
     $.ajax({
@@ -33,33 +75,39 @@ jQuery(document).ready(function ($) {
         email: kura_ai_ajax.admin_email || "admin@example.com"
       },
       beforeSend: function () {
-        $progressMessage.text(kura_ai_ajax.scan_in_progress);
+        updateScanProgress(0, 'Initializing scan...');
       },
       success: function (response) {
         clearInterval(progressInterval);
-        $progressBar.css("width", "100%");
+        updateScanProgress(100, 'Scan completed successfully!');
 
         if (response.success) {
-          $progressMessage.text("Scan completed successfully!");
-
-          // Display results
-          displayScanResults(response.data);
-          $results.show();
+          // Show results after a brief delay
+          setTimeout(function() {
+            hideScanModal();
+            showScanResults(response.data);
+            
+            // Update dashboard stats if available
+            if (response.data && response.data.stats) {
+              $('.stat-card:nth-child(2) .stat-content h3').text(response.data.stats.issues || '0');
+              $('.last-scan-info').text('Last scan: Just now');
+            }
+          }, 1500);
 
           // Reload page if on reports page
           if (window.location.href.indexOf("kura-ai-reports") !== -1) {
             setTimeout(function () {
               window.location.reload();
-            }, 1500);
+            }, 3000);
           }
         } else {
-          $progressMessage.text("Scan failed: " + response.data);
+          updateScanProgress(100, "Scan failed: " + response.data);
+          setTimeout(function() {
+            hideScanModal();
+          }, 2000);
         }
 
-        setTimeout(function () {
-          $progress.hide();
-          $button.prop("disabled", false);
-        }, 2000);
+        $button.prop("disabled", false);
       },
       error: function (xhr, status, error) {
         clearInterval(progressInterval);
@@ -69,7 +117,10 @@ jQuery(document).ready(function ($) {
           responseText: xhr.responseText,
           error: error
         });
-        $progressMessage.text("Scan failed: " + xhr.status + " - " + (xhr.responseText || error));
+        updateScanProgress(100, "Scan failed: " + xhr.status + " - " + (xhr.responseText || error));
+        setTimeout(function() {
+          hideScanModal();
+        }, 2000);
         $button.prop("disabled", false);
       },
     });

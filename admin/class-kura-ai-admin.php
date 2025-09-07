@@ -527,13 +527,6 @@ class Kura_AI_Admin {
         
         wp_schedule_event(time(), 'daily', 'kura_ai_scan_cron', array($target, $email));
         
-        $settings = get_option('kura_ai_settings', array());
-        $settings['last_scan'] = current_time('mysql');
-        $settings['scan_target'] = $target;
-        $settings['notification_email'] = $email;
-        
-        update_option('kura_ai_settings', $settings);
-        
         $scan_id = uniqid('scan_', true);
         
         // Generate mock scan results for display
@@ -541,35 +534,61 @@ class Kura_AI_Admin {
             'vulnerabilities' => array(
                 array(
                     'severity' => 'medium',
-                    'title' => 'Outdated WordPress Version',
-                    'description' => 'WordPress version should be updated to the latest version.',
-                    'file' => 'wp-includes/version.php',
-                    'line' => 1
+                    'message' => 'Outdated WordPress Version - WordPress version should be updated to the latest version.',
+                    'fix' => 'Update WordPress to the latest version through the admin dashboard.',
+                    'type' => 'wordpress_update',
+                    'file' => 'wp-includes/version.php'
                 ),
                 array(
                     'severity' => 'low',
-                    'title' => 'Weak Password Policy',
-                    'description' => 'Consider implementing stronger password requirements.',
-                    'file' => 'wp-config.php',
-                    'line' => 45
+                    'message' => 'Weak Password Policy - Consider implementing stronger password requirements.',
+                    'fix' => 'Install a password policy plugin or configure stronger password requirements.',
+                    'type' => 'password_policy',
+                    'file' => 'wp-config.php'
                 )
             ),
             'malware' => array(),
-            'permissions' => array(
+            'file_permissions' => array(
                 array(
                     'severity' => 'high',
-                    'title' => 'File Permissions Too Permissive',
-                    'description' => 'Some files have overly permissive permissions.',
-                    'file' => 'wp-content/uploads/',
-                    'line' => 0
+                    'message' => 'File Permissions Too Permissive - Some files have overly permissive permissions (777).',
+                    'fix' => 'Change file permissions to 644 for files and 755 for directories.',
+                    'type' => 'file_permissions',
+                    'file' => 'wp-content/uploads/'
                 )
             )
         );
         
+        // Update settings with scan results
+        $settings = get_option('kura_ai_settings', array());
+        $settings['last_scan'] = time();
+        $settings['scan_target'] = $target;
+        $settings['notification_email'] = $email;
+        $settings['scan_results'] = $scan_results;
+        update_option('kura_ai_settings', $settings);
+        
+        // Calculate summary statistics
+        $total_issues = 0;
+        $files_scanned = 150; // Mock value
+        foreach ($scan_results as $category => $issues) {
+            if (is_array($issues)) {
+                $total_issues += count($issues);
+            }
+        }
+        
         wp_send_json_success(array(
              'message' => esc_html__('Scan completed successfully.', 'kura-ai'),
              'scan_id' => $scan_id,
-             'results' => $scan_results
+             'results' => $scan_results,
+             'summary' => array(
+                 'files_scanned' => $files_scanned,
+                 'threats_found' => $total_issues,
+                 'issues_fixed' => 0,
+                 'scan_time' => '2.5s'
+             ),
+             'stats' => array(
+                 'issues' => $total_issues
+             )
          ));
     }
 
@@ -2036,7 +2055,7 @@ class Kura_AI_Admin {
      * @since    1.0.0
      */
     public function display_scanner_page() {
-        echo '<div class="wrap"><h1>' . esc_html__('Security Scanner', 'kura-ai') . '</h1><p>' . esc_html__('Scanner functionality coming soon.', 'kura-ai') . '</p></div>';
+        include_once plugin_dir_path(dirname(__FILE__)) . 'admin/partials/security-scanner.php';
     }
 
     /**
@@ -2257,6 +2276,16 @@ class Kura_AI_Admin {
                 true
             );
         }
+        
+        if ($page === 'kura-ai-scanner' || strpos($page, 'scanner') !== false) {
+            wp_enqueue_script(
+                'kura-ai-security-scanner',
+                $this->assets_url . 'js/security-scanner.js',
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
+                $this->version,
+                true
+            );
+        }
 
         // Localize script for the appropriate handle based on page
         $script_handle = 'kura-ai-admin';
@@ -2344,6 +2373,16 @@ class Kura_AI_Admin {
             wp_enqueue_style(
                 'kura-ai-security-hardening-styles',
                 $this->assets_url . 'css/security-hardening.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
+        if ($page === 'kura-ai-scanner' || strpos($page, 'scanner') !== false) {
+            wp_enqueue_style(
+                'kura-ai-security-scanner-styles',
+                $this->assets_url . 'css/security-scanner.css',
                 array(),
                 $this->version,
                 'all'
