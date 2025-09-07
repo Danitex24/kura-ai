@@ -183,13 +183,22 @@ class Kura_AI_Admin {
     private $assets_url;
 
     /**
-     * The template path.
+     * The template path for admin templates.
      *
      * @since    1.0.0
      * @access   private
-     * @var      string    $template_path    The template path.
+     * @var      string    $template_path    The template path for admin templates.
      */
     private $template_path;
+
+    /**
+     * The file monitor instance.
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      Kura_AI_File_Monitor    $file_monitor    The file monitor instance.
+     */
+    private $file_monitor;
 
     /**
      * The single instance of the class.
@@ -364,6 +373,8 @@ class Kura_AI_Admin {
             'kura_ai_remove_monitored_file' => 'handle_remove_monitored_file',
             'kura_ai_rollback_version' => 'handle_rollback_version',
             'kura_ai_compare_versions' => 'handle_compare_versions',
+            'kura_ai_get_chart_data' => 'handle_get_chart_data',
+            'kura_ai_run_security_scan' => 'handle_run_security_scan',
             // Additional handlers
             'kura_ai_run_scan' => 'handle_run_scan',
             'kura_ai_oauth_reconnect' => 'handle_oauth_reconnect',
@@ -1368,6 +1379,71 @@ class Kura_AI_Admin {
     public function handle_apply_fix() {
         wp_send_json_error(array('message' => esc_html__('Apply fix feature not yet implemented.', 'kura-ai')));
     }
+    
+    /**
+     * Handle get chart data request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_chart_data() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        // Initialize file monitor if not already done
+        if (!$this->file_monitor) {
+            $this->file_monitor = new Kura_AI_File_Monitor();
+        }
+        
+        $chart_data = $this->file_monitor->get_chart_data();
+        wp_send_json_success($chart_data);
+    }
+    
+    /**
+     * Handle run security scan request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_run_security_scan() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        // Initialize file monitor if not already done
+        if (!$this->file_monitor) {
+            $this->file_monitor = new Kura_AI_File_Monitor();
+        }
+        
+        $result = $this->file_monitor->perform_automatic_scan();
+        
+        if ($result) {
+            $critical_files = $this->file_monitor->get_critical_files();
+            wp_send_json_success(array(
+                'message' => esc_html__('Security scan completed successfully.', 'kura-ai'),
+                'scanned_files' => count($critical_files)
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security scan failed. Please try again.', 'kura-ai')
+            ));
+        }
+    }
 
     /**
      * Validation helper methods.
@@ -1796,10 +1872,19 @@ class Kura_AI_Admin {
         }
         
         if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
+            // Enqueue Chart.js for file monitor charts
+            wp_enqueue_script(
+                'chartjs',
+                'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                array(),
+                '3.9.1',
+                true
+            );
+            
             wp_enqueue_script(
                 'kura-ai-file-monitor',
                 $this->assets_url . 'js/file-monitor.js',
-                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config', 'chartjs'),
                 $this->version,
                 true
             );
