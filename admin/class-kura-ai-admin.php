@@ -130,6 +130,9 @@ if (!function_exists('wp_enqueue_style')) {
 if (!function_exists('get_current_screen')) {
     function get_current_screen() { return null; }
 }
+if (!function_exists('wp_mail')) {
+    function wp_mail($to, $subject, $message, $headers = '', $attachments = array()) { return true; }
+}
 
 /**
  * The admin-specific functionality of the plugin.
@@ -237,6 +240,7 @@ class Kura_AI_Admin {
         add_action('admin_init', array($this, 'admin_init'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
+        add_action('kura_ai_compliance_scan', array($this, 'run_scheduled_compliance_scan'));
         $this->register_ajax_actions();
     }
 
@@ -1846,6 +1850,8 @@ class Kura_AI_Admin {
      * @since    1.0.0
      */
     public function enqueue_styles() {
+        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        
         wp_enqueue_style(
             'kura-ai-admin-styles',
             $this->assets_url . 'css/kura-ai-admin.css',
@@ -1853,6 +1859,37 @@ class Kura_AI_Admin {
             $this->version,
             'all'
         );
+        
+        // Page-specific styles
+        if ($page === 'kura-ai-compliance' || strpos($page, 'compliance') !== false) {
+            wp_enqueue_style(
+                'kura-ai-compliance-styles',
+                $this->assets_url . 'css/compliance.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
+        if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
+            wp_enqueue_style(
+                'kura-ai-file-monitor-styles',
+                $this->assets_url . 'css/file-monitor.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
+        if ($page === 'kura-ai-security-hardening' || strpos($page, 'hardening') !== false) {
+            wp_enqueue_style(
+                'kura-ai-security-hardening-styles',
+                $this->assets_url . 'css/security-hardening.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
     }
 
 
@@ -1866,6 +1903,70 @@ class Kura_AI_Admin {
      */
     private function sanitize_input($input) {
         return sanitize_text_field($input);
+    }
+
+    /**
+     * Run scheduled compliance scan.
+     *
+     * @since    1.0.0
+     * @param    string   $standard   The compliance standard to scan for.
+     */
+    public function run_scheduled_compliance_scan($standard) {
+        // Get scheduled scan settings
+        $settings = get_option('kura_ai_scheduled_scan_settings', array());
+        
+        if (empty($settings) || !isset($settings['email'])) {
+            return;
+        }
+        
+        // Generate compliance report by calling the existing handler
+        $_POST['standard'] = $standard;
+        $_POST['nonce'] = wp_create_nonce('kura_ai_compliance_nonce');
+        
+        ob_start();
+        $this->handle_generate_compliance_report();
+        $output = ob_get_clean();
+        
+        $report_data = json_decode($output, true);
+        
+        if (!$report_data || !isset($report_data['success']) || !$report_data['success']) {
+            return;
+        }
+        
+        $report_data = $report_data['data'];
+        
+        // Send email notification
+        $this->send_scheduled_scan_email($settings['email'], $standard, $report_data);
+    }
+    
+    /**
+     * Send scheduled scan email notification.
+     *
+     * @since    1.0.0
+     * @param    string   $email      The email address to send to.
+     * @param    string   $standard   The compliance standard.
+     * @param    array    $report_data The report data.
+     */
+    private function send_scheduled_scan_email($email, $standard, $report_data) {
+        $subject = sprintf('Kura AI - Scheduled %s Compliance Scan Results', $standard);
+        
+        $message = sprintf(
+            "Your scheduled %s compliance scan has been completed.\n\n" .
+            "Scan Results:\n" .
+            "- Total Requirements: %d\n" .
+            "- Compliant: %d\n" .
+            "- Non-Compliant: %d\n" .
+            "- Compliance Score: %s%%\n\n" .
+            "Please log in to your WordPress admin to view the full report.\n\n" .
+            "Best regards,\nKura AI Team",
+            $standard,
+            $report_data['total_requirements'] ?? 0,
+            $report_data['compliant'] ?? 0,
+            $report_data['non_compliant'] ?? 0,
+            $report_data['compliance_score'] ?? '0'
+        );
+        
+        wp_mail($email, $subject, $message);
     }
 
 }
