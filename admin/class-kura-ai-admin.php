@@ -475,7 +475,8 @@ class Kura_AI_Admin {
             'kura_ai_run_scan' => 'handle_run_scan',
             'kura_ai_oauth_reconnect' => 'handle_oauth_reconnect',
             'kura_ai_reset_settings' => 'handle_reset_settings',
-            'kura_ai_apply_fix' => 'handle_apply_fix'
+            'kura_ai_apply_fix' => 'handle_apply_fix',
+            'kura_ai_get_suggestions' => 'handle_get_suggestions'
         );
         
         foreach ($ajax_actions as $action => $method) {
@@ -507,7 +508,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
+        if (!\wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -877,7 +878,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
+        if (!\wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -937,7 +938,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
+        if (!\wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -949,9 +950,20 @@ class Kura_AI_Admin {
             ));
         }
         
-        $issue_type = sanitize_text_field(wp_unslash($_POST['type'] ?? ''));
-        $issue_message = sanitize_textarea_field(wp_unslash($_POST['message'] ?? ''));
-        $severity = sanitize_text_field(wp_unslash($_POST['severity'] ?? 'medium'));
+        // Parse the JSON issue data
+        $issue_json = wp_unslash($_POST['issue'] ?? '');
+        $issue = json_decode($issue_json, true);
+        
+        if (!$issue || !is_array($issue)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid issue data.', 'kura-ai')
+            ));
+        }
+        
+        // Sanitize issue data
+        $issue_type = sanitize_text_field($issue['type'] ?? '');
+        $issue_message = sanitize_textarea_field($issue['message'] ?? '');
+        $severity = sanitize_text_field($issue['severity'] ?? 'medium');
         
         if (empty($issue_message)) {
             wp_send_json_error(array(

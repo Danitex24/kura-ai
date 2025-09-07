@@ -279,6 +279,8 @@ jQuery(document).ready(function ($) {
     var $button = $(this);
     var issue = $button.data("issue");
 
+
+
     // No need to parse issue as jQuery.data() automatically parses JSON
     if (!issue || typeof issue !== "object") {
       console.error("Invalid issue data");
@@ -287,17 +289,18 @@ jQuery(document).ready(function ($) {
 
     $button.prop("disabled", true).text(kura_ai_ajax.getting_suggestions);
 
+    var ajaxData = {
+      action: "kura_ai_get_suggestions",
+      _wpnonce: kura_ai_ajax.nonce,
+      issue: JSON.stringify(issue)
+    };
+    
+
+
     $.ajax({
       url: kura_ai_ajax.ajax_url,
       type: "POST",
-      data: {
-        action: "kura_ai_get_suggestions",
-        _wpnonce: kura_ai_ajax.nonce,
-        type: issue.type || "",
-        severity: issue.severity || "medium",
-        message: issue.message || "",
-        fix: issue.fix || ""
-      },
+      data: ajaxData,
       success: function (response) {
         if (response.success) {
           var $modal = $("#kura-ai-suggestion-modal");
@@ -308,9 +311,9 @@ jQuery(document).ready(function ($) {
               response.data.suggestion.replace(/\n/g, "<br>") +
               "</div>"
           );
-          $modal.show();
+          $modal.show().addClass('show');
         } else {
-          alert("Error: " + response.data);
+          alert("Error: " + (response.data.message || response.data || 'Unknown error'));
         }
       },
       error: function (xhr, status, error) {
@@ -1019,25 +1022,7 @@ jQuery(document).ready(function ($) {
     // Note: Modal handlers removed as we're now using SweetAlert for reset confirmation
   });
 
-  // Modal Close Handlers
-  $(".kura-ai-modal-close, .kura-ai-modal-close-btn").on("click", function () {
-    var $modal = $(this).closest(".kura-ai-modal");
-    $modal.removeClass('show');
-    setTimeout(function() {
-      $modal.hide();
-    }, 300);
-  });
-
-  // Close modal when clicking outside
-  $(document).on('click', '.kura-ai-modal', function(e) {
-    if (e.target === this) {
-      var $modal = $(this);
-      $modal.removeClass('show');
-      setTimeout(function() {
-        $modal.hide();
-      }, 300);
-    }
-  });
+  // Modal close handlers are already defined above, removing duplicates
 
   // Close modal with Escape key
   $(document).on('keydown', function(e) {
@@ -1055,7 +1040,11 @@ jQuery(document).ready(function ($) {
   // Close modal when clicking outside
   $(window).on("click", function (e) {
     if ($(e.target).hasClass("kura-ai-modal")) {
-      $(e.target).hide();
+      var $modal = $(e.target);
+      $modal.removeClass('show');
+      setTimeout(function() {
+        $modal.hide();
+      }, 300);
     }
   });
 });
