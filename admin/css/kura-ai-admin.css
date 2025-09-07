@@ -1375,22 +1375,35 @@ body:not(.swal2-shown) {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .reset-icon::before {
-    font-family: "Font Awesome 5 Free";
-    content: "\f021"; /* fa-sync-alt */
+    font-family: "Font Awesome 6 Free";
+    content: "\f2f1"; /* fa-sync-alt */
     font-weight: 900;
-    font-size: 24px;
+    font-size: 32px;
     color: #2271b1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 .debug-icon::before {
-    font-family: "Font Awesome 5 Free";
+    font-family: "Font Awesome 6 Free";
     content: "\f188"; /* fa-bug */
     font-weight: 900;
-    font-size: 24px;
+    font-size: 32px;
     color: #2271b1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
 }
 
 /* Debug Panel */
@@ -1426,9 +1439,15 @@ body:not(.swal2-shown) {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.kura-ai-modal.show {
+    opacity: 1;
 }
 
 .kura-ai-modal-content {
@@ -1436,49 +1455,92 @@ body:not(.swal2-shown) {
     background-color: #fff;
     margin: 2% auto;
     padding: 0;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    width: 90%;
-    max-width: 1000px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 32px rgba(0, 0, 0, 0.15);
+    width: 95%;
+    max-width: 1200px;
     max-height: 90vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    transform: scale(0.9) translateY(-20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.kura-ai-modal.show .kura-ai-modal-content {
+    transform: scale(1) translateY(0);
+    opacity: 1;
 }
 
 .kura-ai-modal-header {
-    padding: 1.5em;
-    border-bottom: 1px solid #e5e5e5;
+    padding: 2em 2em 1.5em 2em;
+    border-bottom: 1px solid #f0f0f1;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fff;
+    background: linear-gradient(135deg, #fff 0%, #fafafa 100%);
+    border-radius: 16px 16px 0 0;
 }
 
 .kura-ai-modal-header h3 {
     margin: 0;
-    font-size: 1.4em;
+    font-size: 1.5em;
+    font-weight: 600;
     color: #1d2327;
+    background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .kura-ai-modal-close {
-    font-size: 1.5em;
-    font-weight: 700;
-    color: #666;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f6f7f7;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 400;
+    color: #646970;
     cursor: pointer;
-    padding: 0.2em;
-    line-height: 0.8;
+    transition: all 0.2s ease;
+    line-height: 1;
 }
 
 .kura-ai-modal-close:hover {
-    color: #135e96;
+    background: #e74c3c;
+    color: #fff;
+    transform: scale(1.1);
 }
 
 .kura-ai-modal-body {
     flex: 1;
     overflow-y: auto;
-    padding: 0;
-    background-color: #fff;
+    padding: 2em;
+    background-color: #ffffff !important;
+    position: relative;
+}
+
+.kura-ai-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.kura-ai-modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.kura-ai-modal-body::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.kura-ai-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .kura-ai-modal-body.kura-ai-result {
@@ -1489,15 +1551,70 @@ body:not(.swal2-shown) {
 }
 
 .kura-ai-modal-footer {
-    padding: 1.5em;
-    border-top: 1px solid #e5e5e5;
+    padding: 1.5em 2em 2em 2em;
+    border-top: 1px solid #f0f0f1;
     text-align: right;
-    background: #fff;
+    background: linear-gradient(135deg, #fafafa 0%, #fff 100%);
+    border-radius: 0 0 16px 16px;
 }
 
 .kura-ai-modal-footer .button {
-    margin-left: 10px;
-    min-width: 100px;
+    margin-left: 12px;
+    min-width: 120px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.kura-ai-modal-footer .button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Log Details Modal Specific Styling */
+#kura-ai-log-details-modal .kura-ai-modal-body table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#kura-ai-log-details-modal .kura-ai-modal-body table th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 16px;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: left;
+    vertical-align: top;
+}
+
+#kura-ai-log-details-modal .kura-ai-modal-body table td {
+    padding: 16px;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+#kura-ai-log-details-modal .kura-ai-modal-body table tr:last-child td {
+    border-bottom: none;
+}
+
+#kura-ai-log-details-modal .kura-ai-modal-body table tr:hover {
+    background-color: #f8f9fa;
+    transition: background-color 0.2s ease;
+}
+
+/* Enhanced pre styling for code blocks */
+#kura-ai-log-details-modal pre {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border: 1px solid #e1e5e9;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 @media screen and (max-width: 768px) {
@@ -1507,18 +1624,39 @@ body:not(.swal2-shown) {
         height: 100%;
         max-height: 100vh;
         border-radius: 0;
+        transform: scale(1) translateY(100%);
+    }
+
+    .kura-ai-modal.show .kura-ai-modal-content {
+        transform: scale(1) translateY(0);
     }
 
     .kura-ai-modal-header {
-        padding: 1em;
+        padding: 1.5em 1.5em 1em 1.5em;
+        border-radius: 0;
     }
 
     .kura-ai-modal-footer {
-        padding: 1em;
+        padding: 1em 1.5em 1.5em 1.5em;
+        border-radius: 0;
+    }
+
+    .kura-ai-modal-body {
+        padding: 1.5em;
     }
 
     .kura-ai-modal-body.kura-ai-result {
         padding: 1.5em;
+    }
+
+    #kura-ai-log-details-modal .kura-ai-modal-body table th,
+    #kura-ai-log-details-modal .kura-ai-modal-body table td {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    #kura-ai-log-details-modal .kura-ai-modal-body table th {
+        width: 120px !important;
     }
 }
 
@@ -1825,21 +1963,7 @@ body:not(.swal2-shown) {
     background-position: center;
 }
 
-.reset-icon::before {
-    font-family: "Font Awesome 5 Free";
-    content: "\f021"; /* fa-sync-alt */
-    font-weight: 900;
-    font-size: 24px;
-    color: #2271b1;
-}
-
-.debug-icon::before {
-    font-family: "Font Awesome 5 Free";
-    content: "\f188"; /* fa-bug */
-    font-weight: 900;
-    font-size: 24px;
-    color: #2271b1;
-}
+/* Removed conflicting Font Awesome pseudo-element rules - now using SVG background images */
 
 /* Debug Panel */
 .kura-ai-debug-panel {
@@ -2803,5 +2927,107 @@ body:not(.swal2-shown) {
     .kura-ai-admin-header form,
     .kura-ai-admin-header button {
         width: 100%;
+    }
+}
+
+/* Logs Page Specific Styles */
+.kura-ai-logs-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+.kura-ai-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.kura-ai-filter-group label {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.kura-ai-filter-group select,
+.kura-ai-filter-group input[type="text"] {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.kura-ai-filter-group select:focus,
+.kura-ai-filter-group input[type="text"]:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.kura-ai-logs-actions .button {
+    align-self: end;
+    height: fit-content;
+    padding: 8px 16px;
+    margin-right: 10px;
+}
+
+.kura-ai-logs-actions .button:last-child {
+    margin-right: 0;
+}
+
+.kura-ai-logs-table {
+    overflow-x: auto;
+}
+
+.kura-ai-logs-table table {
+    margin: 0;
+}
+
+.kura-ai-severity-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.kura-ai-severity-badge.critical {
+    background: #dc3232;
+    color: #fff;
+}
+
+.kura-ai-severity-badge.high {
+    background: #ff6900;
+    color: #fff;
+}
+
+.kura-ai-severity-badge.medium {
+    background: #ffb900;
+    color: #fff;
+}
+
+.kura-ai-severity-badge.low {
+    background: #00a32a;
+    color: #fff;
+}
+
+.kura-ai-severity-badge.info {
+    background: #0073aa;
+    color: #fff;
+}
+
+@media screen and (max-width: 782px) {
+    .kura-ai-logs-actions {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .kura-ai-logs-actions .button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
     }
 }

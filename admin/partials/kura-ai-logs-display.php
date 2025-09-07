@@ -1,58 +1,68 @@
 <div class="wrap kura-ai-logs">
-    <h1><?php echo function_exists('esc_html') && function_exists('get_admin_page_title') ? esc_html(get_admin_page_title()) : 'Activity Logs'; ?></h1>
-
-    <div class="kura-ai-logs-actions">
-        <form id="kura-ai-logs-filter" method="get">
-            <input type="hidden" name="page" value="kura-ai-logs">
-
-            <div class="kura-ai-filter-group">
-                <label for="kura-ai-log-type"><?php _e('Log Type', 'kura-ai'); ?></label>
-                <select id="kura-ai-log-type" name="type">
-                    <option value=""><?php echo function_exists('_e') ? _e('All Types', 'kura-ai') : 'All Types'; ?></option>
-                    <option value="scan" <?php echo function_exists('selected') ? \selected(!empty($_GET['type']) && $_GET['type'] === 'scan') : ((!empty($_GET['type']) && $_GET['type'] === 'scan') ? 'selected' : ''); ?>>
-                        <?php echo function_exists('_e') ? _e('Scans', 'kura-ai') : 'Scans'; ?></option>
-                    <option value="fix_applied" <?php echo function_exists('selected') ? \selected(!empty($_GET['type']) && $_GET['type'] === 'fix_applied') : ((!empty($_GET['type']) && $_GET['type'] === 'fix_applied') ? 'selected' : ''); ?>><?php echo function_exists('_e') ? _e('Applied Fixes', 'kura-ai') : 'Applied Fixes'; ?></option>
-                    <option value="ai_suggestion" <?php echo function_exists('selected') ? \selected(!empty($_GET['type']) && $_GET['type'] === 'ai_suggestion') : ((!empty($_GET['type']) && $_GET['type'] === 'ai_suggestion') ? 'selected' : ''); ?>><?php echo function_exists('_e') ? _e('AI Suggestions', 'kura-ai') : 'AI Suggestions'; ?></option>
-                    <option value="export" <?php echo function_exists('selected') ? \selected(!empty($_GET['type']) && $_GET['type'] === 'export') : ((!empty($_GET['type']) && $_GET['type'] === 'export') ? 'selected' : ''); ?>>
-                        <?php echo function_exists('_e') ? _e('Exports', 'kura-ai') : 'Exports'; ?></option>
-                </select>
-            </div>
-
-            <div class="kura-ai-filter-group">
-                <label for="kura-ai-log-severity"><?php _e('Severity', 'kura-ai'); ?></label>
-                <select id="kura-ai-log-severity" name="severity">
-                    <option value=""><?php echo function_exists('_e') ? _e('All Levels', 'kura-ai') : 'All Levels'; ?></option>
-                    <option value="critical" <?php echo function_exists('selected') ? \selected(!empty($_GET['severity']) && $_GET['severity'] === 'critical') : ((!empty($_GET['severity']) && $_GET['severity'] === 'critical') ? 'selected' : ''); ?>><?php echo function_exists('_e') ? _e('Critical', 'kura-ai') : 'Critical'; ?></option>
-                    <option value="high" <?php echo function_exists('selected') ? \selected(!empty($_GET['severity']) && $_GET['severity'] === 'high') : ((!empty($_GET['severity']) && $_GET['severity'] === 'high') ? 'selected' : ''); ?>>
-                        <?php echo function_exists('_e') ? _e('High', 'kura-ai') : 'High'; ?></option>
-                    <option value="medium" <?php echo function_exists('selected') ? \selected(!empty($_GET['severity']) && $_GET['severity'] === 'medium') : ((!empty($_GET['severity']) && $_GET['severity'] === 'medium') ? 'selected' : ''); ?>><?php echo function_exists('_e') ? _e('Medium', 'kura-ai') : 'Medium'; ?></option>
-                    <option value="low" <?php echo function_exists('selected') ? \selected(!empty($_GET['severity']) && $_GET['severity'] === 'low') : ((!empty($_GET['severity']) && $_GET['severity'] === 'low') ? 'selected' : ''); ?>>
-                        <?php echo function_exists('_e') ? _e('Low', 'kura-ai') : 'Low'; ?></option>
-                    <option value="info" <?php echo function_exists('selected') ? \selected(!empty($_GET['severity']) && $_GET['severity'] === 'info') : ((!empty($_GET['severity']) && $_GET['severity'] === 'info') ? 'selected' : ''); ?>>
-                        <?php echo function_exists('_e') ? _e('Info', 'kura-ai') : 'Info'; ?></option>
-                </select>
-            </div>
-
-            <div class="kura-ai-filter-group">
-                <label for="kura-ai-log-search"><?php _e('Search', 'kura-ai'); ?></label>
-                <input type="text" id="kura-ai-log-search" name="search"
-                    value="<?php echo function_exists('esc_attr') ? esc_attr(!empty($_GET['search']) ? $_GET['search'] : '') : htmlspecialchars(!empty($_GET['search']) ? $_GET['search'] : '', ENT_QUOTES); ?>">
-            </div>
-
-            <button type="submit" class="button"><?php echo function_exists('_e') ? _e('Filter', 'kura-ai') : 'Filter'; ?></button>
-            <button type="button" id="kura-ai-export-logs" class="button">
-                <?php echo function_exists('_e') ? _e('Export to CSV', 'kura-ai') : 'Export to CSV'; ?>
-            </button>
-            <button type="button" id="kura-ai-clear-logs" class="button button-danger">
-                <?php echo function_exists('_e') ? _e('Clear Logs', 'kura-ai') : 'Clear Logs'; ?>
-            </button>
-        </form>
+    <div class="kura-ai-header">
+        <h1><?php echo function_exists('esc_html') && function_exists('get_admin_page_title') ? esc_html(get_admin_page_title()) : 'Activity Logs'; ?></h1>
+        <div class="kura-ai-version">v<?php echo defined('KURA_AI_VERSION') ? KURA_AI_VERSION : '1.0.0'; ?></div>
     </div>
-        <!-- Clearing log display  -->
-<div id="kura-ai-clear-message" class="notice" style="display: none;"></div>
-<div class="kura-ai-clear-loading" style="display: none;">
-    <span class="spinner is-active"></span> Clearing logs...
-</div>
+
+    <!-- Filters Card -->
+    <div class="kura-ai-card">
+        <div class="kura-ai-card-header">
+            <h2><?php _e('Filter & Actions', 'kura-ai'); ?></h2>
+        </div>
+        <div class="kura-ai-card-body">
+            <form id="kura-ai-logs-filter" method="get" class="kura-ai-logs-actions">
+                <input type="hidden" name="page" value="kura-ai-logs">
+
+                <div class="kura-ai-filter-group">
+                    <label for="kura-ai-log-type"><?php _e('Log Type', 'kura-ai'); ?></label>
+                    <select id="kura-ai-log-type" name="type">
+                        <option value=""><?php echo function_exists('_e') ? _e('All Types', 'kura-ai') : 'All Types'; ?></option>
+                        <option value="scan" <?php echo (!empty($_GET['type']) && $_GET['type'] === 'scan') ? 'selected' : ''; ?>>
+                            <?php echo function_exists('_e') ? _e('Scans', 'kura-ai') : 'Scans'; ?></option>
+                        <option value="fix_applied" <?php echo (!empty($_GET['type']) && $_GET['type'] === 'fix_applied') ? 'selected' : ''; ?>><?php echo function_exists('_e') ? _e('Applied Fixes', 'kura-ai') : 'Applied Fixes'; ?></option>
+                        <option value="ai_suggestion" <?php echo (!empty($_GET['type']) && $_GET['type'] === 'ai_suggestion') ? 'selected' : ''; ?>><?php echo function_exists('_e') ? _e('AI Suggestions', 'kura-ai') : 'AI Suggestions'; ?></option>
+                        <option value="export" <?php echo (!empty($_GET['type']) && $_GET['type'] === 'export') ? 'selected' : ''; ?>>
+                            <?php echo function_exists('_e') ? _e('Exports', 'kura-ai') : 'Exports'; ?></option>
+                    </select>
+                </div>
+
+                <div class="kura-ai-filter-group">
+                    <label for="kura-ai-log-severity"><?php _e('Severity', 'kura-ai'); ?></label>
+                    <select id="kura-ai-log-severity" name="severity">
+                        <option value=""><?php echo function_exists('_e') ? _e('All Levels', 'kura-ai') : 'All Levels'; ?></option>
+                        <option value="critical" <?php echo (!empty($_GET['severity']) && $_GET['severity'] === 'critical') ? 'selected' : ''; ?>><?php echo function_exists('_e') ? _e('Critical', 'kura-ai') : 'Critical'; ?></option>
+                        <option value="high" <?php echo (!empty($_GET['severity']) && $_GET['severity'] === 'high') ? 'selected' : ''; ?>>
+                            <?php echo function_exists('_e') ? _e('High', 'kura-ai') : 'High'; ?></option>
+                        <option value="medium" <?php echo (!empty($_GET['severity']) && $_GET['severity'] === 'medium') ? 'selected' : ''; ?>><?php echo function_exists('_e') ? _e('Medium', 'kura-ai') : 'Medium'; ?></option>
+                        <option value="low" <?php echo (!empty($_GET['severity']) && $_GET['severity'] === 'low') ? 'selected' : ''; ?>>
+                            <?php echo function_exists('_e') ? _e('Low', 'kura-ai') : 'Low'; ?></option>
+                        <option value="info" <?php echo (!empty($_GET['severity']) && $_GET['severity'] === 'info') ? 'selected' : ''; ?>>
+                            <?php echo function_exists('_e') ? _e('Info', 'kura-ai') : 'Info'; ?></option>
+                    </select>
+                </div>
+
+                <div class="kura-ai-filter-group">
+                    <label for="kura-ai-log-search"><?php _e('Search', 'kura-ai'); ?></label>
+                    <input type="text" id="kura-ai-log-search" name="search"
+                        value="<?php echo function_exists('esc_attr') ? esc_attr(!empty($_GET['search']) ? $_GET['search'] : '') : htmlspecialchars(!empty($_GET['search']) ? $_GET['search'] : '', ENT_QUOTES); ?>">
+                </div>
+
+                <button type="submit" class="button button-primary"><?php echo function_exists('_e') ? _e('Filter', 'kura-ai') : 'Filter'; ?></button>
+                <button type="button" id="kura-ai-export-logs" class="button">
+                    <?php echo function_exists('_e') ? _e('Export to CSV', 'kura-ai') : 'Export to CSV'; ?>
+                </button>
+                <button type="button" id="kura-ai-clear-logs" class="button button-danger">
+                    <?php echo function_exists('_e') ? _e('Clear Logs', 'kura-ai') : 'Clear Logs'; ?>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clearing log display  -->
+    <div id="kura-ai-clear-message" class="notice" style="display: none;"></div>
+    <div class="kura-ai-clear-loading" style="display: none;">
+        <span class="spinner is-active"></span> Clearing logs...
+    </div>
     <?php
     $logger = new \Kura_AI\Kura_AI_Logger($plugin_name, $version);
 
@@ -67,7 +77,13 @@
     $logs = $logger->get_logs($args);
     ?>
 
-    <div class="kura-ai-logs-table">
+    <!-- Logs Table Card -->
+    <div class="kura-ai-card">
+        <div class="kura-ai-card-header">
+            <h2><?php _e('Activity Logs', 'kura-ai'); ?></h2>
+        </div>
+        <div class="kura-ai-card-body">
+            <div class="kura-ai-logs-table">
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
@@ -88,8 +104,13 @@
                     <?php foreach ($logs['items'] as $log): ?>
                         <tr>
                             <td><?php echo $log['id']; ?></td>
-                            <td><?php echo function_exists('date_i18n') && function_exists('get_option') ? \date_i18n(\get_option('date_format') . ' ' . \get_option('time_format'), \strtotime($log['created_at'])) : date('Y-m-d H:i:s', strtotime($log['created_at'])); ?>
-                            </td>
+                            <td><?php 
+                                if (function_exists('date_i18n') && function_exists('get_option')) {
+                                    echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($log['created_at']));
+                                } else {
+                                    echo date('Y-m-d H:i:s', strtotime($log['created_at']));
+                                }
+                            ?></td>
                             <td><?php echo function_exists('esc_html') ? esc_html(ucfirst($log['log_type'])) : htmlspecialchars(ucfirst($log['log_type']), ENT_QUOTES); ?></td>
                             <td>
                                 <span class="kura-ai-severity-badge <?php echo function_exists('esc_attr') ? esc_attr($log['severity']) : htmlspecialchars($log['severity'], ENT_QUOTES); ?>">
@@ -113,21 +134,50 @@
 
         <div class="kura-ai-logs-pagination">
             <?php
-            $page_links = function_exists('paginate_links') ? \paginate_links(array(
-                 'base' => function_exists('add_query_arg') ? \add_query_arg('paged', '%#%') : '?paged=%#%',
-                 'format' => '',
-                 'prev_text' => function_exists('__') ? \__('&laquo;', 'kura-ai') : '&laquo;',
-                 'next_text' => function_exists('__') ? \__('&raquo;', 'kura-ai') : '&raquo;',
-                 'total' => $logs['total_pages'],
-                 'current' => $args['page']
-             )) : '';
-
-            if ($page_links) {
-                echo '<div class="tablenav"><div class="tablenav-pages">' . $page_links . '</div></div>';
+            if (function_exists('paginate_links') && function_exists('add_query_arg')) {
+                $page_links = paginate_links(array(
+                     'base' => add_query_arg('paged', '%#%'),
+                     'format' => '',
+                     'prev_text' => function_exists('__') ? __('&laquo;', 'kura-ai') : '&laquo;',
+                     'next_text' => function_exists('__') ? __('&raquo;', 'kura-ai') : '&raquo;',
+                     'total' => $logs['total_pages'],
+                     'current' => $args['page']
+                 ));
+                
+                if ($page_links) {
+                    echo '<div class="tablenav"><div class="tablenav-pages">' . $page_links . '</div></div>';
+                }
+            } else {
+                // Fallback pagination
+                $current_page = $args['page'];
+                $total_pages = $logs['total_pages'];
+                
+                if ($total_pages > 1) {
+                    echo '<div class="tablenav"><div class="tablenav-pages">';
+                    
+                    $prev_page = max(1, $current_page - 1);
+                    $next_page = min($total_pages, $current_page + 1);
+                    
+                    if ($current_page > 1) {
+                        echo '<a href="?page=kura-ai-logs&paged=' . $prev_page . '" class="button">&laquo; Previous</a> ';
+                    }
+                    
+                    echo '<span class="paging-input">';
+                    echo '<span class="tablenav-paging-text">Page ' . $current_page . ' of ' . $total_pages . '</span>';
+                    echo '</span>';
+                    
+                    if ($current_page < $total_pages) {
+                        echo ' <a href="?page=kura-ai-logs&paged=' . $next_page . '" class="button">Next &raquo;</a>';
+                    }
+                    
+                    echo '</div></div>';
+                }
             }
             ?>
+            </div>
         </div>
     </div>
+</div>
 
     <div id="kura-ai-log-details-modal" class="kura-ai-modal" style="display: none;">
         <div class="kura-ai-modal-content">

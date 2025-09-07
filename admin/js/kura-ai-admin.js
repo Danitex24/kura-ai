@@ -375,6 +375,7 @@ jQuery(document).ready(function ($) {
     var $button = $(this);
     var type = $("#kura-ai-log-type").val();
     var severity = $("#kura-ai-log-severity").val();
+    var search = $("#kura-ai-log-search").val();
 
     $button.prop("disabled", true).text(kura_ai_ajax.exporting_logs);
 
@@ -385,6 +386,7 @@ jQuery(document).ready(function ($) {
 
     if (type) data.type = type;
     if (severity) data.severity = severity;
+    if (search) data.search = search;
 
     // Create a form and submit it to trigger download
     var $form = $("<form>", {
@@ -417,7 +419,11 @@ jQuery(document).ready(function ($) {
   $("#kura-ai-clear-logs").on("click", function (e) {
     e.preventDefault();
     e.stopPropagation(); // Prevent event bubbling
-    $("#kura-ai-confirm-clear-modal").show();
+    var $modal = $("#kura-ai-confirm-clear-modal");
+            $modal.css('display', 'block');
+            setTimeout(function() {
+                $modal.addClass('show');
+            }, 10);
   });
 
   // Confirm Clear handler
@@ -455,7 +461,11 @@ jQuery(document).ready(function ($) {
       },
       complete: function () {
         $button.prop("disabled", false).text("Clear Logs");
-        $("#kura-ai-confirm-clear-modal").hide();
+        var $modal = $("#kura-ai-confirm-clear-modal");
+                $modal.removeClass('show');
+                setTimeout(function() {
+                    $modal.hide();
+                }, 300);
         $(".kura-ai-clear-loading").hide();
       },
     });
@@ -515,7 +525,11 @@ jQuery(document).ready(function ($) {
       },
       complete: function () {
         $button.prop("disabled", false).text("Clear Logs");
-        $("#kura-ai-confirm-clear-modal").hide();
+        var $modal = $("#kura-ai-confirm-clear-modal");
+            $modal.removeClass('show');
+            setTimeout(function() {
+                $modal.hide();
+            }, 300);
         $(".kura-ai-clear-loading").hide();
       },
     });
@@ -670,74 +684,48 @@ jQuery(document).ready(function ($) {
           });
   
           // View Log Details
-          $(document).on('click', '.kura-ai-view-details', function() {
-              var logData = $(this).data('log-data');
-              var $modal = $('#kura-ai-log-details-modal');
-              var $content = $('#kura-ai-log-details-content');
+        $(document).on('click', '.kura-ai-view-details', function() {
+            var logData = $(this).data('log-data');
+            var $modal = $('#kura-ai-log-details-modal');
+            var $content = $('#kura-ai-log-details-content');
+
+            $content.empty();
+
+            if (typeof logData === 'object') {
+                var html = '<table class="wp-list-table widefat fixed striped">';
+                for (var key in logData) {
+                    html += '<tr><th style="width: 200px; font-weight: 600; color: #1d2327; text-transform: capitalize;">' + key.replace(/_/g, ' ') + '</th><td style="word-break: break-word;">';
+                    if (typeof logData[key] === 'object') {
+                        html += '<pre style="background: #f8f9fa; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; margin: 0; overflow-x: auto;">' + JSON.stringify(logData[key], null, 2) + '</pre>';
+                    } else {
+                        html += '<span style="color: #50575e;">' + logData[key] + '</span>';
+                    }
+                    html += '</td></tr>';
+                }
+                html += '</table>';
+                $content.html(html);
+            } else {
+                $content.html('<pre style="background: #f8f9fa; padding: 20px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin: 0; overflow-x: auto; color: #1d2327;">' + logData + '</pre>');
+            }
+
+            // Smooth modal animation
+            $modal.css('display', 'block');
+            setTimeout(function() {
+                $modal.addClass('show');
+            }, 10);
+        });
   
-              $content.empty();
-  
-              if (typeof logData === 'object') {
-                  var html = '<table class="wp-list-table widefat fixed">';
-                  for (var key in logData) {
-                      html += '<tr><th>' + key + '</th><td>';
-                      if (typeof logData[key] === 'object') {
-                          html += '<pre>' + JSON.stringify(logData[key], null, 2) + '</pre>';
-                      } else {
-                          html += logData[key];
-                      }
-                      html += '</td></tr>';
-                  }
-                  html += '</table>';
-                  $content.html(html);
-              } else {
-                  $content.html('<pre>' + logData + '</pre>');
-              }
-  
-              $modal.show();
-          });
-  
-          // Reset Settings
-          $('#kura-ai-reset-settings').on('click', function(e) {
-              e.preventDefault();
-              $('#kura-ai-confirm-reset-modal').show();
-          });
-  
-          $('#kura-ai-confirm-reset').on('click', function(e) {
-              e.preventDefault();
-              var $button = $(this);
-  
-              $button.prop('disabled', true).text('Resetting...');
-  
-              $.ajax({
-                  url: kura_ai_ajax.ajax_url,
-                  type: 'POST',
-                  data: {
-                      action: 'kura_ai_reset_settings',
-                      _wpnonce: kura_ai_ajax.nonce
-                  },
-                  success: function(response) {
-                      if (response.success) {
-                          window.location.reload();
-                      } else {
-                          alert('Error: ' + response.data);
-                      }
-                  },
-                  error: function(xhr, status, error) {
-                      alert('Error: ' + error);
-                  },
-                  complete: function() {
-                      $button.prop('disabled', false).text('Reset Settings');
-                      $('#kura-ai-confirm-reset-modal').hide();
-                  }
-              });
-          });
+          // Reset Settings functionality is handled in the main document ready block below
   
           // Modal close handlers
           $('.kura-ai-modal-close, .kura-ai-modal-close-btn').on('click', function(e) {
-              e.preventDefault();
-              $(this).closest('.kura-ai-modal').hide();
-          });
+            e.preventDefault();
+            var $modal = $(this).closest('.kura-ai-modal');
+            $modal.removeClass('show');
+            setTimeout(function() {
+                $modal.hide();
+            }, 300);
+        });
   
           // Close modal when clicking outside
           $('.kura-ai-modal-overlay').on('click', function(e) {
@@ -745,25 +733,7 @@ jQuery(document).ready(function ($) {
               $('#kura-ai-confirm-reset-modal').hide();
           });
   
-          // View Debug Info
-          $('#kura-ai-view-debug').on('click', function() {
-              $('#kura-ai-debug-info').toggle();
-          });
-  
-          // Copy Debug Info
-          $('#kura-ai-copy-debug').on('click', function() {
-              var $debugInfo = $('#kura-ai-debug-info textarea');
-              $debugInfo.select();
-              document.execCommand('copy');
-  
-              var $button = $(this);
-              var originalText = $button.text();
-              $button.text('Copied!');
-  
-              setTimeout(function() {
-                  $button.text(originalText);
-              }, 2000);
-          });
+          // Debug Info functionality is handled in the main document ready block below
   
           // Handle API key visibility
           $('#enable_ai').on('change', function() {
@@ -900,15 +870,15 @@ jQuery(document).ready(function ($) {
     $content.empty();
 
     if (typeof logData === "object") {
-      var html = '<table class="wp-list-table widefat fixed">';
+      var html = '<table class="wp-list-table widefat fixed striped">';
 
       for (var key in logData) {
-        html += "<tr><th>" + key + "</th><td>";
+        html += "<tr><th style='width: 200px; font-weight: 600; color: #1d2327; text-transform: capitalize;'>" + key.replace(/_/g, ' ') + "</th><td style='word-break: break-word;'>";
 
         if (typeof logData[key] === "object") {
-          html += "<pre>" + JSON.stringify(logData[key], null, 2) + "</pre>";
+          html += "<pre style='background: #f8f9fa; padding: 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; margin: 0; overflow-x: auto;'>" + JSON.stringify(logData[key], null, 2) + "</pre>";
         } else {
-          html += logData[key];
+          html += "<span style='color: #50575e;'>" + logData[key] + "</span>";
         }
 
         html += "</td></tr>";
@@ -917,90 +887,169 @@ jQuery(document).ready(function ($) {
       html += "</table>";
       $content.html(html);
     } else {
-      $content.html("<pre>" + logData + "</pre>");
+      $content.html("<pre style='background: #f8f9fa; padding: 20px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin: 0; overflow-x: auto; color: #1d2327;'>" + logData + "</pre>");
     }
 
-    $modal.show();
+    // Smooth modal animation
+    $modal.css('display', 'block');
+    setTimeout(function() {
+      $modal.addClass('show');
+    }, 10);
   });
 
-  // Reset Settings
+  // Reset Settings and Debug Info functionality
   jQuery(document).ready(function ($) {
-    // Show reset confirmation modal
+    // Show reset confirmation using SweetAlert
     $("#kura-ai-reset-settings").on("click", function (e) {
       e.preventDefault();
-      $("#kura-ai-confirm-reset-modal").show();
-    });
-
-    // Handle actual reset confirmation
-    $("#kura-ai-confirm-reset").on("click", function (e) {
-      e.preventDefault();
-      var $button = $(this);
-
-      $button.prop("disabled", true).text("Resetting...");
-
-      $.ajax({
-        url: kura_ai_ajax.ajax_url,
-        type: "POST",
-        data: {
-          action: "kura_ai_reset_settings",
-          _wpnonce: kura_ai_ajax.nonce, // Use _wpnonce for WordPress compatibility
-        },
-        success: function (response) {
-          if (response.success) {
-            window.location.reload();
-          } else {
-            alert("Error: " + response.data);
-          }
-        },
-        error: function (xhr, status, error) {
-          alert("Error: " + error);
-        },
-        complete: function () {
-          $button.prop("disabled", false).text("Reset Settings");
-          $("#kura-ai-confirm-reset-modal").hide();
-        },
+      
+      Swal.fire({
+        title: 'Confirm Reset',
+        text: 'Are you sure you want to reset all settings to default? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d63638',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Reset Settings',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+          confirmButton: 'button button-danger',
+          cancelButton: 'button button-secondary'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Show loading state
+          Swal.fire({
+            title: 'Resetting Settings...',
+            text: 'Please wait while we reset your settings.',
+            icon: 'info',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          // Perform the reset
+          $.ajax({
+            url: kura_ai_ajax.ajax_url,
+            type: "POST",
+            data: {
+              action: "kura_ai_reset_settings",
+              _wpnonce: kura_ai_ajax.nonce
+            },
+            success: function (response) {
+              if (response.success) {
+                Swal.fire({
+                  title: 'Success!',
+                  text: 'Settings have been reset successfully!',
+                  icon: 'success',
+                  confirmButtonText: 'OK',
+                  customClass: {
+                    confirmButton: 'button button-primary'
+                  }
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire({
+                  title: 'Error!',
+                  text: response.data.message || response.data || 'Failed to reset settings.',
+                  icon: 'error',
+                  confirmButtonText: 'OK',
+                  customClass: {
+                    confirmButton: 'button button-primary'
+                  }
+                });
+              }
+            },
+            error: function (xhr, status, error) {
+              Swal.fire({
+                title: 'Error!',
+                text: 'Network error: ' + error,
+                icon: 'error',
+                confirmButtonText: 'OK',
+                customClass: {
+                  confirmButton: 'button button-primary'
+                }
+              });
+            }
+          });
+        }
       });
     });
 
-    // Modal close handlers
-    $(".kura-ai-modal-close, .kura-ai-modal-close-btn").on(
-      "click",
-      function (e) {
-        e.preventDefault();
-        $("#kura-ai-confirm-reset-modal").hide();
-      }
-    );
-
-    // Close modal when clicking outside
-    $(".kura-ai-modal-overlay").on("click", function (e) {
+    // View Debug Info - toggle visibility
+    $("#kura-ai-view-debug").on("click", function (e) {
       e.preventDefault();
-      $("#kura-ai-confirm-reset-modal").hide();
+      var $debugPanel = $("#kura-ai-debug-info");
+      var $button = $(this);
+      
+      if ($debugPanel.is(':visible')) {
+        $debugPanel.slideUp();
+        $button.text('View Debug Info');
+      } else {
+        $debugPanel.slideDown();
+        $button.text('Hide Debug Info');
+      }
     });
-  });
 
-  // View Debug Info
-  $("#kura-ai-view-debug").on("click", function () {
-    $("#kura-ai-debug-info").toggle();
-  });
+    // Copy Debug Info to clipboard
+    $("#kura-ai-copy-debug").on("click", function (e) {
+      e.preventDefault();
+      var $debugInfo = $("#kura-ai-debug-info textarea");
+      var $button = $(this);
+      var originalText = $button.text();
+      
+      try {
+        $debugInfo.select();
+        document.execCommand("copy");
+        $button.text("Copied!").addClass('button-primary');
+        
+        setTimeout(function () {
+          $button.text(originalText).removeClass('button-primary');
+        }, 2000);
+      } catch (err) {
+        alert('Failed to copy debug info. Please select and copy manually.');
+      }
+    });
 
-  // Copy Debug Info
-  $("#kura-ai-copy-debug").on("click", function () {
-    var $debugInfo = $("#kura-ai-debug-info textarea");
-    $debugInfo.select();
-    document.execCommand("copy");
-
-    var $button = $(this);
-    var originalText = $button.text();
-    $button.text("Copied!");
-
-    setTimeout(function () {
-      $button.text(originalText);
-    }, 2000);
+    // Note: Modal handlers removed as we're now using SweetAlert for reset confirmation
   });
 
   // Modal Close Handlers
   $(".kura-ai-modal-close, .kura-ai-modal-close-btn").on("click", function () {
-    $(this).closest(".kura-ai-modal").hide();
+    var $modal = $(this).closest(".kura-ai-modal");
+    $modal.removeClass('show');
+    setTimeout(function() {
+      $modal.hide();
+    }, 300);
+  });
+
+  // Close modal when clicking outside
+  $(document).on('click', '.kura-ai-modal', function(e) {
+    if (e.target === this) {
+      var $modal = $(this);
+      $modal.removeClass('show');
+      setTimeout(function() {
+        $modal.hide();
+      }, 300);
+    }
+  });
+
+  // Close modal with Escape key
+  $(document).on('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var $modal = $('.kura-ai-modal:visible');
+      if ($modal.length) {
+        $modal.removeClass('show');
+        setTimeout(function() {
+          $modal.hide();
+        }, 300);
+      }
+    }
   });
 
   // Close modal when clicking outside

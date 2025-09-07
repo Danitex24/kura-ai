@@ -180,28 +180,7 @@ if (!function_exists('esc_attr')) {
         </div>
     </div>
 
-    <!-- Reset Confirmation Modal -->
-    <div id="kura-ai-confirm-reset-modal" class="kura-ai-modal">
-        <div class="kura-ai-modal-overlay"></div>
-        <div class="kura-ai-modal-dialog">
-            <div class="kura-ai-modal-header">
-                <h3><?php \_e('Confirm Reset', 'kura-ai'); ?></h3>
-                <button class="kura-ai-modal-close">&times;</button>
-            </div>
-            <div class="kura-ai-modal-body">
-                <div class="modal-warning-icon">⚠️</div>
-                <p><?php \_e('Are you sure you want to reset all settings to default? This action cannot be undone.', 'kura-ai'); ?></p>
-            </div>
-            <div class="kura-ai-modal-footer">
-                <button id="kura-ai-confirm-reset" class="button button-danger">
-                    <?php \_e('Reset Settings', 'kura-ai'); ?>
-                </button>
-                <button class="button kura-ai-modal-close-btn">
-                    <?php \_e('Cancel', 'kura-ai'); ?>
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Reset confirmation now handled by SweetAlert -->
 </div>
 
 <script>

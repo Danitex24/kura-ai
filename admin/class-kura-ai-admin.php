@@ -27,10 +27,30 @@ if (!function_exists('current_time')) {
 if (!function_exists('home_url')) {
     function home_url() { return ''; }
 }
+if (!function_exists('get_site_url')) {
+    function get_site_url($blog_id = null, $path = '', $scheme = null) { return 'http://example.com' . $path; }
+}
+if (!function_exists('get_home_url')) {
+    function get_home_url($blog_id = null, $path = '', $scheme = null) { return 'http://example.com' . $path; }
+}
+if (!function_exists('get_locale')) {
+    function get_locale() { return 'en_US'; }
+}
+if (!function_exists('get_plugin_data')) {
+    function get_plugin_data($plugin_file, $markup = true, $translate = true) { return array('Version' => '1.0.0'); }
+}
+if (!function_exists('wp_get_theme')) {
+    function wp_get_theme($stylesheet = null, $theme_root = null) { 
+        return (object) array('get' => function($header) { return 'Default Theme'; });
+    }
+}
 
 // Define WordPress constants if not defined (for static analysis)
 if (!defined('DOING_AJAX')) {
     define('DOING_AJAX', false);
+}
+if (!defined('WP_DEBUG')) {
+    define('WP_DEBUG', false);
 }
 
 // WordPress function stubs for static analysis (these won't execute in real WordPress environment)
@@ -423,6 +443,7 @@ class Kura_AI_Admin {
             'kura_ai_get_scan_results' => 'handle_get_scan_results',
             'save_api_key' => 'handle_save_api_key',
             'kura_ai_clear_logs' => 'handle_clear_logs',
+            'kura_ai_export_logs' => 'handle_export_logs',
             'save_ai_service_provider' => 'handle_save_ai_service_provider',
             'kura_ai_get_suggestions' => 'handle_get_suggestions',
             'kura_ai_generate_compliance_report' => 'handle_generate_compliance_report',
@@ -992,6 +1013,61 @@ class Kura_AI_Admin {
             wp_send_json_error(array(
                 'message' => esc_html__('Failed to clear logs.', 'kura-ai')
             ));
+        }
+    }
+
+    /**
+     * Handle logs export request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_export_logs() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_die(esc_html__('Security check failed.', 'kura-ai'), 'Security Error', array('response' => 400));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Insufficient permissions.', 'kura-ai'), 'Permission Error', array('response' => 403));
+        }
+        
+        try {
+            // Get filter parameters
+            $args = array();
+            
+            if (isset($_POST['type']) && !empty($_POST['type'])) {
+                $args['type'] = sanitize_text_field(wp_unslash($_POST['type']));
+            }
+            
+            if (isset($_POST['severity']) && !empty($_POST['severity'])) {
+                $args['severity'] = sanitize_text_field(wp_unslash($_POST['severity']));
+            }
+            
+            if (isset($_POST['search']) && !empty($_POST['search'])) {
+                $args['search'] = sanitize_text_field(wp_unslash($_POST['search']));
+            }
+            
+            // Remove pagination for export (get all matching records)
+            $args['per_page'] = -1;
+            
+            // Initialize logger and export logs
+            $logger = new \Kura_AI\Kura_AI_Logger($this->plugin_name, $this->version);
+            $csv_content = $logger->export_logs_to_csv($args);
+            
+            // Set headers for CSV download
+            $filename = 'kura-ai-logs-' . current_time('Y-m-d-H-i-s') . '.csv';
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . strlen($csv_content));
+            header('Cache-Control: private, max-age=0, must-revalidate');
+            header('Pragma: public');
+            
+            // Output the CSV content
+            echo $csv_content;
+            
+            exit;
+            
+        } catch (\Exception $e) {
+            wp_die(esc_html__('Failed to export logs: ', 'kura-ai') . $e->getMessage(), 'Export Error', array('response' => 500));
         }
     }
 
@@ -1750,11 +1826,134 @@ class Kura_AI_Admin {
     }
     
     public function handle_reset_settings() {
-        wp_send_json_error(array('message' => __('Reset settings feature not yet implemented.', 'kura-ai')));
+        // Check nonce for security
+        if (!$this->is_valid_ajax_request()) {
+            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+            return;
+        }
+
+        // Verify nonce - check both possible parameter names
+        $nonce = $_POST['_wpnonce'] ?? $_POST['nonce'] ?? '';
+        if (!\wp_verify_nonce($nonce, 'kura_ai_nonce')) {
+            \wp_send_json_error(array('message' => \__('Security check failed.', 'kura-ai')));
+            return;
+        }
+
+        // Check user permissions
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array('message' => \__('Insufficient permissions.', 'kura-ai')));
+            return;
+        }
+
+        try {
+            // Delete all plugin options
+            delete_option('kura_ai_settings');
+            delete_option('kura_ai_api_keys');
+            delete_option('kura_ai_scan_results');
+            delete_option('kura_ai_compliance_settings');
+            delete_option('kura_ai_file_monitor_settings');
+            delete_option('kura_ai_malware_settings');
+            delete_option('kura_ai_hardening_settings');
+            delete_option('kura_ai_chatbot_settings');
+            
+            wp_send_json_success(array(
+                'message' => __('All settings have been reset to default values.', 'kura-ai')
+            ));
+        } catch (\Exception $e) {
+            wp_send_json_error(array(
+                'message' => __('Failed to reset settings: ', 'kura-ai') . $e->getMessage()
+            ));
+        }
     }
     
     public function handle_apply_fix() {
         wp_send_json_error(array('message' => __('Apply fix feature not yet implemented.', 'kura-ai')));
+    }
+
+    /**
+     * Get debug information for troubleshooting.
+     *
+     * @since    1.0.0
+     * @return   string    Debug information
+     */
+    public function get_debug_info() {
+        global $wp_version;
+        
+        $debug_info = array();
+        
+        // WordPress Information
+        $debug_info[] = '=== WordPress Information ===';
+        $debug_info[] = 'WordPress Version: ' . $wp_version;
+        $debug_info[] = 'Site URL: ' . \get_site_url();
+        $debug_info[] = 'Home URL: ' . \get_home_url();
+        $debug_info[] = 'Admin Email: ' . \get_option('admin_email');
+        $debug_info[] = 'Language: ' . \get_locale();
+        $debug_info[] = 'Timezone: ' . \get_option('timezone_string');
+        $debug_info[] = 'Debug Mode: ' . (\defined('WP_DEBUG') && \WP_DEBUG ? 'Enabled' : 'Disabled');
+        $debug_info[] = '';
+        
+        // Server Information
+        $debug_info[] = '=== Server Information ===';
+        $debug_info[] = 'PHP Version: ' . \PHP_VERSION;
+        $debug_info[] = 'Server Software: ' . (isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : 'Unknown');
+        $debug_info[] = 'MySQL Version: ' . $this->get_mysql_version();
+        $debug_info[] = 'Max Execution Time: ' . \ini_get('max_execution_time') . 's';
+        $debug_info[] = 'Memory Limit: ' . \ini_get('memory_limit');
+        $debug_info[] = 'Upload Max Filesize: ' . \ini_get('upload_max_filesize');
+        $debug_info[] = 'Post Max Size: ' . \ini_get('post_max_size');
+        $debug_info[] = '';
+        
+        // Plugin Information
+        $debug_info[] = '=== Kura AI Plugin Information ===';
+        $debug_info[] = 'Plugin Version: ' . $this->version;
+        $debug_info[] = 'Plugin Path: ' . $this->plugin_path;
+        $debug_info[] = 'Assets URL: ' . $this->assets_url;
+        $debug_info[] = '';
+        
+        // Plugin Settings
+        $settings = \get_option('kura_ai_settings', array());
+        $settings = is_array($settings) ? $settings : array();
+        $debug_info[] = '=== Plugin Settings ===';
+        $debug_info[] = 'Settings Count: ' . count($settings);
+        if (!empty($settings['last_scan'])) {
+            $debug_info[] = 'Last Scan: ' . \date('Y-m-d H:i:s', $settings['last_scan']);
+        }
+        $debug_info[] = '';
+        
+        // Active Plugins
+        $debug_info[] = '=== Active Plugins ===';
+        if (!\function_exists('get_plugin_data')) {
+            require_once(\ABSPATH . 'wp-admin/includes/plugin.php');
+        }
+        $active_plugins = \get_option('active_plugins', array());
+        $active_plugins = is_array($active_plugins) ? $active_plugins : array();
+        foreach ($active_plugins as $plugin) {
+            $plugin_data = \get_plugin_data(\WP_PLUGIN_DIR . '/' . $plugin);
+            if (isset($plugin_data['Name']) && isset($plugin_data['Version'])) {
+                $debug_info[] = $plugin_data['Name'] . ' v' . $plugin_data['Version'];
+            }
+        }
+        $debug_info[] = '';
+        
+        // Theme Information
+        $theme = \wp_get_theme();
+        $debug_info[] = '=== Theme Information ===';
+        $debug_info[] = 'Active Theme: ' . $theme->get('Name') . ' v' . $theme->get('Version');
+        $debug_info[] = 'Theme Author: ' . $theme->get('Author');
+        $debug_info[] = '';
+        
+        return implode("\n", $debug_info);
+    }
+    
+    /**
+     * Get MySQL version.
+     *
+     * @since    1.0.0
+     * @return   string    MySQL version
+     */
+    private function get_mysql_version() {
+        global $wpdb;
+        return $wpdb->get_var("SELECT VERSION()");
     }
     
     /**
@@ -2207,6 +2406,14 @@ class Kura_AI_Admin {
                 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css',
                 array(),
                 '11.0.0'
+            );
+            
+            // Enqueue Font Awesome for icons
+            wp_enqueue_style(
+                'font-awesome',
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+                array(),
+                '6.4.0'
             );
             
             // Enqueue SweetAlert2 configuration script

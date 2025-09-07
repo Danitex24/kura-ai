@@ -67,9 +67,9 @@ class Kura_AI_Logger
         $insert_data = array(
             'log_type' => \sanitize_text_field($type),
             'log_message' => \sanitize_text_field($message),
-            'log_data' => \maybe_serialize($data),
+            'log_data' => serialize($data),
             'severity' => \in_array($severity, array('info', 'warning', 'error', 'critical')) ? $severity : 'info',
-            'created_at' => \current_time('mysql')
+            'created_at' => date('Y-m-d H:i:s')
         );
 
         $result = $wpdb->insert($table_name, $insert_data);
@@ -105,7 +105,7 @@ class Kura_AI_Logger
             'order' => 'DESC'
         );
 
-        $args = \wp_parse_args($args, $defaults);
+        $args = array_merge($defaults, $args);
 
         $where = array();
         $query_params = array();
@@ -138,20 +138,28 @@ class Kura_AI_Logger
         $total_items = $wpdb->get_var($count_query);
 
         // Prepare main query
-        $offset = ($args['page'] - 1) * $args['per_page'];
         $orderby = \in_array($args['orderby'], array('id', 'log_type', 'severity', 'created_at')) ? $args['orderby'] : 'created_at';
         $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
 
-        $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
-        $query_params[] = $args['per_page'];
-        $query_params[] = $offset;
-
-        $query = $wpdb->prepare($query, $query_params);
+        if ($args['per_page'] == -1) {
+            // Export all records without pagination
+            $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order";
+            if (!empty($query_params)) {
+                $query = $wpdb->prepare($query, $query_params);
+            }
+        } else {
+            // Apply pagination
+            $offset = ($args['page'] - 1) * $args['per_page'];
+            $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
+            $query_params[] = $args['per_page'];
+            $query_params[] = $offset;
+            $query = $wpdb->prepare($query, $query_params);
+        }
         $items = $wpdb->get_results($query, ARRAY_A);
 
         // Unserialize log data
         foreach ($items as &$item) {
-            $item['log_data'] = \maybe_unserialize($item['log_data']);
+            $item['log_data'] = is_string($item['log_data']) ? unserialize($item['log_data']) : $item['log_data'];
         }
 
         return array(
@@ -181,7 +189,7 @@ class Kura_AI_Logger
             'older_than' => ''
         );
 
-        $args = \wp_parse_args($args, $defaults);
+        $args = array_merge($defaults, $args);
 
         $where = array();
         $query_params = array();
