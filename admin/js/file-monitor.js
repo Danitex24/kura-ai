@@ -6,8 +6,17 @@
     class KuraAIFileMonitor {
         constructor() {
             this.addFileForm = $('#add-file-form');
-            this.filesGrid = $('.files-grid');
+            this.filesGrid = $('.kura-ai-monitored-files');
             this.compareModal = $('#version-compare-modal');
+            
+            // Add error handling for missing elements
+            if (this.filesGrid.length === 0) {
+                console.error('Files grid container not found');
+                return;
+            }
+            
+
+            
             this.bindEvents();
             this.initCharts();
             this.loadChartData();
@@ -21,17 +30,22 @@
         }
 
         bindEvents() {
+            
             this.addFileForm.on('submit', (e) => this.handleAddFile(e));
-            this.filesGrid.on('click', '.create-version-btn', (e) => this.handleCreateVersion(e));
+            this.filesGrid.on('click', '.kura-ai-create-version', (e) => {
+                this.handleCreateVersion(e);
+            });
             this.filesGrid.on('click', '.view-versions-btn', (e) => this.handleToggleVersions(e));
-            this.filesGrid.on('click', '.remove-file-btn', (e) => this.handleRemoveFile(e));
+            this.filesGrid.on('click', '.kura-ai-remove-file', (e) => {
+                this.handleRemoveFile(e);
+            });
             this.filesGrid.on('click', '.compare-version-btn', (e) => this.handleCompareVersion(e));
             this.filesGrid.on('click', '.rollback-version-btn', (e) => this.handleRollback(e));
             this.compareModal.find('.close-modal').on('click', () => this.closeCompareModal());
             $('#version-from, #version-to').on('change', () => this.updateDiff());
             
             // Add file button
-            $('#add-file-btn').on('click', () => this.openModal('addFileModal'));
+            $('#kura-ai-add-file').on('click', () => this.openModal('kura-ai-add-file-modal'));
             
             // Monitor file changes
             $('.monitor-file-btn').on('click', (e) => {
@@ -43,6 +57,20 @@
             $('.stop-monitor-btn').on('click', (e) => {
                 const filePath = $(e.currentTarget).data('file-path');
                 this.stopMonitoring(filePath);
+            });
+            
+            // Modal event handlers
+            $(document).on('click', '.kura-ai-modal-close', (e) => {
+                $(e.target).closest('.kura-ai-modal').hide();
+            });
+            
+            $(document).on('click', '.kura-ai-modal-submit', (e) => {
+                const modal = $(e.target).closest('.kura-ai-modal');
+                const modalId = modal.attr('id');
+                
+                if (modalId === 'kura-ai-add-file-modal') {
+                    this.handleAddFileSubmit();
+                }
             });
             
             // Close modal when clicking outside
@@ -85,7 +113,7 @@
 
         handleCreateVersion(e) {
             const button = $(e.currentTarget);
-            const filePath = button.data('path');
+            const filePath = button.closest('.kura-ai-file-item').data('file');
 
             this.showLoading(button);
 
@@ -124,49 +152,40 @@
 
         handleRemoveFile(e) {
             const button = $(e.currentTarget);
-            const filePath = button.data('path');
+            const filePath = button.closest('.kura-ai-file-item').data('file');
 
-            Swal.fire({
-                title: kura_ai_ajax.confirm_remove_title,
-                text: kura_ai_ajax.confirm_remove_text,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: kura_ai_ajax.yes_remove,
-                cancelButtonText: kura_ai_ajax.no_cancel,
-                allowOutsideClick: true,
-                allowEscapeKey: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: kura_ai_ajax.ajax_url,
-                        type: 'POST',
-                        data: {
-                            action: 'kura_ai_remove_monitored_file',
-                            nonce: kura_ai_ajax.nonce,
-                            file_path: filePath
-                        },
-                        success: (response) => {
-                            if (response.success) {
-                                location.reload(); // Refresh to remove file
-                            } else {
-                                this.showNotice('error', response.data.message || kura_ai_ajax.remove_file_error);
-                            }
-                        },
-                        error: () => {
-                            this.showNotice('error', kura_ai_ajax.remove_file_error);
-                        }
-                    });
-                }
-            });
+            // Simple confirm dialog for testing
+             if (confirm('Are you sure you want to remove this file from monitoring?')) {
+                 $.ajax({
+                     url: kura_ai_ajax.ajax_url,
+                     type: 'POST',
+                     data: {
+                         action: 'kura_ai_remove_monitored_file',
+                         nonce: kura_ai_ajax.nonce,
+                         file_path: filePath
+                     },
+                     success: (response) => {
+                         if (response.success) {
+                             location.reload(); // Refresh to remove file
+                         } else {
+                             this.showNotice('error', response.data.message || kura_ai_ajax.remove_file_error);
+                         }
+                     },
+                     error: () => {
+                         this.showNotice('error', kura_ai_ajax.remove_file_error);
+                     }
+                 });
+             }
         }
 
         handleCompareVersion(e) {
             const button = $(e.currentTarget);
-            const fileItem = button.closest('.file-item');
-            const versions = fileItem.find('.version-item').map(function() {
+            const fileItem = button.closest('.kura-ai-file-item');
+            const versions = fileItem.find('tbody tr').map(function() {
                 return {
-                    id: $(this).data('version-id'),
-                    date: $(this).find('.version-date').text()
+                    id: $(this).data('version'),
+                    date: $(this).find('td:nth-child(2)').text(),
+                    hash: $(this).find('td:nth-child(1)').text()
                 };
             }).get();
 
@@ -178,7 +197,7 @@
         handleRollback(e) {
             const button = $(e.currentTarget);
             const versionId = button.data('version-id');
-            const filePath = button.closest('.file-item').find('.remove-file-btn').data('path');
+            const filePath = button.closest('.kura-ai-file-item').data('file');
 
             Swal.fire({
                 title: kura_ai_ajax.confirm_rollback_title,
@@ -230,7 +249,7 @@
             versions.forEach((version, index) => {
                 const option = $('<option></option>')
                     .val(version.id)
-                    .text(version.date);
+                    .text(`${version.hash} - ${version.date}`);
 
                 fromSelect.append(option.clone());
                 toSelect.append(option.clone());
@@ -589,6 +608,38 @@
             }
         }
 
+        handleAddFileSubmit() {
+            const filePath = $('#kura-ai-file-path').val().trim();
+            
+            if (!filePath) {
+                this.showNotice('error', 'Please enter a file path');
+                return;
+            }
+            
+            $.ajax({
+                url: kura_ai_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'kura_ai_add_monitored_file',
+                    file_path: filePath,
+                    nonce: kura_ai_ajax.nonce
+                },
+                success: (response) => {
+                    if (response.success) {
+                        $('#kura-ai-add-file-modal').hide();
+                        $('#kura-ai-file-path').val('');
+                        this.showNotice('success', 'File added to monitoring successfully');
+                        location.reload();
+                    } else {
+                        this.showNotice('error', response.data.message || 'Error adding file to monitoring');
+                    }
+                },
+                error: () => {
+                    this.showNotice('error', 'Network error occurred');
+                }
+            });
+        }
+
         formatBytes(bytes, decimals = 2) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -646,12 +697,12 @@
     }
 
     // Initialize when document is ready
-    $(document).ready(() => {
+    $(document).ready(function() {
         const fileMonitor = new KuraAIFileMonitor();
         
-        // Make openModal globally accessible for onclick handlers
-        window.openModal = (modalId) => fileMonitor.openModal(modalId);
-        window.closeModal = (modalId) => fileMonitor.closeModal(modalId);
+        // Make modal functions globally accessible
+        window.openModal = fileMonitor.openModal.bind(fileMonitor);
+        window.closeModal = fileMonitor.closeModal.bind(fileMonitor);
     });
 
 })(jQuery);

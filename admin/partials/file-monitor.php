@@ -8,6 +8,36 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// WordPress function stubs for static analysis
+if (!function_exists('is_wp_error')) {
+    function is_wp_error($thing) { return is_a($thing, 'WP_Error'); }
+}
+if (!function_exists('wp_nonce_field')) {
+    function wp_nonce_field($action = -1, $name = '_wpnonce', $referer = true, $echo = true) {
+        $nonce_field = '<input type="hidden" id="' . $name . '" name="' . $name . '" value="' . wp_create_nonce($action) . '" />';
+        if ($echo) echo $nonce_field;
+        return $nonce_field;
+    }
+}
+if (!function_exists('wp_create_nonce')) {
+    function wp_create_nonce($action = -1) { return 'dummy_nonce_' . md5($action); }
+}
+if (!function_exists('esc_html__')) {
+    function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
+}
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        public $errors = array();
+        public $error_data = array();
+        public function __construct($code = '', $message = '', $data = '') {
+            if (empty($code)) return;
+            $this->errors[$code][] = $message;
+            if (!empty($data)) $this->error_data[$code] = $data;
+        }
+        public function get_error_message($code = '') { return isset($this->errors[$code]) ? $this->errors[$code][0] : ''; }
+    }
+}
+
 $file_monitor = new \Kura_AI\Kura_AI_File_Monitor();
 $monitored_files = $file_monitor->get_monitored_files();
 $critical_files = $file_monitor->get_critical_wordpress_files();
@@ -245,10 +275,10 @@ if ($_POST) {
                                 <td><?php echo esc_html($version->created_at); ?></td>
                                 <td><?php echo esc_html($version->description); ?></td>
                                 <td>
-                                    <button type="button" class="button button-small kura-ai-rollback-version">
+                                    <button type="button" class="button button-small rollback-version-btn" data-version-id="<?php echo esc_attr($version->id); ?>">
                                         <?php echo esc_html__('Rollback', 'kura-ai'); ?>
                                     </button>
-                                    <button type="button" class="button button-small kura-ai-compare-version">
+                                    <button type="button" class="button button-small compare-version-btn" data-version-id="<?php echo esc_attr($version->id); ?>">
                                         <?php echo esc_html__('Compare', 'kura-ai'); ?>
                                     </button>
                                 </td>
@@ -313,24 +343,27 @@ if ($_POST) {
     </div>
 
     <!-- Compare Versions Modal -->
-    <div id="kura-ai-compare-modal" class="kura-ai-modal" style="display: none;">
+    <div id="version-compare-modal" class="kura-ai-modal" style="display: none;">
         <div class="kura-ai-modal-content kura-ai-modal-large">
             <h2><?php echo esc_html__('Compare Versions', 'kura-ai'); ?></h2>
             <div class="kura-ai-modal-body">
                 <div class="kura-ai-version-select">
                     <div class="kura-ai-form-group">
-                        <label for="kura-ai-version-1"><?php echo esc_html__('Version 1:', 'kura-ai'); ?></label>
-                        <select id="kura-ai-version-1"></select>
+                        <label for="version-from"><?php echo esc_html__('Version From:', 'kura-ai'); ?></label>
+                        <select id="version-from"></select>
                     </div>
                     <div class="kura-ai-form-group">
-                        <label for="kura-ai-version-2"><?php echo esc_html__('Version 2:', 'kura-ai'); ?></label>
-                        <select id="kura-ai-version-2"></select>
+                        <label for="version-to"><?php echo esc_html__('Version To:', 'kura-ai'); ?></label>
+                        <select id="version-to"></select>
                     </div>
                 </div>
-                <div id="kura-ai-diff-viewer" class="kura-ai-diff-viewer"></div>
+                <div class="diff-viewer">
+                    <div class="diff-loading" style="display: none;">Loading...</div>
+                    <div class="diff-content"></div>
+                </div>
             </div>
             <div class="kura-ai-modal-footer">
-                <button type="button" class="button kura-ai-modal-close">
+                <button type="button" class="button close-modal">
                     <?php echo esc_html__('Close', 'kura-ai'); ?>
                 </button>
             </div>

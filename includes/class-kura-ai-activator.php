@@ -54,7 +54,8 @@ class Kura_AI_Activator
             $wpdb->prefix . 'kura_ai_security_reports',
             $wpdb->prefix . 'kura_ai_vulnerabilities',
             $wpdb->prefix . 'kura_ai_hardening_rules',
-            $wpdb->prefix . 'kura_ai_ai_analysis'
+            $wpdb->prefix . 'kura_ai_ai_analysis',
+            $wpdb->prefix . 'kura_ai_file_versions'
         );
         
         foreach ($tables as $table) {
@@ -230,17 +231,33 @@ class Kura_AI_Activator
             KEY provider (provider)
         ) $charset_collate;";
 
-        require_once(\ABSPATH . 'wp-admin/includes/upgrade.php');
-        \dbDelta($logs_sql);
-        \dbDelta($api_keys_sql);
-        \dbDelta($malware_patterns_sql);
-        \dbDelta($file_integrity_sql);
-        \dbDelta($user_activity_sql);
-        \dbDelta($api_security_sql);
-        \dbDelta($security_reports_sql);
-        \dbDelta($vulnerabilities_sql);
-        \dbDelta($hardening_rules_sql);
-        \dbDelta($ai_analysis_sql);
+        // Create file versions table
+        $file_versions_table = $wpdb->prefix . 'kura_ai_file_versions';
+        $file_versions_sql = "CREATE TABLE $file_versions_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            file_path varchar(255) NOT NULL,
+            content longtext NOT NULL,
+            hash varchar(64) NOT NULL,
+            description text,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY file_path (file_path),
+            KEY hash (hash),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($logs_sql);
+        dbDelta($api_keys_sql);
+        dbDelta($malware_patterns_sql);
+        dbDelta($file_integrity_sql);
+        dbDelta($user_activity_sql);
+        dbDelta($api_security_sql);
+        dbDelta($security_reports_sql);
+        dbDelta($vulnerabilities_sql);
+        dbDelta($hardening_rules_sql);
+        dbDelta($ai_analysis_sql);
+        dbDelta($file_versions_sql);
 
         // Add default API key for OpenAI if not exists
         $existing_key = $wpdb->get_var($wpdb->prepare(
@@ -339,8 +356,8 @@ class Kura_AI_Activator
         );
 
         foreach ($schedules as $hook => $frequency) {
-            if (!\wp_next_scheduled($hook)) {
-                \wp_schedule_event(\time(), $frequency, $hook);
+            if (!wp_next_scheduled($hook)) {
+                wp_schedule_event(time(), $frequency, $hook);
             }
         }
     }

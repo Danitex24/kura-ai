@@ -2,8 +2,87 @@
 
 namespace Kura_AI;
 
+/**
+ * The file monitoring functionality of the plugin.
+ *
+ * @link       https://kura.ai
+ * @since      1.0.0
+ *
+ * @package    Kura_Ai
+ * @subpackage Kura_Ai/includes
+ */
+
+// Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
+}
+
+// WordPress function stubs for static analysis
+if (!function_exists('get_template_directory')) {
+    function get_template_directory() { return '/path/to/theme'; }
+}
+if (!function_exists('is_child_theme')) {
+    function is_child_theme() { return false; }
+}
+if (!function_exists('get_stylesheet_directory')) {
+    function get_stylesheet_directory() { return '/path/to/stylesheet'; }
+}
+if (!function_exists('wp_next_scheduled')) {
+    function wp_next_scheduled($hook, $args = array()) { return false; }
+}
+if (!function_exists('wp_schedule_event')) {
+    function wp_schedule_event($timestamp, $recurrence, $hook, $args = array()) { return true; }
+}
+if (!function_exists('dbDelta')) {
+    function dbDelta($queries = '', $execute = true) { return array(); }
+}
+if (!function_exists('current_time')) {
+    function current_time($type, $gmt = 0) { return date('Y-m-d H:i:s'); }
+}
+if (!function_exists('esc_html__')) {
+    function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
+}
+if (!function_exists('is_wp_error')) {
+    function is_wp_error($thing) { return is_a($thing, 'WP_Error'); }
+}
+if (!function_exists('check_ajax_referer')) {
+    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
+}
+if (!function_exists('current_user_can')) {
+    function current_user_can($capability, $object_id = null) { return true; }
+}
+if (!function_exists('wp_die')) {
+    function wp_die($message = '', $title = '', $args = array()) { die($message); }
+}
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($str) { return trim(strip_tags($str)); }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($data = null, $status_code = null) { wp_die(json_encode(array('success' => false, 'data' => $data))); }
+}
+if (!function_exists('wp_send_json_success')) {
+    function wp_send_json_success($data = null, $status_code = null) { wp_die(json_encode(array('success' => true, 'data' => $data))); }
+}
+if (!function_exists('update_option')) {
+    function update_option($option, $value, $autoload = null) { return true; }
+}
+if (!function_exists('get_option')) {
+    function get_option($option, $default = false) { return $default; }
+}
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        public $errors = array();
+        public $error_data = array();
+        public function __construct($code = '', $message = '', $data = '') {
+            if (empty($code)) return;
+            $this->errors[$code][] = $message;
+            if (!empty($data)) $this->error_data[$code] = $data;
+        }
+        public function get_error_message($code = '') { return isset($this->errors[$code]) ? $this->errors[$code][0] : ''; }
+    }
+}
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
 }
 
 // Import WordPress core files and functions
@@ -90,6 +169,10 @@ class Kura_AI_File_Monitor {
         // Schedule automatic scans
         if (!\wp_next_scheduled('kura_ai_file_monitor_scan')) {
             \wp_schedule_event(time(), 'daily', 'kura_ai_file_monitor_scan');
+        }
+        // Schedule automatic scans if not already scheduled
+        if (!\wp_next_scheduled('kura_ai_auto_scan')) {
+            \wp_schedule_event(time(), 'hourly', 'kura_ai_auto_scan');
         }
     }
     
@@ -339,6 +422,14 @@ class Kura_AI_File_Monitor {
         );
     }
 
+    public function remove_file_versions($file_path) {
+        return $this->wpdb->delete(
+            $this->version_table,
+            array('file_path' => $file_path),
+            array('%s')
+        );
+    }
+
     public function compare_versions($version_id_1, $version_id_2) {
         $version1 = $this->wpdb->get_row(
             $this->wpdb->prepare(
@@ -358,7 +449,11 @@ class Kura_AI_File_Monitor {
             return new \WP_Error('invalid_version', \esc_html__('One or both versions not found', 'kura-ai'));
         }
 
+        // Generate diff HTML
+        $diff_html = $this->generate_diff_html($version1->content, $version2->content);
+        
         return array(
+            'diff_html' => $diff_html,
             'version1' => array(
                 'content' => $version1->content,
                 'created_at' => $version1->created_at,
@@ -374,6 +469,27 @@ class Kura_AI_File_Monitor {
 
     public function get_monitored_files() {
         return $this->monitored_files;
+    }
+    
+    /**
+     * Generate HTML diff between two content strings
+     */
+    private function generate_diff_html($content1, $content2) {
+        $lines1 = explode("\n", $content1);
+        $lines2 = explode("\n", $content2);
+        
+        $diff_html = '<div class="diff-container">';
+        $diff_html .= '<div class="diff-side">';
+        $diff_html .= '<h4>Version 1</h4>';
+        $diff_html .= '<pre class="diff-content">' . esc_html($content1) . '</pre>';
+        $diff_html .= '</div>';
+        $diff_html .= '<div class="diff-side">';
+        $diff_html .= '<h4>Version 2</h4>';
+        $diff_html .= '<pre class="diff-content">' . esc_html($content2) . '</pre>';
+        $diff_html .= '</div>';
+        $diff_html .= '</div>';
+        
+        return $diff_html;
     }
 
     /**
@@ -534,17 +650,21 @@ class Kura_AI_File_Monitor {
      * Get critical files list
      */
     public function get_critical_files_list() {
-        $critical_files = array();
-        
-        foreach ($this->critical_files as $name => $path) {
-            if (file_exists($path)) {
-                $critical_files[] = array(
-                    'name' => $name,
-                    'path' => $path,
-                    'size' => filesize($path),
-                    'modified' => date('Y-m-d H:i:s', filemtime($path))
-                );
-            }
+        $critical_files = array(
+            'wp-config.php' => ABSPATH . 'wp-config.php',
+            'index.php' => ABSPATH . 'index.php',
+            '.htaccess' => ABSPATH . '.htaccess',
+            'wp-admin/index.php' => ABSPATH . 'wp-admin/index.php',
+            'wp-includes/wp-config-sample.php' => ABSPATH . 'wp-includes/wp-config-sample.php',
+            'active_theme_functions' => \get_template_directory() . '/functions.php',
+            'active_theme_index' => \get_template_directory() . '/index.php',
+            'active_theme_style' => \get_template_directory() . '/style.css'
+        );
+
+        // Add child theme files if active
+        if (\is_child_theme()) {
+            $critical_files['child_theme_functions'] = \get_stylesheet_directory() . '/functions.php';
+            $critical_files['child_theme_style'] = \get_stylesheet_directory() . '/style.css';
         }
         
         return $critical_files;

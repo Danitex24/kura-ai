@@ -338,22 +338,52 @@
 }
 
 .diff-viewer {
-    background: #f8f9fa;
-    border: 1px solid #e2e4e7;
+    margin-top: 20px;
+    border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 15px;
+    overflow: hidden;
 }
 
-.diff-loading {
-    text-align: center;
-    padding: 20px;
-    color: #666;
+.diff-container {
+    display: flex;
+    min-height: 400px;
+}
+
+.diff-side {
+    flex: 1;
+    border-right: 1px solid #ddd;
+}
+
+.diff-side:last-child {
+    border-right: none;
+}
+
+.diff-side h4 {
+    margin: 0;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 .diff-content {
-    font-family: monospace;
+    margin: 0;
+    padding: 15px;
+    background: #fff;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
     white-space: pre-wrap;
-    line-height: 1.5;
+    word-wrap: break-word;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.diff-loading {
+    padding: 20px;
+    text-align: center;
+    color: #666;
 }
 
 /* Modern Stats Cards */

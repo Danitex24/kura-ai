@@ -49,6 +49,63 @@ if (!function_exists('add_action')) {
 if (!function_exists('is_admin')) {
     function is_admin() { return true; }
 }
+if (!function_exists('esc_html__')) {
+    function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
+}
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($value) { return stripslashes_deep($value); }
+}
+if (!function_exists('check_ajax_referer')) {
+    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
+}
+if (!function_exists('wp_send_json_error')) {
+    function wp_send_json_error($data = null, $status_code = null) { 
+        wp_send_json(array('success' => false, 'data' => $data), $status_code);
+    }
+}
+if (!function_exists('wp_send_json_success')) {
+    function wp_send_json_success($data = null, $status_code = null) {
+        wp_send_json(array('success' => true, 'data' => $data), $status_code);
+    }
+}
+if (!function_exists('wp_send_json')) {
+    function wp_send_json($response, $status_code = null) {
+        if ($status_code) {
+            status_header($status_code);
+        }
+        header('Content-Type: application/json; charset=' . get_option('blog_charset'));
+        echo wp_json_encode($response);
+        wp_die();
+    }
+}
+if (!function_exists('wp_json_encode')) {
+    function wp_json_encode($data, $options = 0, $depth = 512) {
+        return json_encode($data, $options, $depth);
+    }
+}
+if (!function_exists('wp_die')) {
+    function wp_die($message = '', $title = '', $args = array()) {
+        if (is_string($message)) {
+            echo $message;
+        }
+        exit;
+    }
+}
+if (!function_exists('get_option')) {
+    function get_option($option, $default = false) {
+        return $default;
+    }
+}
+if (!function_exists('status_header')) {
+    function status_header($code, $description = '') {
+        http_response_code($code);
+    }
+}
+if (!function_exists('stripslashes_deep')) {
+    function stripslashes_deep($value) {
+        return is_array($value) ? array_map('stripslashes_deep', $value) : stripslashes($value);
+    }
+}
 if (!function_exists('current_user_can')) {
     function current_user_can($capability) { return true; }
 }
@@ -222,6 +279,9 @@ class Kura_AI_Admin {
         $this->plugin_path = trailingslashit(plugin_dir_path(__FILE__));
         $this->assets_url = trailingslashit(plugin_dir_url(__FILE__));
         $this->template_path = $this->plugin_path . 'partials/';
+        
+        // Initialize file monitor
+        $this->file_monitor = new \Kura_AI\Kura_AI_File_Monitor();
         
         $this->init();
     }
@@ -411,7 +471,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -692,7 +752,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -752,7 +812,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!\wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -1305,79 +1365,219 @@ class Kura_AI_Admin {
      */
     
     public function handle_analyze_code() {
-        wp_send_json_error(array('message' => esc_html__('AI Analysis feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('AI Analysis feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_submit_feedback() {
-        wp_send_json_error(array('message' => esc_html__('Feedback submission not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Feedback submission not yet implemented.', 'kura-ai')));
     }
     
     public function handle_apply_htaccess_rules() {
-        wp_send_json_error(array('message' => esc_html__('Htaccess rules feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Htaccess rules feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_optimize_database() {
-        wp_send_json_error(array('message' => esc_html__('Database optimization not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Database optimization not yet implemented.', 'kura-ai')));
     }
     
     public function handle_get_metrics() {
-        wp_send_json_error(array('message' => esc_html__('Metrics feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Metrics feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_get_recent_events() {
-        wp_send_json_error(array('message' => esc_html__('Recent events feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Recent events feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_start_malware_scan() {
-        wp_send_json_error(array('message' => esc_html__('Malware scan feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Malware scan feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_get_scan_progress() {
-        wp_send_json_error(array('message' => esc_html__('Scan progress feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Scan progress feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_cancel_scan() {
-        wp_send_json_error(array('message' => esc_html__('Cancel scan feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Cancel scan feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_quarantine_file() {
-        wp_send_json_error(array('message' => esc_html__('File quarantine feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('File quarantine feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_add_monitored_file() {
-        wp_send_json_error(array('message' => esc_html__('File monitoring feature not yet implemented.', 'kura-ai')));
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+        }
+        
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions.', 'kura-ai')));
+        }
+        
+        $file_path = sanitize_text_field($_POST['file_path']);
+        
+        if (empty($file_path)) {
+            wp_send_json_error(array('message' => __('File path is required.', 'kura-ai')));
+        }
+        
+        // Check if file exists
+        if (!file_exists($file_path)) {
+            wp_send_json_error(array('message' => __('File does not exist.', 'kura-ai')));
+        }
+        
+        // Add file to monitoring
+        $monitored_files = get_option('kura_ai_monitored_files', array());
+        
+        if (in_array($file_path, $monitored_files)) {
+            wp_send_json_error(array('message' => __('File is already being monitored.', 'kura-ai')));
+        }
+        
+        $monitored_files[] = $file_path;
+        update_option('kura_ai_monitored_files', $monitored_files);
+        
+        // Create initial version
+        if (isset($this->file_monitor)) {
+            $this->file_monitor->create_version($file_path, 'Initial version');
+        }
+        
+        wp_send_json_success(array('message' => __('File added to monitoring successfully.', 'kura-ai')));
     }
     
     public function handle_create_version() {
-        wp_send_json_error(array('message' => esc_html__('Version creation feature not yet implemented.', 'kura-ai')));
+        if (!\wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            \wp_send_json_error(array('message' => \esc_html__('Security check failed.', 'kura-ai')));
+        }
+
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array('message' => \esc_html__('Insufficient permissions.', 'kura-ai')));
+        }
+
+        $file_path = \sanitize_text_field(\wp_unslash($_POST['file_path'] ?? ''));
+        
+        if (empty($file_path)) {
+            \wp_send_json_error(array('message' => \esc_html__('File path is required.', 'kura-ai')));
+        }
+
+        if (!\file_exists($file_path)) {
+            \wp_send_json_error(array('message' => \esc_html__('File does not exist.', 'kura-ai')));
+        }
+
+        // Create version using file monitor
+        $version_id = $this->file_monitor->create_version($file_path);
+        
+        if ($version_id) {
+            \wp_send_json_success(array(
+                'message' => \esc_html__('Version created successfully!', 'kura-ai'),
+                'version_id' => $version_id
+            ));
+        } else {
+            \wp_send_json_error(array('message' => \esc_html__('Failed to create version.', 'kura-ai')));
+        }
     }
     
     public function handle_remove_monitored_file() {
-        wp_send_json_error(array('message' => esc_html__('Remove monitoring feature not yet implemented.', 'kura-ai')));
+        if (!\wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            \wp_send_json_error(array('message' => \esc_html__('Security check failed.', 'kura-ai')));
+        }
+
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array('message' => \esc_html__('Insufficient permissions.', 'kura-ai')));
+        }
+
+        $file_path = \sanitize_text_field(\wp_unslash($_POST['file_path'] ?? ''));
+        
+        if (empty($file_path)) {
+            \wp_send_json_error(array('message' => \esc_html__('File path is required.', 'kura-ai')));
+        }
+
+        // Get current monitored files
+        $monitored_files = \get_option('kura_ai_monitored_files', array());
+        
+        // Remove file from monitoring
+        $key = \array_search($file_path, $monitored_files);
+        if ($key !== false) {
+            unset($monitored_files[$key]);
+            $monitored_files = \array_values($monitored_files); // Re-index array
+            
+            // Update option
+            if (\update_option('kura_ai_monitored_files', $monitored_files)) {
+                // Also remove all versions for this file
+                $this->file_monitor->remove_file_versions($file_path);
+                
+                \wp_send_json_success(array(
+                    'message' => \esc_html__('File removed from monitoring successfully!', 'kura-ai')
+                ));
+            } else {
+                wp_send_json_error(array('message' => __('Failed to remove file from monitoring.', 'kura-ai')));
+            }
+        } else {
+            wp_send_json_error(array('message' => __('File is not being monitored.', 'kura-ai')));
+        }
     }
     
     public function handle_rollback_version() {
-        wp_send_json_error(array('message' => esc_html__('Version rollback feature not yet implemented.', 'kura-ai')));
+        check_ajax_referer('kura_ai_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'kura-ai')));
+        }
+
+        $version_id = intval($_POST['version_id'] ?? 0);
+        $file_path = sanitize_text_field($_POST['file_path'] ?? '');
+        
+        if (!$version_id || !$file_path) {
+            wp_send_json_error(array('message' => __('Invalid parameters', 'kura-ai')));
+        }
+
+        $file_monitor = new \Kura_AI\Kura_AI_File_Monitor();
+        $result = $file_monitor->rollback_version($version_id);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        } else {
+            wp_send_json_success(array('message' => __('File rolled back successfully', 'kura-ai')));
+        }
     }
     
     public function handle_compare_versions() {
-        wp_send_json_error(array('message' => esc_html__('Version comparison feature not yet implemented.', 'kura-ai')));
+        check_ajax_referer('kura_ai_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions', 'kura-ai')));
+        }
+
+        $version_id_1 = intval($_POST['version_id_1'] ?? 0);
+        $version_id_2 = intval($_POST['version_id_2'] ?? 0);
+        
+        if (!$version_id_1 || !$version_id_2) {
+            wp_send_json_error(array('message' => __('Invalid version IDs', 'kura-ai')));
+        }
+
+        $file_monitor = new \Kura_AI\Kura_AI_File_Monitor();
+        $result = $file_monitor->compare_versions($version_id_1, $version_id_2);
+
+        if (is_wp_error($result)) {
+            wp_send_json_error(array('message' => $result->get_error_message()));
+        } else {
+            wp_send_json_success($result);
+        }
     }
     
     public function handle_run_scan() {
-        wp_send_json_error(array('message' => esc_html__('Run scan feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Run scan feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_oauth_reconnect() {
-        wp_send_json_error(array('message' => esc_html__('OAuth reconnect feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('OAuth reconnect feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_reset_settings() {
-        wp_send_json_error(array('message' => esc_html__('Reset settings feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Reset settings feature not yet implemented.', 'kura-ai')));
     }
     
     public function handle_apply_fix() {
-        wp_send_json_error(array('message' => esc_html__('Apply fix feature not yet implemented.', 'kura-ai')));
+        wp_send_json_error(array('message' => __('Apply fix feature not yet implemented.', 'kura-ai')));
     }
     
     /**
@@ -1433,7 +1633,7 @@ class Kura_AI_Admin {
         $result = $this->file_monitor->perform_automatic_scan();
         
         if ($result) {
-            $critical_files = \method_exists($this->file_monitor, 'get_critical_files') ? $this->file_monitor->get_critical_files() : array();
+            $critical_files = \method_exists($this->file_monitor, 'get_critical_wordpress_files') ? $this->file_monitor->get_critical_wordpress_files() : array();
             \wp_send_json_success(array(
                 'message' => \esc_html__('Security scan completed successfully.', 'kura-ai'),
                 'scanned_files' => \count($critical_files)
@@ -1900,8 +2100,14 @@ class Kura_AI_Admin {
             );
         }
 
+        // Localize script for the appropriate handle based on page
+        $script_handle = 'kura-ai-admin';
+        if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
+            $script_handle = 'kura-ai-file-monitor';
+        }
+        
         wp_localize_script(
-            'kura-ai-admin',
+            $script_handle,
             'kura_ai_ajax',
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
@@ -1916,6 +2122,15 @@ class Kura_AI_Admin {
                 'exporting_logs' => esc_html__('Exporting logs...', 'kura-ai'),
                 'clearing_logs' => esc_html__('Clearing logs...', 'kura-ai'),
                 'logs_cleared' => esc_html__('Logs cleared successfully!', 'kura-ai'),
+                // File monitor strings
+                'create_version_error' => esc_html__('Failed to create version', 'kura-ai'),
+                'remove_file_error' => esc_html__('Failed to remove file', 'kura-ai'),
+                'confirm_remove_title' => esc_html__('Remove File?', 'kura-ai'),
+                'confirm_remove_text' => esc_html__('Are you sure you want to remove this file from monitoring?', 'kura-ai'),
+                'yes_remove' => esc_html__('Yes, Remove', 'kura-ai'),
+                'no_cancel' => esc_html__('Cancel', 'kura-ai'),
+                'confirm_rollback_title' => esc_html__('Rollback Version?', 'kura-ai'),
+                'confirm_rollback_text' => esc_html__('Are you sure you want to rollback to this version?', 'kura-ai'),
                 'strings' => array(
                     'loading' => esc_html__('Loading...', 'kura-ai'),
                     'error' => esc_html__('An error occurred.', 'kura-ai'),
