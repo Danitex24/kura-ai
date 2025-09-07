@@ -17,6 +17,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Define WordPress functions for static analysis
+if (!function_exists('sanitize_file_name')) {
+    function sanitize_file_name($filename) { return $filename; }
+}
+if (!function_exists('current_time')) {
+    function current_time($type) { return date('Y-m-d'); }
+}
+if (!function_exists('home_url')) {
+    function home_url() { return ''; }
+}
+
 // Define WordPress constants if not defined (for static analysis)
 if (!defined('DOING_AJAX')) {
     define('DOING_AJAX', false);
@@ -325,7 +336,35 @@ class Kura_AI_Admin {
             'save_api_key' => 'handle_save_api_key',
             'kura_ai_clear_logs' => 'handle_clear_logs',
             'save_ai_service_provider' => 'handle_save_ai_service_provider',
-            'kura_ai_get_suggestions' => 'handle_get_suggestions'
+            'kura_ai_get_suggestions' => 'handle_get_suggestions',
+            'kura_ai_generate_compliance_report' => 'handle_generate_compliance_report',
+            'kura_ai_schedule_compliance_scan' => 'handle_schedule_compliance_scan',
+            'kura_ai_export_compliance_pdf' => 'handle_export_compliance_pdf',
+            'kura_ai_export_compliance_csv' => 'handle_export_compliance_csv',
+            // AI Analysis handlers
+            'kura_ai_analyze_code' => 'handle_analyze_code',
+            'kura_ai_submit_feedback' => 'handle_submit_feedback',
+            // Security handlers
+            'kura_ai_apply_htaccess_rules' => 'handle_apply_htaccess_rules',
+            'kura_ai_optimize_database' => 'handle_optimize_database',
+            'kura_ai_get_metrics' => 'handle_get_metrics',
+            'kura_ai_get_recent_events' => 'handle_get_recent_events',
+            // Malware detection handlers
+            'kura_ai_start_malware_scan' => 'handle_start_malware_scan',
+            'kura_ai_get_scan_progress' => 'handle_get_scan_progress',
+            'kura_ai_cancel_scan' => 'handle_cancel_scan',
+            'kura_ai_quarantine_file' => 'handle_quarantine_file',
+            // File monitor handlers
+            'kura_ai_add_monitored_file' => 'handle_add_monitored_file',
+            'kura_ai_create_version' => 'handle_create_version',
+            'kura_ai_remove_monitored_file' => 'handle_remove_monitored_file',
+            'kura_ai_rollback_version' => 'handle_rollback_version',
+            'kura_ai_compare_versions' => 'handle_compare_versions',
+            // Additional handlers
+            'kura_ai_run_scan' => 'handle_run_scan',
+            'kura_ai_oauth_reconnect' => 'handle_oauth_reconnect',
+            'kura_ai_reset_settings' => 'handle_reset_settings',
+            'kura_ai_apply_fix' => 'handle_apply_fix'
         );
         
         foreach ($ajax_actions as $action => $method) {
@@ -778,6 +817,555 @@ class Kura_AI_Admin {
     }
 
     /**
+     * Handle compliance report generation request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_generate_compliance_report() {
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        $standard = isset($_POST['standard']) ? sanitize_text_field(wp_unslash($_POST['standard'])) : '';
+        
+        if (empty($standard)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('No compliance standard specified.', 'kura-ai')
+            ));
+        }
+        
+        try {
+            // Load required classes
+            require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-pdf.php';
+            
+            // Initialize compliance class
+            $compliance = new \Kura_AI\Kura_AI_Compliance();
+            $report = $compliance->generate_report($standard);
+            
+            if (is_wp_error($report)) {
+                wp_send_json_error(array(
+                    'message' => $report->get_error_message()
+                ));
+            }
+            
+            // Debug: Log the report structure
+            error_log('Kura AI Compliance Report: ' . print_r($report, true));
+            
+            wp_send_json_success($report);
+            
+        } catch (\Exception $e) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Failed to generate compliance report: ', 'kura-ai') . $e->getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Handle compliance PDF export request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_export_compliance_pdf() {
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_die(esc_html__('Security check failed.', 'kura-ai'), 'Security Error', array('response' => 400));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Insufficient permissions.', 'kura-ai'), 'Permission Error', array('response' => 403));
+        }
+        
+        $standard = isset($_GET['standard']) ? sanitize_text_field(wp_unslash($_GET['standard'])) : '';
+        
+        if (empty($standard)) {
+            wp_die(esc_html__('No compliance standard specified.', 'kura-ai'), 'Invalid Request', array('response' => 400));
+        }
+        
+        try {
+            // Initialize compliance class
+            $compliance = new \Kura_AI\Kura_AI_Compliance();
+            $report = $compliance->generate_report($standard);
+            
+            if (is_wp_error($report)) {
+                wp_die($report->get_error_message(), 'Report Generation Error', array('response' => 500));
+            }
+            
+            // Generate HTML report for download (PDF library not available)
+              $html_content = $this->generate_html_report($report);
+              
+              // Set headers for HTML download
+               $filename = 'compliance-report-' . sanitize_file_name($standard) . '-' . current_time('Y-m-d') . '.html';
+             header('Content-Type: text/html; charset=utf-8');
+             header('Content-Disposition: attachment; filename="' . $filename . '"');
+             header('Content-Length: ' . strlen($html_content));
+             header('Cache-Control: private, max-age=0, must-revalidate');
+             header('Pragma: public');
+             
+             // Output the HTML content
+             echo $html_content;
+            
+            exit;
+            
+        } catch (\Exception $e) {
+             wp_die(esc_html__('Failed to export PDF: ', 'kura-ai') . $e->getMessage(), 'Export Error', array('response' => 500));
+         }
+     }
+
+     /**
+      * Generate HTML report content.
+      *
+      * @since    1.0.0
+      * @param    array    $report    The compliance report data
+      * @return   string              The HTML content
+      */
+     private function generate_html_report($report) {
+         ob_start();
+         ?>
+         <!DOCTYPE html>
+         <html>
+         <head>
+             <meta charset="utf-8">
+             <title><?php echo esc_html__('Security Compliance Report', 'kura-ai'); ?></title>
+             <style>
+                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 20px; }
+                 .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #2271b1; padding-bottom: 20px; }
+                 h1 { color: #2271b1; font-size: 28px; margin-bottom: 10px; }
+                 .meta { margin-bottom: 30px; background: #f9f9f9; padding: 15px; border-radius: 5px; }
+                 .meta-item { margin-bottom: 8px; }
+                 .meta-label { font-weight: bold; color: #2271b1; }
+                 .summary { margin-bottom: 30px; }
+                 .summary-grid { display: table; width: 100%; border-collapse: collapse; }
+                 .summary-item { display: table-row; }
+                 .summary-label, .summary-value { display: table-cell; padding: 12px; border: 1px solid #ddd; }
+                 .summary-label { background: #f0f0f1; font-weight: bold; width: 200px; }
+                 .requirements { margin-bottom: 30px; }
+                 .requirement { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+                 .requirement-header { margin-bottom: 10px; }
+                 .requirement h3 { margin: 0 0 10px 0; color: #2271b1; }
+                 .requirement-status { display: inline-block; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+                 .status-compliant { background: #d1e7dd; color: #0a3622; }
+                 .status-partially { background: #fff3cd; color: #664d03; }
+                 .status-non-compliant { background: #f8d7da; color: #842029; }
+                 .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #666; border-top: 1px solid #ddd; padding-top: 20px; }
+             </style>
+         </head>
+         <body>
+             <div class="header">
+                 <h1><?php echo esc_html__('Security Compliance Report', 'kura-ai'); ?></h1>
+                 <p><?php echo esc_html(sprintf(__('Generated on %s', 'kura-ai'), date('F j, Y, g:i a'))); ?></p>
+             </div>
+
+             <div class="meta">
+                 <div class="meta-item">
+                     <span class="meta-label"><?php echo esc_html__('Standard:', 'kura-ai'); ?></span>
+                     <?php echo esc_html(strtoupper($report['standard'])); ?>
+                 </div>
+                 <div class="meta-item">
+                     <span class="meta-label"><?php echo esc_html__('Website:', 'kura-ai'); ?></span>
+                     <?php echo esc_html(get_bloginfo('name')); ?>
+                 </div>
+                 <div class="meta-item">
+                      <span class="meta-label"><?php echo esc_html__('URL:', 'kura-ai'); ?></span>
+                       <?php echo esc_html(home_url()); ?>
+                  </div>
+             </div>
+
+             <?php if (isset($report['summary'])) : ?>
+             <div class="summary">
+                 <h2><?php echo esc_html__('Summary', 'kura-ai'); ?></h2>
+                 <div class="summary-grid">
+                     <div class="summary-item">
+                         <div class="summary-label"><?php echo esc_html__('Total Requirements', 'kura-ai'); ?></div>
+                         <div class="summary-value"><?php echo esc_html($report['summary']['total_requirements']); ?></div>
+                     </div>
+                     <div class="summary-item">
+                         <div class="summary-label"><?php echo esc_html__('Compliant', 'kura-ai'); ?></div>
+                         <div class="summary-value"><?php echo esc_html($report['summary']['compliant_count']); ?></div>
+                     </div>
+                     <div class="summary-item">
+                         <div class="summary-label"><?php echo esc_html__('Partially Compliant', 'kura-ai'); ?></div>
+                         <div class="summary-value"><?php echo esc_html($report['summary']['partially_count']); ?></div>
+                     </div>
+                     <div class="summary-item">
+                         <div class="summary-label"><?php echo esc_html__('Non-Compliant', 'kura-ai'); ?></div>
+                         <div class="summary-value"><?php echo esc_html($report['summary']['non_compliant_count']); ?></div>
+                     </div>
+                 </div>
+             </div>
+             <?php endif; ?>
+
+             <div class="requirements">
+                 <h2><?php echo esc_html__('Detailed Requirements', 'kura-ai'); ?></h2>
+                 <?php if (isset($report['requirements']) && is_array($report['requirements'])) : ?>
+                     <?php foreach ($report['requirements'] as $requirement) : ?>
+                         <div class="requirement">
+                             <div class="requirement-header">
+                                 <h3><?php echo esc_html($requirement['name']); ?></h3>
+                                 <?php
+                                 $status_class = '';
+                                 $status_text = '';
+                                 switch ($requirement['status']) {
+                                     case 'compliant':
+                                         $status_class = 'status-compliant';
+                                         $status_text = __('Compliant', 'kura-ai');
+                                         break;
+                                     case 'partially':
+                                         $status_class = 'status-partially';
+                                         $status_text = __('Partially Compliant', 'kura-ai');
+                                         break;
+                                     case 'non_compliant':
+                                     case 'non-compliant':
+                                         $status_class = 'status-non-compliant';
+                                         $status_text = __('Non-Compliant', 'kura-ai');
+                                         break;
+                                 }
+                                 ?>
+                                 <span class="requirement-status <?php echo esc_attr($status_class); ?>">
+                                     <?php echo esc_html($status_text); ?>
+                                 </span>
+                             </div>
+                             <p><?php echo esc_html($requirement['description']); ?></p>
+                             <?php if (!empty($requirement['recommendation'])) : ?>
+                                 <p><strong><?php echo esc_html__('Recommendation:', 'kura-ai'); ?></strong></p>
+                                 <p><?php echo esc_html($requirement['recommendation']); ?></p>
+                             <?php endif; ?>
+                         </div>
+                     <?php endforeach; ?>
+                 <?php else : ?>
+                     <p><?php echo esc_html__('No requirements data available.', 'kura-ai'); ?></p>
+                 <?php endif; ?>
+             </div>
+
+             <div class="footer">
+                 <p><?php echo esc_html(sprintf(__('Generated by %s', 'kura-ai'), 'Kura AI Security')); ?></p>
+             </div>
+         </body>
+         </html>
+         <?php
+         return ob_get_clean();
+     }
+
+     /**
+      * Handle CSV export request.
+      *
+      * @since    1.0.0
+      */
+     public function handle_export_compliance_csv() {
+         if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+             wp_die(esc_html__('Security check failed.', 'kura-ai'), 'Security Error', array('response' => 400));
+         }
+         
+         if (!current_user_can('manage_options')) {
+             wp_die(esc_html__('Insufficient permissions.', 'kura-ai'), 'Permission Error', array('response' => 403));
+         }
+         
+         $standard = isset($_GET['standard']) ? sanitize_text_field(wp_unslash($_GET['standard'])) : '';
+         
+         if (empty($standard)) {
+             wp_die(esc_html__('No compliance standard specified.', 'kura-ai'), 'Invalid Request', array('response' => 400));
+         }
+         
+         try {
+             // Initialize compliance class
+             $compliance = new \Kura_AI\Kura_AI_Compliance();
+             $report = $compliance->generate_report($standard);
+             
+             if (is_wp_error($report)) {
+                 wp_die($report->get_error_message(), 'Report Generation Error', array('response' => 500));
+             }
+             
+             // Generate CSV content
+             $csv_content = $this->generate_csv_report($report);
+             
+             // Set headers for CSV download
+             $filename = 'compliance-report-' . sanitize_file_name($standard) . '-' . current_time('Y-m-d') . '.csv';
+             header('Content-Type: text/csv; charset=utf-8');
+             header('Content-Disposition: attachment; filename="' . $filename . '"');
+             header('Content-Length: ' . strlen($csv_content));
+             header('Cache-Control: private, max-age=0, must-revalidate');
+             header('Pragma: public');
+             
+             // Output the CSV content
+             echo $csv_content;
+             
+             exit;
+             
+         } catch (\Exception $e) {
+             wp_die(esc_html__('Failed to export CSV: ', 'kura-ai') . $e->getMessage(), 'Export Error', array('response' => 500));
+         }
+     }
+
+     /**
+      * Generate CSV report content.
+      *
+      * @since    1.0.0
+      * @param    array    $report    The compliance report data
+      * @return   string              The CSV content
+      */
+     private function generate_csv_report($report) {
+         $csv_data = array();
+         
+         // Add header row
+         $csv_data[] = array(
+             'Requirement ID',
+             'Title',
+             'Status',
+             'Description',
+             'Recommendation'
+         );
+         
+         // Add data rows
+         if (!empty($report['requirements']) && is_array($report['requirements'])) {
+             foreach ($report['requirements'] as $req_id => $requirement) {
+                 $status_text = '';
+                 switch ($requirement['status']) {
+                     case 'compliant':
+                         $status_text = __('Compliant', 'kura-ai');
+                         break;
+                     case 'partially':
+                         $status_text = __('Partially Compliant', 'kura-ai');
+                         break;
+                     case 'non_compliant':
+                     case 'non-compliant':
+                         $status_text = __('Non-Compliant', 'kura-ai');
+                         break;
+                 }
+                 
+                 $csv_data[] = array(
+                     $req_id,
+                     isset($requirement['title']) ? $requirement['title'] : '',
+                     $status_text,
+                     isset($requirement['description']) ? $requirement['description'] : '',
+                     isset($requirement['recommendation']) ? $requirement['recommendation'] : ''
+                 );
+             }
+         }
+         
+         // Convert array to CSV string
+         ob_start();
+         $output = fopen('php://output', 'w');
+         
+         foreach ($csv_data as $row) {
+             fputcsv($output, $row);
+         }
+         
+         fclose($output);
+         return ob_get_clean();
+     }
+
+     /**
+      * Handle compliance scan scheduling request.
+      *
+      * @since    1.0.0
+      */
+    public function handle_schedule_compliance_scan() {
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        $frequency = isset($_POST['frequency']) ? sanitize_text_field(wp_unslash($_POST['frequency'])) : '';
+        $time = isset($_POST['time']) ? sanitize_text_field(wp_unslash($_POST['time'])) : '';
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $standard = isset($_POST['standard']) ? sanitize_text_field(wp_unslash($_POST['standard'])) : '';
+        
+        // Validate inputs
+        if (empty($frequency) || empty($time) || empty($email) || empty($standard)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('All fields are required.', 'kura-ai')
+            ));
+        }
+        
+        if (!$this->validate_frequency($frequency)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid frequency selected.', 'kura-ai')
+            ));
+        }
+        
+        if (!is_email($email)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid email address.', 'kura-ai')
+            ));
+        }
+        
+        try {
+            // Clear any existing scheduled scans
+            $timestamp = wp_next_scheduled('kura_ai_compliance_scan', array($standard));
+            if ($timestamp) {
+                wp_unschedule_event($timestamp, 'kura_ai_compliance_scan', array($standard));
+            }
+            
+            // Calculate next run time
+            $next_run = $this->calculate_next_run_time($frequency, $time);
+            
+            // Schedule the new scan
+            $scheduled = wp_schedule_event($next_run, $frequency, 'kura_ai_compliance_scan', array(
+                'standard' => $standard,
+                'email' => $email
+            ));
+            
+            if ($scheduled === false) {
+                wp_send_json_error(array(
+                    'message' => esc_html__('Failed to schedule compliance scan.', 'kura-ai')
+                ));
+            }
+            
+            // Save schedule settings
+            $schedule_settings = array(
+                'frequency' => $frequency,
+                'time' => $time,
+                'email' => $email,
+                'standard' => $standard,
+                'next_run' => $next_run
+            );
+            
+            update_option('kura_ai_compliance_schedule', $schedule_settings);
+            
+            wp_send_json_success(array(
+                'message' => esc_html__('Compliance scan scheduled successfully!', 'kura-ai'),
+                'next_run' => date('Y-m-d H:i:s', $next_run)
+            ));
+            
+        } catch (\Exception $e) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Failed to schedule compliance scan: ', 'kura-ai') . $e->getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Calculate next run time based on frequency and time.
+     *
+     * @since    1.0.0
+     * @param    string    $frequency    The frequency (daily, weekly, monthly)
+     * @param    string    $time         The time in HH:MM format
+     * @return   int                     The timestamp for next run
+     */
+    private function calculate_next_run_time($frequency, $time) {
+        $time_parts = explode(':', $time);
+        $hour = intval($time_parts[0]);
+        $minute = intval($time_parts[1]);
+        
+        $now = current_time('timestamp');
+        $today = strtotime(date('Y-m-d', $now));
+        $scheduled_time = $today + ($hour * 3600) + ($minute * 60);
+        
+        // If the scheduled time has already passed today, schedule for next occurrence
+        if ($scheduled_time <= $now) {
+            switch ($frequency) {
+                case 'daily':
+                    $scheduled_time += 24 * 3600; // Add 1 day
+                    break;
+                case 'weekly':
+                    $scheduled_time += 7 * 24 * 3600; // Add 1 week
+                    break;
+                case 'monthly':
+                    $scheduled_time = strtotime('+1 month', $scheduled_time);
+                    break;
+            }
+        }
+        
+        return $scheduled_time;
+    }
+
+    /**
+     * Placeholder AJAX handlers to prevent 400 errors.
+     * These should be implemented with proper functionality.
+     *
+     * @since    1.0.0
+     */
+    
+    public function handle_analyze_code() {
+        wp_send_json_error(array('message' => esc_html__('AI Analysis feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_submit_feedback() {
+        wp_send_json_error(array('message' => esc_html__('Feedback submission not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_apply_htaccess_rules() {
+        wp_send_json_error(array('message' => esc_html__('Htaccess rules feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_optimize_database() {
+        wp_send_json_error(array('message' => esc_html__('Database optimization not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_get_metrics() {
+        wp_send_json_error(array('message' => esc_html__('Metrics feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_get_recent_events() {
+        wp_send_json_error(array('message' => esc_html__('Recent events feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_start_malware_scan() {
+        wp_send_json_error(array('message' => esc_html__('Malware scan feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_get_scan_progress() {
+        wp_send_json_error(array('message' => esc_html__('Scan progress feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_cancel_scan() {
+        wp_send_json_error(array('message' => esc_html__('Cancel scan feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_quarantine_file() {
+        wp_send_json_error(array('message' => esc_html__('File quarantine feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_add_monitored_file() {
+        wp_send_json_error(array('message' => esc_html__('File monitoring feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_create_version() {
+        wp_send_json_error(array('message' => esc_html__('Version creation feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_remove_monitored_file() {
+        wp_send_json_error(array('message' => esc_html__('Remove monitoring feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_rollback_version() {
+        wp_send_json_error(array('message' => esc_html__('Version rollback feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_compare_versions() {
+        wp_send_json_error(array('message' => esc_html__('Version comparison feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_run_scan() {
+        wp_send_json_error(array('message' => esc_html__('Run scan feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_oauth_reconnect() {
+        wp_send_json_error(array('message' => esc_html__('OAuth reconnect feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_reset_settings() {
+        wp_send_json_error(array('message' => esc_html__('Reset settings feature not yet implemented.', 'kura-ai')));
+    }
+    
+    public function handle_apply_fix() {
+        wp_send_json_error(array('message' => esc_html__('Apply fix feature not yet implemented.', 'kura-ai')));
+    }
+
+    /**
      * Validation helper methods.
      *
      * @since    1.0.0
@@ -1185,10 +1773,19 @@ class Kura_AI_Admin {
 
         // Page-specific scripts
         if ($page === 'kura-ai-compliance' || strpos($page, 'compliance') !== false) {
+            // Enqueue Chart.js for compliance charts
+            wp_enqueue_script(
+                'chartjs',
+                'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                array(),
+                '3.9.1',
+                true
+            );
+            
             wp_enqueue_script(
                 'kura-ai-compliance',
                 $this->assets_url . 'js/compliance.js',
-                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config', 'chartjs'),
                 $this->version,
                 true
             );

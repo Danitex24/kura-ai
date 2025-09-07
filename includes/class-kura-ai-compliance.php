@@ -1,9 +1,23 @@
 <?php
+/**
+ * Compliance functionality for the plugin.
+ *
+ * @link       https://kura.ai
+ * @since      1.0.0
+ *
+ * @package    Kura_Ai
+ * @subpackage Kura_Ai/includes
+ */
 
 namespace Kura_AI;
 
 if (!defined('ABSPATH')) {
     exit;
+}
+
+// Ensure WordPress functions are available
+if (!function_exists('is_plugin_active')) {
+    require_once(ABSPATH . 'wp-admin/includes/plugin.php');
 }
 
 // Import WordPress core files
@@ -27,7 +41,7 @@ use function \esc_html__;
 use function \esc_attr__;
 use function \esc_html;
 use function \esc_attr;
-use function \__;
+use function \__;  
 use function \wp_die;
 use function \is_wp_error;
 use function \sanitize_text_field;
@@ -38,11 +52,37 @@ use function \wp_remote_retrieve_body;
 use function \wp_remote_retrieve_response_code;
 use function \wp_json_encode;
 use function \sprintf;
+use function \get_post_status;
+use function \is_ssl;
+use function \wp_send_json_success;
+use function \wp_send_json_error;
+use function \wp_verify_nonce;
+use function \wp_kses_post;
+use function \wp_strip_all_tags;
+use function \wp_unslash;
+use function \current_user_can;
+use function \get_current_user_id;
+use function \wp_get_current_user;
+use function \delete_option;
+use function \add_option;
+use function \get_transient;
+use function \set_transient;
+use function \delete_transient;
 
 // Import WordPress constants
 use const \ABSPATH;
 use const \WP_DEBUG;
 
+/**
+ * The compliance functionality of the plugin.
+ *
+ * Defines the plugin name, version, and two examples hooks for how to
+ * enqueue the admin-specific stylesheet and JavaScript.
+ *
+ * @package    Kura_Ai
+ * @subpackage Kura_Ai/includes
+ * @author     Kura AI <support@kura.ai>
+ */
 class Kura_AI_Compliance {
     private $standards = array(
         'pci_dss' => array(
@@ -119,7 +159,46 @@ class Kura_AI_Compliance {
                 break;
         }
 
+        // Calculate summary statistics
+        $report['summary'] = $this->calculate_summary($report['requirements']);
+        $report['timestamp'] = date('Y-m-d H:i:s', strtotime($report['generated_at']));
+
         return $report;
+    }
+
+    /**
+     * Calculate summary statistics from requirements.
+     *
+     * @param array $requirements The requirements array
+     * @return array Summary statistics
+     */
+    private function calculate_summary($requirements) {
+        $total = count($requirements);
+        $compliant = 0;
+        $partially_compliant = 0;
+        $non_compliant = 0;
+
+        foreach ($requirements as $requirement) {
+            switch ($requirement['status']) {
+                case 'compliant':
+                    $compliant++;
+                    break;
+                case 'partially_compliant':
+                    $partially_compliant++;
+                    break;
+                case 'non_compliant':
+                default:
+                    $non_compliant++;
+                    break;
+            }
+        }
+
+        return array(
+            'total' => $total,
+            'compliant' => $compliant,
+            'partially_compliant' => $partially_compliant,
+            'non_compliant' => $non_compliant
+        );
     }
 
     private function check_pci_dss_requirements() {
