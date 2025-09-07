@@ -647,7 +647,11 @@
 
     // Initialize when document is ready
     $(document).ready(() => {
-        new KuraAIFileMonitor();
+        const fileMonitor = new KuraAIFileMonitor();
+        
+        // Make openModal globally accessible for onclick handlers
+        window.openModal = (modalId) => fileMonitor.openModal(modalId);
+        window.closeModal = (modalId) => fileMonitor.closeModal(modalId);
     });
 
 })(jQuery);

@@ -1,9 +1,17 @@
+/* Modern Card Layout */
 .kura-ai-file-monitor .kura-ai-card {
     background: #fff;
     border: 1px solid #e2e4e7;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.kura-ai-file-monitor .kura-ai-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
 }
 
 .kura-ai-file-monitor .card-header {
@@ -47,17 +55,100 @@
     flex: 1;
 }
 
-/* Files Grid Styles */
-.files-grid {
+/* Modern Responsive Card Grid */
+.kura-ai-files-grid {
     display: grid;
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin: 24px 0;
 }
 
-.file-item {
+.kura-ai-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.kura-ai-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin: 24px 0;
+}
+
+/* Modern File Card */
+.kura-ai-file-card {
+    background: #fff;
     border: 1px solid #e2e4e7;
-    border-radius: 4px;
-    padding: 15px;
-    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.kura-ai-file-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.kura-ai-file-card .file-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px;
+    text-align: center;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.kura-ai-file-card .file-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.kura-ai-file-card .file-info {
+    padding: 20px;
+}
+
+.kura-ai-file-card .file-info h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.kura-ai-file-card .file-info p {
+    margin: 0 0 12px 0;
+    color: #64748b;
+    font-size: 14px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    word-break: break-all;
+}
+
+.kura-ai-file-card .file-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.kura-ai-file-card .status-ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.kura-ai-file-card .status-missing {
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 .file-item.changed {
@@ -265,78 +356,393 @@
     line-height: 1.5;
 }
 
-/* Stats Grid Styles */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 4px;
+/* Modern Stats Cards */
+.kura-ai-stat-box {
+    background: #fff;
     border: 1px solid #e2e4e7;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.stat-icon {
-    font-size: 2em;
-    color: #2271b1;
+.kura-ai-stat-box:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
 }
 
-.stat-info {
-    display: flex;
-    flex-direction: column;
+.kura-ai-stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
 }
 
-.stat-value {
-    font-size: 1.5em;
-    font-weight: 600;
+.kura-ai-stat-box h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kura-ai-stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
     line-height: 1;
 }
 
-.stat-label {
-    color: #666;
-    font-size: 0.9em;
-    margin-top: 5px;
+.kura-ai-stat-box p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
-/* Responsive Adjustments */
-@media screen and (max-width: 782px) {
-    .monitor-form .input-group {
-        flex-direction: column;
-    }
+/* Chart Container Styling */
+.kura-ai-chart-container {
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+}
 
-    .file-header {
-        flex-direction: column;
-    }
+.kura-ai-chart-container:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
 
-    .file-status {
-        margin: 10px 0 0;
-    }
+.kura-ai-chart-container h3 {
+    margin: 0 0 20px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+}
 
-    .file-actions {
-        flex-wrap: wrap;
-    }
+/* Modern Monitored Files Section */
+.kura-ai-monitored-files {
+    margin-top: 32px;
+}
 
-    .version-item {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
-    }
+.kura-ai-monitored-files h2 {
+    margin-bottom: 24px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+}
 
-    .version-actions {
-        justify-content: center;
-    }
+.kura-ai-file-item {
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
 
-    .comparison-options {
-        flex-direction: column;
-    }
+.kura-ai-file-item:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
 
-    .stats-grid {
+.kura-ai-file-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kura-ai-file-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.kura-ai-file-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.kura-ai-file-actions .button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kura-ai-file-versions {
+    padding: 20px 24px;
+}
+
+.kura-ai-no-files {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Modern Modal Styling */
+.kura-ai-modal {
+    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.6);
+}
+
+.kura-ai-modal-content {
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    overflow: hidden;
+}
+
+.kura-ai-modal-large {
+    max-width: 1200px;
+}
+
+/* Section Headers */
+.kura-ai-charts-section h2,
+.kura-ai-recent-scans h2,
+.kura-ai-critical-files h2 {
+    margin-bottom: 24px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kura-ai-charts-section h2::before {
+    content: '📊';
+    font-size: 18px;
+}
+
+.kura-ai-recent-scans h2::before {
+    content: '🔍';
+    font-size: 18px;
+}
+
+.kura-ai-critical-files h2::before {
+    content: '🔒';
+    font-size: 18px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1200px) {
+    .kura-ai-charts-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .kura-ai-files-grid {
         grid-template-columns: 1fr;
     }
+    
+    .kura-ai-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .kura-ai-charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .kura-ai-file-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
+    
+    .kura-ai-file-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .kura-ai-modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .kura-ai-files-grid {
+        gap: 16px;
+        margin: 16px 0;
+    }
+    
+    .kura-ai-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .kura-ai-stat-box {
+        padding: 20px;
+    }
+    
+    .kura-ai-stat-number {
+        font-size: 28px;
+    }
+    
+    .kura-ai-chart-container {
+        padding: 16px;
+    }
+}
+
+/* Empty State Styling */
+.kura-ai-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+.kura-ai-empty-state p {
+    color: #64748b;
+    font-size: 16px;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group .description {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Header Styling */
+.kura-ai-admin-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    align-items: center;
+}
+
+.kura-ai-admin-header .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* Recent Scans Table Styling */
+.kura-ai-recent-scans .wp-list-table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.scan-row.scan-safe {
+    background-color: #f0fdf4;
+}
+
+.scan-row.scan-warning {
+    background-color: #fffbeb;
+}
+
+.scan-row.scan-danger {
+    background-color: #fef2f2;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.status-safe {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.status-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.status-danger {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+.risk-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.risk-badge.risk-low {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.risk-badge.risk-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.risk-badge.risk-high {
+    background: #fecaca;
+    color: #dc2626;
 }
