@@ -49,6 +49,18 @@ if (!function_exists('add_action')) {
 if (!function_exists('is_admin')) {
     function is_admin() { return true; }
 }
+if (!function_exists('wp_unslash')) {
+    function wp_unslash($value) { return is_string($value) ? stripslashes($value) : $value; }
+}
+if (!function_exists('check_ajax_referer')) {
+    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
+}
+if (!function_exists('get_option')) {
+    function get_option($option, $default = false) { return is_array($default) ? $default : array(); }
+}
+if (!function_exists('update_option')) {
+    function update_option($option, $value, $autoload = null) { return true; }
+}
 if (!function_exists('esc_html__')) {
     function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
 }
@@ -1493,6 +1505,9 @@ class Kura_AI_Admin {
 
         // Get current monitored files
         $monitored_files = \get_option('kura_ai_monitored_files', array());
+        if (!is_array($monitored_files)) {
+            $monitored_files = array();
+        }
         
         // Remove file from monitoring
         $key = \array_search($file_path, $monitored_files);
@@ -2131,6 +2146,7 @@ class Kura_AI_Admin {
                 'no_cancel' => esc_html__('Cancel', 'kura-ai'),
                 'confirm_rollback_title' => esc_html__('Rollback Version?', 'kura-ai'),
                 'confirm_rollback_text' => esc_html__('Are you sure you want to rollback to this version?', 'kura-ai'),
+                'yes_rollback' => esc_html__('Yes I confirm', 'kura-ai'),
                 'strings' => array(
                     'loading' => esc_html__('Loading...', 'kura-ai'),
                     'error' => esc_html__('An error occurred.', 'kura-ai'),
