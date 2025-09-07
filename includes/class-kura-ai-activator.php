@@ -346,18 +346,26 @@ class Kura_AI_Activator
      */
     private static function schedule_cron_jobs()
     {
+        // Reduced cron events to prevent overload and "could_not_set" errors
         $schedules = array(
             'kura_ai_daily_scan' => 'daily',
-            'kura_ai_malware_scan' => 'daily',
-            'kura_ai_file_integrity_check' => 'hourly',
-            'kura_ai_security_report_generation' => 'weekly',
-            'kura_ai_vulnerability_assessment' => 'daily',
             'kura_ai_cleanup_logs' => 'daily'
         );
 
+        // Space out the scheduling to prevent conflicts
+        $delay = 0;
         foreach ($schedules as $hook => $frequency) {
             if (!wp_next_scheduled($hook)) {
-                wp_schedule_event(time(), $frequency, $hook);
+                // Add delay between events to prevent cron conflicts
+                $schedule_time = time() + $delay;
+                $result = wp_schedule_event($schedule_time, $frequency, $hook);
+                
+                // Log if scheduling fails
+                if ($result === false) {
+                    error_log("Kura AI: Failed to schedule cron event: $hook");
+                }
+                
+                $delay += 300; // 5 minute delay between events
             }
         }
     }

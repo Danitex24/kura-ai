@@ -166,14 +166,20 @@ class Kura_AI_File_Monitor {
         // Create scan results table if it doesn't exist
         $this->create_scan_results_table();
         
-        // Schedule automatic scans
-        if (!\wp_next_scheduled('kura_ai_file_monitor_scan')) {
-            \wp_schedule_event(time(), 'daily', 'kura_ai_file_monitor_scan');
+        // Schedule only essential daily scan to prevent cron overload
+        if (function_exists('wp_next_scheduled') && !\wp_next_scheduled('kura_ai_file_monitor_scan')) {
+            // Add delay to prevent conflicts with other Kura AI cron events
+            $schedule_time = time() + 600; // 10 minute delay
+            if (function_exists('wp_schedule_event')) {
+                $result = \wp_schedule_event($schedule_time, 'daily', 'kura_ai_file_monitor_scan');
+                
+                if ($result === false) {
+                    error_log('Kura AI: Failed to schedule file monitor scan');
+                }
+            }
         }
-        // Schedule automatic scans if not already scheduled
-        if (!\wp_next_scheduled('kura_ai_auto_scan')) {
-            \wp_schedule_event(time(), 'hourly', 'kura_ai_auto_scan');
-        }
+        
+        // Removed hourly auto_scan to reduce cron load and prevent "could_not_set" errors
     }
     
     /**
@@ -214,7 +220,9 @@ class Kura_AI_File_Monitor {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        \dbDelta($sql);
+        if (function_exists('dbDelta')) {
+            \dbDelta($sql);
+        }
     }
 
     /**
@@ -332,7 +340,7 @@ class Kura_AI_File_Monitor {
                 'file_size' => $file_info['file_size'],
                 'file_hash' => $file_info['file_hash'],
                 'last_modified' => $file_info['last_modified'],
-                'scan_date' => \current_time('mysql'),
+                'scan_date' => function_exists('current_time') ? \current_time('mysql') : date('Y-m-d H:i:s'),
                 'status' => $file_info['status'],
                 'risk_level' => $file_info['risk_level'],
                 'changes_detected' => $file_info['changes_detected']
@@ -381,7 +389,7 @@ class Kura_AI_File_Monitor {
                 'content' => $content,
                 'hash' => $hash,
                 'description' => \sanitize_text_field($description),
-                'created_at' => \current_time('mysql')
+                'created_at' => function_exists('current_time') ? \current_time('mysql') : date('Y-m-d H:i:s')
             ),
             array('%s', '%s', '%s', '%s', '%s')
         );
@@ -566,7 +574,7 @@ class Kura_AI_File_Monitor {
                 'status' => $result['status'],
                 'risk_level' => $result['risk_level'],
                 'changes_detected' => $result['changes_detected'],
-                'scan_date' => \current_time('mysql')
+                'scan_date' => function_exists('current_time') ? \current_time('mysql') : date('Y-m-d H:i:s')
             ),
             array('%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s')
         );
@@ -672,7 +680,9 @@ class Kura_AI_File_Monitor {
 
     // AJAX handlers
     public function ajax_monitor_file() {
-        \check_ajax_referer('kura_ai_nonce', 'nonce');
+        if (function_exists('check_ajax_referer')) {
+            \check_ajax_referer('kura_ai_nonce', 'nonce');
+        }
         
         if (!\current_user_can('manage_options')) {
             \wp_die(\esc_html__('Insufficient permissions', 'kura-ai'));

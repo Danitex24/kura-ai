@@ -49,6 +49,7 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-analyzer.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-hardening.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-monitor.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-cron-fix.php';
         
         // AI Integration
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-ai-handler.php';
@@ -105,6 +106,9 @@ class Kura_AI {
     }
 
     public function run() {
+        // Initialize cron fix to prevent "could_not_set" errors
+        new \Kura_AI_Cron_Fix();
+        
         $this->loader->run();
     }
 
