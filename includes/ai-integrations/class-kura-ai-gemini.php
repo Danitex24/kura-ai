@@ -83,44 +83,44 @@ class Kura_AI_Gemini implements Kura_AI_Interface {
             )
         );
         
-        $response = wp_remote_post($url, array(
+        $response = \wp_remote_post($url, array(
             'headers' => $headers,
-            'body' => wp_json_encode($body),
+            'body' => \wp_json_encode($body),
             'timeout' => 60
         ));
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
                 'gemini_api_error',
-                __('Error connecting to Gemini API: ', 'kura-ai') . $response->get_error_message()
+                \__('Error connecting to Gemini API: ', 'kura-ai') . $response->get_error_message()
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
         if ($response_code !== 200) {
-            return new WP_Error(
+            return new \WP_Error(
                 'gemini_api_error',
-                __('Gemini API returned error code: ', 'kura-ai') . $response_code
+                \__('Gemini API returned error code: ', 'kura-ai') . $response_code
             );
         }
 
-        $response_body = wp_remote_retrieve_body($response);
-        $data = json_decode($response_body, true);
+        $response_body = \wp_remote_retrieve_body($response);
+        $data = \json_decode($response_body, true);
         if (!$data) {
-            return new WP_Error(
+            return new \WP_Error(
                 'gemini_api_error',
-                __('Invalid response from Gemini API', 'kura-ai')
+                \__('Invalid response from Gemini API', 'kura-ai')
             );
         }
         
         if (empty($data['candidates'][0]['content']['parts'][0]['text'])) {
-            return new WP_Error(
+            return new \WP_Error(
                 'gemini_api_error',
-                __('No suggestion was returned by the AI.', 'kura-ai')
+                \__('No suggestion was returned by the AI.', 'kura-ai')
             );
         }
 
-        return $body['candidates'][0]['content']['parts'][0]['text'];
+        return $data['candidates'][0]['content']['parts'][0]['text'];
     }
 
     /**
@@ -130,19 +130,19 @@ class Kura_AI_Gemini implements Kura_AI_Interface {
      * @return   bool|WP_Error    True if connected, WP_Error if not
      */
     public function verify_connection() {
-        $response = wp_remote_get(
-            'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . '?key=' . urlencode($this->api_key),
+        $response = \wp_remote_get(
+            'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . '?key=' . \urlencode($this->api_key),
             array('timeout' => 15)
         );
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
                 'gemini_connection_error',
-                sprintf(__('Could not connect to Gemini API: %s', 'kura-ai'), $response->get_error_message())
+                \sprintf(\__('Could not connect to Gemini API: %s', 'kura-ai'), $response->get_error_message())
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
         return $response_code === 200;
     }
 
@@ -155,9 +155,15 @@ class Kura_AI_Gemini implements Kura_AI_Interface {
      */
     private function build_prompt($issue) {
         $prompt = "You are a WordPress security expert. I need help with a security issue:\n\n";
-        $prompt .= "Issue Type: " . $issue['type'] . "\n";
-        $prompt .= "Severity: " . $issue['severity'] . "\n";
-        $prompt .= "Message: " . $issue['message'] . "\n";
+        
+        // Safely access array keys with defaults
+        $issue_type = isset($issue['type']) ? $issue['type'] : 'Unknown';
+        $issue_severity = isset($issue['severity']) ? $issue['severity'] : 'Medium';
+        $issue_message = isset($issue['message']) ? $issue['message'] : 'No details provided';
+        
+        $prompt .= "Issue Type: " . $issue_type . "\n";
+        $prompt .= "Severity: " . $issue_severity . "\n";
+        $prompt .= "Message: " . $issue_message . "\n";
 
         if (!empty($issue['fix'])) {
             $prompt .= "Current suggested fix: " . $issue['fix'] . "\n";

@@ -60,15 +60,30 @@
 /* Chatbot Window */
 .kura-ai-chatbot-window {
     position: absolute;
-    width: 350px;
-    height: 500px;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    width: 400px;
+    height: 550px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1);
     display: none;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.kura-ai-chatbot-window.show {
+    display: flex;
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.kura-ai-chatbot-window.hide {
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
 }
 
 .kura-ai-chatbot-bottom-right .kura-ai-chatbot-window,
@@ -95,64 +110,228 @@
 .kura-ai-chatbot-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 16px 20px;
+    padding: 18px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-radius: 16px 16px 0 0;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.kura-ai-chatbot-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.1) 100%);
+    pointer-events: none;
 }
 
 .kura-ai-chatbot-title {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    font-size: 16px;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+    position: relative;
 }
 
+.kura-ai-chatbot-title svg {
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.kura-ai-chatbot-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 1;
+    position: relative;
+}
+
+.kura-ai-chatbot-reset,
+.kura-ai-chatbot-new,
 .kura-ai-chatbot-close {
-    background: none;
-    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.9;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 32px;
+    height: 32px;
+}
+
+.kura-ai-chatbot-reset:hover,
+.kura-ai-chatbot-new:hover,
+.kura-ai-chatbot-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    opacity: 1;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.kura-ai-chatbot-reset:active,
+.kura-ai-chatbot-new:active,
+.kura-ai-chatbot-close:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual button styling */
+.kura-ai-chatbot-reset {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.kura-ai-chatbot-reset:hover {
+    background: rgba(34, 197, 94, 0.3);
+    border-color: rgba(34, 197, 94, 0.5);
+}
+
+.kura-ai-chatbot-new {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.kura-ai-chatbot-new:hover {
+    background: rgba(59, 130, 246, 0.3);
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.kura-ai-chatbot-close {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 .kura-ai-chatbot-close:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
 }
 
 /* Messages Container */
 .kura-ai-chatbot-messages {
     flex: 1;
-    padding: 20px;
+    padding: 24px;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    background: #f8f9fa;
+    gap: 18px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    scroll-behavior: smooth;
+    scroll-padding: 24px;
+    position: relative;
+    min-height: 300px;
+    max-height: calc(550px - 140px);
 }
 
+/* Scroll indicator for when there are more messages above */
+.kura-ai-chatbot-messages::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: linear-gradient(to bottom, rgba(248, 249, 250, 0.9), transparent);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.kura-ai-chatbot-messages.has-scroll::before {
+    opacity: 1;
+}
+
+/* Enhanced scrollbar - more visible */
 .kura-ai-chatbot-messages::-webkit-scrollbar {
-    width: 6px;
+    width: 12px;
 }
 
 .kura-ai-chatbot-messages::-webkit-scrollbar-track {
-    background: transparent;
+    background: #e2e8f0;
+    border-radius: 6px;
+    margin: 8px 0;
+    border: 1px solid #cbd5e0;
 }
 
 .kura-ai-chatbot-messages::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 30px;
 }
 
 .kura-ai-chatbot-messages::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.kura-ai-chatbot-messages::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+    transform: scale(0.95);
+}
+
+/* Enhanced scrollbar for Firefox */
+.kura-ai-chatbot-messages {
+    scrollbar-width: auto;
+    scrollbar-color: #667eea #e2e8f0;
+}
+
+/* Temporary Notifications */
+.kura-ai-temp-notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1000;
+    display: none;
+    white-space: nowrap;
+}
+
+.kura-ai-temp-success {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.kura-ai-temp-info {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.kura-ai-temp-error {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* Messages */
@@ -186,7 +365,11 @@
     padding: 12px 16px;
     border-radius: 18px;
     word-wrap: break-word;
-    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    max-height: none;
+    white-space: pre-wrap;
 }
 
 .kura-ai-message-user .kura-ai-message-content {
@@ -257,26 +440,87 @@
     }
 }
 
+/* Preset Prompts */
+.kura-ai-preset-prompts {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f0f4f8;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.kura-ai-prompts-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.kura-ai-prompt-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kura-ai-prompt-btn {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kura-ai-prompt-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.kura-ai-prompt-btn:active {
+    transform: translateY(0);
+}
+
+/* Hide prompts after first message */
+.kura-ai-chatbot-messages.has-user-message .kura-ai-preset-prompts {
+    display: none;
+}
+
 /* Input Area */
 .kura-ai-chatbot-input {
-    padding: 16px 20px;
-    background: white;
-    border-top: 1px solid #e2e8f0;
+    padding: 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    backdrop-filter: blur(10px);
 }
 
 .kura-ai-input-container {
     display: flex;
     align-items: flex-end;
     gap: 12px;
-    background: #f7fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 24px;
-    padding: 8px 12px;
-    transition: border-color 0.2s ease;
+    background: rgba(249, 250, 251, 0.8);
+    border: 2px solid rgba(226, 232, 240, 0.6);
+    border-radius: 16px;
+    padding: 12px 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .kura-ai-input-container:focus-within {
     border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
 }
 
 #kura-ai-message-input {
@@ -291,7 +535,7 @@
     min-height: 20px;
     max-height: 100px;
     font-family: inherit;
-    color: #2d3748;
+    color: #000000 !important;
 }
 
 #kura-ai-message-input::placeholder {
@@ -300,32 +544,38 @@
 
 #kura-ai-send-button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
     border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
+    min-width: 44px;
+    height: 44px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    backdrop-filter: blur(10px);
     flex-shrink: 0;
 }
 
 #kura-ai-send-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
 
 #kura-ai-send-button:active {
-    transform: scale(0.95);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
 }
 
 #kura-ai-send-button:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
 }
 
 /* Responsive Design */
@@ -390,11 +640,54 @@
     }
     
     #kura-ai-message-input {
-        color: #e2e8f0;
+        color: #000000 !important;
     }
     
     #kura-ai-message-input::placeholder {
         color: #718096;
+    }
+    
+    .kura-ai-preset-prompts {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .kura-ai-prompts-title {
+        color: #e2e8f0;
+    }
+    
+    .kura-ai-prompt-btn {
+        background: #4a5568;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    
+    .kura-ai-prompt-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .kura-ai-chatbot-messages::-webkit-scrollbar-track {
+        background: #374151;
+    }
+    
+    .kura-ai-chatbot-messages::-webkit-scrollbar-thumb {
+        background: #6b7280;
+        border-color: #4b5563;
+    }
+    
+    .kura-ai-chatbot-messages::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+        border-color: #6b7280;
+    }
+    
+    .kura-ai-chatbot-messages::-webkit-scrollbar-thumb:active {
+        background: #d1d5db;
+    }
+    
+    .kura-ai-chatbot-messages::before {
+        background: linear-gradient(to bottom, rgba(45, 55, 72, 0.9), transparent);
     }
 }
 

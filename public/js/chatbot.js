@@ -35,6 +35,16 @@ jQuery(document).ready(function($) {
                 this.close();
             });
             
+            // Reset chat
+            $(document).on('click', '#kura-ai-chatbot-reset', () => {
+                this.resetChat();
+            });
+            
+            // New chat
+            $(document).on('click', '#kura-ai-chatbot-new', () => {
+                this.newChat();
+            });
+            
             // Send message on button click
             $(document).on('click', '#kura-ai-send-button', () => {
                 this.sendMessage();
@@ -59,6 +69,20 @@ jQuery(document).ready(function($) {
                     this.close();
                 }
             });
+            
+            // Handle preset prompt clicks
+            $(document).on('click', '.kura-ai-prompt-btn', (e) => {
+                const prompt = $(e.target).data('prompt');
+                if (prompt) {
+                    $('#kura-ai-message-input').val(prompt);
+                    this.sendMessage();
+                }
+            });
+            
+            // Handle scroll indicator
+            $(document).on('scroll', '#kura-ai-chatbot-messages', () => {
+                this.updateScrollIndicator();
+            });
         }
         
         toggle() {
@@ -71,16 +95,34 @@ jQuery(document).ready(function($) {
         
         open() {
             this.isOpen = true;
+            const $window = $('#kura-ai-chatbot-window');
             $('#kura-ai-chatbot').addClass('kura-ai-chatbot-open');
-            $('#kura-ai-chatbot-window').slideDown(300);
-            $('#kura-ai-message-input').focus();
-            this.scrollToBottom();
+            
+            // Show the window with CSS transitions
+            $window.css('display', 'flex');
+            setTimeout(() => {
+                $window.addClass('show').removeClass('hide');
+            }, 10);
+            
+            // Focus input after animation
+            setTimeout(() => {
+                $('#kura-ai-message-input').focus();
+                this.scrollToBottom();
+            }, 200);
         }
         
         close() {
             this.isOpen = false;
+            const $window = $('#kura-ai-chatbot-window');
             $('#kura-ai-chatbot').removeClass('kura-ai-chatbot-open');
-            $('#kura-ai-chatbot-window').slideUp(300);
+            
+            // Hide the window with CSS transitions
+            $window.addClass('hide').removeClass('show');
+            
+            // Hide completely after animation
+            setTimeout(() => {
+                $window.css('display', 'none');
+            }, 400);
         }
         
         sendMessage() {
@@ -119,7 +161,18 @@ jQuery(document).ready(function($) {
             `;
             
             messagesContainer.append(messageHtml);
+            
+            // Hide preset prompts after first user message
+            if (type === 'user') {
+                messagesContainer.addClass('has-user-message');
+            }
+            
             this.scrollToBottom();
+            
+            // Update scroll indicator
+            setTimeout(() => {
+                this.updateScrollIndicator();
+            }, 350);
             
             // Save to history
             this.messageHistory.push({
@@ -191,7 +244,24 @@ jQuery(document).ready(function($) {
         
         scrollToBottom() {
             const messagesContainer = $('#kura-ai-chatbot-messages');
-            messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
+            const container = messagesContainer[0];
+            
+            if (container) {
+                // Use smooth scrolling with animation
+                messagesContainer.animate({
+                    scrollTop: container.scrollHeight
+                }, 300, 'swing');
+            }
+        }
+        
+        updateScrollIndicator() {
+            const messagesContainer = $('#kura-ai-chatbot-messages');
+            const container = messagesContainer[0];
+            
+            if (container) {
+                const isScrolled = container.scrollTop > 20;
+                messagesContainer.toggleClass('has-scroll', isScrolled);
+            }
         }
         
         escapeHtml(text) {
@@ -222,6 +292,7 @@ jQuery(document).ready(function($) {
                     // Clear existing messages except welcome message
                     messagesContainer.find('.kura-ai-message:not(:first)').remove();
                     
+                    let hasUserMessage = false;
                     recentMessages.forEach(msg => {
                         const timestamp = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         const messageHtml = `
@@ -233,7 +304,16 @@ jQuery(document).ready(function($) {
                             </div>
                         `;
                         messagesContainer.append(messageHtml);
+                        
+                        if (msg.type === 'user') {
+                            hasUserMessage = true;
+                        }
                     });
+                    
+                    // Hide preset prompts if there are user messages in history
+                    if (hasUserMessage) {
+                        messagesContainer.addClass('has-user-message');
+                    }
                 }
             } catch (e) {
                 console.error('Error loading chat history:', e);
@@ -246,12 +326,75 @@ jQuery(document).ready(function($) {
             localStorage.removeItem('kura_ai_chat_history');
             
             // Clear messages except welcome message
-            $('#kura-ai-chatbot-messages').find('.kura-ai-message:not(:first)').remove();
+            const messagesContainer = $('#kura-ai-chatbot-messages');
+            messagesContainer.find('.kura-ai-message:not(:first)').remove();
+            messagesContainer.removeClass('has-user-message');
+            
+            // Show preset prompts again
+            $('#kura-ai-preset-prompts').show();
+        }
+        
+        resetChat() {
+            // Show confirmation dialog
+            if (confirm('Are you sure you want to reset the chat? This will clear all messages.')) {
+                this.clearHistory();
+                
+                // Clear input field
+                $('#kura-ai-message-input').val('');
+                this.adjustInputHeight();
+                
+                // Scroll to top to show welcome message
+                this.scrollToTop();
+                
+                // Show success feedback
+                this.showTemporaryMessage('Chat has been reset', 'success');
+            }
+        }
+        
+        newChat() {
+            // Clear input field and start fresh
+            $('#kura-ai-message-input').val('').focus();
+            this.adjustInputHeight();
+            
+            // Scroll to bottom for new conversation
+            this.scrollToBottom();
+            
+            // Show temporary message
+            this.showTemporaryMessage('Ready for a new conversation!', 'info');
+        }
+        
+        scrollToTop() {
+            const messagesContainer = $('#kura-ai-chatbot-messages');
+            messagesContainer.animate({
+                scrollTop: 0
+            }, 300, 'swing');
+        }
+        
+        showTemporaryMessage(text, type = 'info') {
+            // Create temporary notification
+            const notification = $(`
+                <div class="kura-ai-temp-notification kura-ai-temp-${type}">
+                    ${text}
+                </div>
+            `);
+            
+            // Add to header
+            $('.kura-ai-chatbot-header').append(notification);
+            
+            // Animate in
+            notification.fadeIn(200);
+            
+            // Remove after 2 seconds
+            setTimeout(() => {
+                notification.fadeOut(200, () => {
+                    notification.remove();
+                });
+            }, 2000);
         }
     }
     
     // Initialize chatbot when DOM is ready
-    if (typeof kuraAiChatbot !== 'undefined') {
+    if (typeof kuraAiChatbot !== 'undefined' && kuraAiChatbot.config && (kuraAiChatbot.config.enabled === true || kuraAiChatbot.config.enabled === '1' || kuraAiChatbot.config.enabled === 1)) {
         new KuraAIChatbot();
     }
 });

@@ -50,6 +50,18 @@
                 e.preventDefault();
                 this.close();
             });
+            
+            // Reset chat
+            $('#kura-ai-chatbot-reset').on('click', (e) => {
+                e.preventDefault();
+                this.resetChat();
+            });
+            
+            // New chat
+            $('#kura-ai-chatbot-new').on('click', (e) => {
+                e.preventDefault();
+                this.newChat();
+            });
 
             // Handle form submission
             $form.on('submit', (e) => {
@@ -100,16 +112,20 @@
          * Open chatbot
          */
         open() {
-            const $container = $('#kura-ai-chatbot');
-            const $input = $('#kura-chatbot-message');
-            
-            $container.addClass('open');
             this.isOpen = true;
+            const $window = $('#kura-chatbot-window');
+            $('#kura-ai-chatbot').addClass('open');
+            
+            // Show the window with CSS transitions
+            $window.css('display', 'flex');
+            setTimeout(() => {
+                $window.addClass('show').removeClass('hide');
+            }, 10);
             
             // Focus input after animation
             setTimeout(() => {
-                $input.focus();
-            }, 300);
+                $('#kura-chatbot-message').focus();
+            }, 200);
             
             // Scroll to bottom
             this.scrollToBottom();
@@ -119,10 +135,17 @@
          * Close chatbot
          */
         close() {
-            const $container = $('#kura-ai-chatbot');
-            
-            $container.removeClass('open');
             this.isOpen = false;
+            const $window = $('#kura-chatbot-window');
+            $('#kura-ai-chatbot').removeClass('open');
+            
+            // Hide the window with CSS transitions
+            $window.addClass('hide').removeClass('show');
+            
+            // Hide completely after animation
+            setTimeout(() => {
+                $window.css('display', 'none');
+            }, 400);
         }
 
         /**
@@ -344,6 +367,74 @@
             } catch (e) {
                 // Ignore localStorage errors
             }
+        }
+        
+        /**
+         * Reset chat with confirmation
+         */
+        resetChat() {
+            if (confirm('Are you sure you want to reset the chat? This will clear all messages.')) {
+                this.clearHistory();
+                
+                // Clear input field
+                $('#kura-chatbot-message').val('');
+                this.adjustInputHeight();
+                
+                // Scroll to top to show welcome message
+                this.scrollToTop();
+                
+                // Show success feedback
+                this.showTemporaryMessage('Chat has been reset', 'success');
+            }
+        }
+        
+        /**
+         * Start new chat
+         */
+        newChat() {
+            // Clear input field and start fresh
+            $('#kura-chatbot-message').val('').focus();
+            this.adjustInputHeight();
+            
+            // Scroll to bottom for new conversation
+            this.scrollToBottom();
+            
+            // Show temporary message
+            this.showTemporaryMessage('Ready for a new conversation!', 'info');
+        }
+        
+        /**
+         * Scroll to top of messages
+         */
+        scrollToTop() {
+            const $messages = $('#kura-chatbot-messages');
+            $messages.animate({
+                scrollTop: 0
+            }, 300);
+        }
+        
+        /**
+         * Show temporary notification message
+         */
+        showTemporaryMessage(text, type = 'info') {
+            const $notification = $(`
+                <div class="kura-chatbot-temp-notification kura-chatbot-temp-${type}">
+                    ${text}
+                </div>
+            `);
+            
+            // Add to header
+            $('.kura-chatbot-header').append($notification);
+            
+            // Animate in
+            $notification.fadeIn(200);
+            
+            // Remove after 2 seconds
+            setTimeout(() => {
+                $notification.fadeOut(200, () => {
+                    $notification.remove();
+                });
+            }, 2000);
         }
     }
 

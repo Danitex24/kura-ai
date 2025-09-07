@@ -75,34 +75,34 @@ class Kura_AI_Claude implements Kura_AI_Interface {
             'max_tokens' => 1000
         );
         
-        $response = wp_remote_post('https://api.anthropic.com/v1/messages', array(
+        $response = \wp_remote_post('https://api.anthropic.com/v1/messages', array(
             'headers' => $headers,
-            'body' => wp_json_encode($body),
+            'body' => \wp_json_encode($body),
             'timeout' => 30
         ));
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
                 'claude_api_error',
-                sprintf(__('Claude API Error: %s', 'kura-ai'), $response->get_error_message())
+                \sprintf(\__('Claude API Error: %s', 'kura-ai'), $response->get_error_message())
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
 
         if ($response_code !== 200) {
-            return new WP_Error(
+            return new \WP_Error(
                 'claude_api_error',
-                sprintf(__('Claude API Error: Received response code %d', 'kura-ai'), $response_code)
+                \sprintf(\__('Claude API Error: Received response code %d', 'kura-ai'), $response_code)
             );
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $body = \json_decode(\wp_remote_retrieve_body($response), true);
 
         if (empty($body['content'][0]['text'])) {
-            return new WP_Error(
+            return new \WP_Error(
                 'claude_api_error',
-                __('No suggestion was returned by the AI.', 'kura-ai')
+                \__('No suggestion was returned by the AI.', 'kura-ai')
             );
         }
 
@@ -135,20 +135,52 @@ class Kura_AI_Claude implements Kura_AI_Interface {
             'max_tokens' => 10
         );
 
-        $response = wp_remote_post($api_url, array(
+        $response = \wp_remote_post($api_url, array(
             'headers' => $headers,
-            'body' => wp_json_encode($body),
+            'body' => \wp_json_encode($body),
             'timeout' => 10
         ));
 
-        if (is_wp_error($response)) {
-            return new WP_Error(
+        if (\is_wp_error($response)) {
+            return new \WP_Error(
                 'claude_connection_error',
-                sprintf(__('Could not connect to Claude API: %s', 'kura-ai'), $response->get_error_message())
+                \sprintf(\__('Could not connect to Claude API: %s', 'kura-ai'), $response->get_error_message())
             );
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
+        $response_code = \wp_remote_retrieve_response_code($response);
         return $response_code === 200;
+    }
+
+    /**
+     * Build the prompt for the AI.
+     *
+     * @since    1.0.0
+     * @param    array     $issue    The security issue data
+     * @return   string    The formatted prompt
+     */
+    private function build_prompt($issue) {
+        $prompt = "You are a WordPress security expert. I need help with a security issue:\n\n";
+        
+        // Safely access array keys with defaults
+        $issue_type = isset($issue['type']) ? $issue['type'] : 'Unknown';
+        $issue_severity = isset($issue['severity']) ? $issue['severity'] : 'Medium';
+        $issue_message = isset($issue['message']) ? $issue['message'] : 'No details provided';
+        
+        $prompt .= "Issue Type: " . $issue_type . "\n";
+        $prompt .= "Severity: " . $issue_severity . "\n";
+        $prompt .= "Message: " . $issue_message . "\n";
+
+        if (!empty($issue['fix'])) {
+            $prompt .= "Current suggested fix: " . $issue['fix'] . "\n";
+        }
+
+        $prompt .= "\nPlease provide:\n";
+        $prompt .= "1. A detailed explanation of the risk\n";
+        $prompt .= "2. Step-by-step instructions to fix the issue\n";
+        $prompt .= "3. Additional recommendations to prevent similar issues\n";
+        $prompt .= "\nFormat your response with clear headings and bullet points.";
+
+        return $prompt;
     }
 }

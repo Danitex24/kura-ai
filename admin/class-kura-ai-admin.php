@@ -633,7 +633,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
             wp_send_json_error(array(
                 'message' => esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -666,7 +666,7 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
             wp_send_json_error(array(
                 'message' => esc_html__('Security check failed.', 'kura-ai')
             ));

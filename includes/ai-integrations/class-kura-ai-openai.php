@@ -135,9 +135,15 @@ class Kura_AI_OpenAI implements Kura_AI_Interface {
     private function build_prompt($issue) {
         $prompt = "I'm managing a WordPress site and have identified a security issue. ";
         $prompt .= "Here are the details:\n\n";
-        $prompt .= "Issue Type: " . $issue['type'] . "\n";
-        $prompt .= "Severity: " . $issue['severity'] . "\n";
-        $prompt .= "Message: " . $issue['message'] . "\n";
+        
+        // Safely access array keys with defaults
+        $issue_type = isset($issue['type']) ? $issue['type'] : 'Unknown';
+        $issue_severity = isset($issue['severity']) ? $issue['severity'] : 'Medium';
+        $issue_message = isset($issue['message']) ? $issue['message'] : 'No details provided';
+        
+        $prompt .= "Issue Type: " . $issue_type . "\n";
+        $prompt .= "Severity: " . $issue_severity . "\n";
+        $prompt .= "Message: " . $issue_message . "\n";
 
         if (!empty($issue['fix'])) {
             $prompt .= "Current suggested fix: " . $issue['fix'] . "\n";

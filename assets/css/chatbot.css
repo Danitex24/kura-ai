@@ -119,21 +119,40 @@
     50% { opacity: 0.5; }
 }
 
+.kura-chatbot-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kura-chatbot-reset,
+.kura-chatbot-new,
 .kura-chatbot-close {
     background: none;
     border: none;
     color: white;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.8;
 }
 
+.kura-chatbot-reset:hover,
+.kura-chatbot-new:hover,
 .kura-chatbot-close:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.kura-chatbot-reset:active,
+.kura-chatbot-new:active,
+.kura-chatbot-close:active {
+    transform: scale(0.95);
 }
 
 /* Messages Container */
@@ -147,21 +166,41 @@
     background: #f8fafc;
 }
 
+/* Enhanced scrollbar - more visible */
 .kura-chatbot-messages::-webkit-scrollbar {
-    width: 4px;
+    width: 12px;
 }
 
 .kura-chatbot-messages::-webkit-scrollbar-track {
-    background: transparent;
+    background: #e2e8f0;
+    border-radius: 6px;
+    margin: 8px 0;
+    border: 1px solid #cbd5e0;
 }
 
 .kura-chatbot-messages::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-height: 30px;
 }
 
 .kura-chatbot-messages::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.kura-chatbot-messages::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #4c51bf 0%, #553c9a 100%);
+    transform: scale(0.95);
+}
+
+/* Enhanced scrollbar for Firefox */
+.kura-chatbot-messages {
+    scrollbar-width: auto;
+    scrollbar-color: #667eea #e2e8f0;
 }
 
 /* Message Bubbles */
@@ -267,7 +306,7 @@
 
 .kura-chatbot-typing-text {
     font-size: 12px;
-    color: #6b7280;
+    color: #090a0a;
     font-style: italic;
 }
 
@@ -376,8 +415,8 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     .kura-chatbot-window {
-        background: #1f2937;
-        color: #f9fafb;
+        background: #fdfdfd;
+        color: #121417;
     }
     
     .kura-chatbot-messages {
@@ -385,8 +424,8 @@
     }
     
     .kura-chatbot-message-bot .kura-chatbot-message-content {
-        background: #374151;
-        color: #f9fafb;
+        background: #f8f9fa;
+        color: #0d0d0d;
         border-color: #4b5563;
     }
     
@@ -396,8 +435,8 @@
     }
     
     .kura-chatbot-input input {
-        background: #374151;
-        color: #f9fafb;
+        background: #ffffff;
+        color: #0e0e0e;
         border-color: #4b5563;
     }
     
@@ -435,6 +474,44 @@
     .kura-chatbot-message-user .kura-chatbot-message-content {
         background: #000;
     }
+}
+
+/* Temporary Notifications */
+.kura-chatbot-temp-notification {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1000;
+    display: none;
+    white-space: nowrap;
+}
+
+.kura-chatbot-temp-success {
+    background: rgba(34, 197, 94, 0.9);
+    color: white;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.kura-chatbot-temp-info {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.kura-chatbot-temp-error {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* Reduced motion */
