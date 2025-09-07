@@ -60,6 +60,7 @@ class Kura_AI {
         // Admin and public interfaces
         require_once KURA_AI_PLUGIN_DIR . 'admin/class-kura-ai-admin.php';
         require_once KURA_AI_PLUGIN_DIR . 'public/class-kura-ai-public.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-chatbot.php';
 
         $this->loader = new Kura_AI_Loader();
     }
@@ -79,12 +80,24 @@ class Kura_AI {
         // AJAX handlers are registered in the admin class via register_ajax_actions()
         
         // All AJAX handlers are registered in the admin class via register_ajax_actions()
+        
+        // Initialize chatbot for admin AJAX handlers
+        $chatbot = new Kura_Ai_Chatbot();
+        $this->loader->add_action('wp_ajax_kura_ai_chat_message', $chatbot, 'handle_chat_message');
+        $this->loader->add_action('wp_ajax_nopriv_kura_ai_chat_message', $chatbot, 'handle_chat_message');
+        $this->loader->add_action('wp_ajax_save_chatbot_settings', $plugin_admin, 'handle_save_chatbot_settings');
+        $this->loader->add_action('wp_ajax_save_chatbot_position', $plugin_admin, 'handle_save_chatbot_position');
     }
 
     private function define_public_hooks() {
         $plugin_public = new Kura_AI_Public($this->get_plugin_name(), $this->get_version());
         $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
         $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
+        
+        // Initialize chatbot for frontend
+        $chatbot = new Kura_Ai_Chatbot();
+        $this->loader->add_action('wp_enqueue_scripts', $chatbot, 'enqueue_scripts');
+        $this->loader->add_action('wp_footer', $chatbot, 'render_chatbot');
     }
 
     public function run() {

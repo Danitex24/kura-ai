@@ -2115,8 +2115,137 @@ body:not(.swal2-shown) {
     font-weight: bold;
 }
 
+/* Chatbot Settings Styles */
+.kura-ai-chatbot-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.kura-ai-setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.kura-ai-setting-row:hover {
+    background: #f0f0f1;
+    border-color: #c3c4c7;
+}
+
+.setting-info {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.setting-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.setting-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.setting-control {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Toggle Switch Styles */
+.kura-ai-toggle {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.kura-ai-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.kura-ai-toggle .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.kura-ai-toggle .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.kura-ai-toggle input:checked + .slider {
+    background-color: #2271b1;
+}
+
+.kura-ai-toggle input:focus + .slider {
+    box-shadow: 0 0 1px #2271b1;
+}
+
+.kura-ai-toggle input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Select Styles for Chatbot Position */
+.setting-control select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 14px;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.setting-control select:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
 /* Responsive Adjustments */
 @media screen and (max-width: 782px) {
+    .kura-ai-setting-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .setting-info {
+        margin-right: 0;
+    }
+    
+    .setting-control {
+        justify-content: flex-start;
+    }
     .scan-controls {
         flex-direction: column;
         align-items: stretch;

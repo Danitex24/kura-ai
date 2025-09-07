@@ -90,6 +90,48 @@ if (!function_exists('esc_attr')) {
             </div>
         </div>
 
+        <!-- Chatbot Settings Card -->
+        <div class="kura-ai-card kura-ai-chatbot-card">
+            <div class="kura-ai-card-header">
+                <h2><?php \_e('Chatbot Settings', 'kura-ai'); ?></h2>
+            </div>
+            <div class="kura-ai-card-body">
+                <div class="kura-ai-chatbot-settings">
+                    <div class="kura-ai-setting-row">
+                        <div class="setting-info">
+                            <h3><?php \_e('Enable AI Chatbot', 'kura-ai'); ?></h3>
+                            <p><?php \_e('Allow visitors to chat with AI about your website and plugin features.', 'kura-ai'); ?></p>
+                        </div>
+                        <div class="setting-control">
+                            <?php 
+                            $chatbot_enabled = get_option('kura_ai_chatbot_enabled', false);
+                            ?>
+                            <label class="kura-ai-toggle">
+                                <input type="checkbox" id="kura-ai-chatbot-enabled" <?php echo $chatbot_enabled ? 'checked' : ''; ?> />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="kura-ai-setting-row">
+                        <div class="setting-info">
+                            <h3><?php \_e('Chatbot Position', 'kura-ai'); ?></h3>
+                            <p><?php \_e('Choose where the chatbot appears on your website.', 'kura-ai'); ?></p>
+                        </div>
+                        <div class="setting-control">
+                            <?php 
+                            $chatbot_position = get_option('kura_ai_chatbot_position', 'bottom-right');
+                            ?>
+                            <select id="kura-ai-chatbot-position">
+                                <option value="bottom-right" <?php echo $chatbot_position === 'bottom-right' ? 'selected' : ''; ?>><?php \_e('Bottom Right', 'kura-ai'); ?></option>
+                                <option value="bottom-left" <?php echo $chatbot_position === 'bottom-left' ? 'selected' : ''; ?>><?php \_e('Bottom Left', 'kura-ai'); ?></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Advanced Tools Card -->
         <div class="kura-ai-card kura-ai-tools-card">
             <div class="kura-ai-card-header">
@@ -271,6 +313,39 @@ if (!function_exists('esc_attr')) {
                         confirmButton: 'button button-primary'
                     }
                 });
+            });
+        });
+
+        // Handle chatbot settings
+        $('#kura-ai-chatbot-enabled').on('change', function() {
+            const isEnabled = $(this).is(':checked');
+            
+            $.post(kura_ai_ajax.ajax_url, {
+                action: 'save_chatbot_settings',
+                enabled: isEnabled ? 1 : 0,
+                _wpnonce: $('.save-api-key').first().data('nonce')
+            }, function(response) {
+                if (response.success) {
+                    console.log('Chatbot setting updated: ' + (isEnabled ? 'enabled' : 'disabled'));
+                } else {
+                    console.error('Failed to update chatbot setting');
+                }
+            });
+        });
+
+        $('#kura-ai-chatbot-position').on('change', function() {
+            const position = $(this).val();
+            
+            $.post(kura_ai_ajax.ajax_url, {
+                action: 'save_chatbot_position',
+                position: position,
+                _wpnonce: $('.save-api-key').first().data('nonce')
+            }, function(response) {
+                if (response.success) {
+                    console.log('Chatbot position updated: ' + position);
+                } else {
+                    console.error('Failed to update chatbot position');
+                }
             });
         });
     });

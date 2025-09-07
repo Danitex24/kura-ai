@@ -148,6 +148,9 @@ if (!function_exists('wp_unslash')) {
 if (!function_exists('sanitize_email')) {
     function sanitize_email($email) { return $email; }
 }
+if (!function_exists('wp_verify_nonce')) {
+    function wp_verify_nonce($nonce, $action = -1) { return true; }
+}
 if (!function_exists('is_email')) {
     function is_email($email) { return filter_var($email, FILTER_VALIDATE_EMAIL); }
 }
@@ -615,6 +618,76 @@ class Kura_AI_Admin {
         
         wp_send_json_success(array(
             'message' => 'Settings saved successfully.'
+        ));
+    }
+
+    /**
+     * Handle save chatbot settings request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_save_chatbot_settings() {
+        if (!$this->is_valid_ajax_request()) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid request.', 'kura-ai')
+            ));
+        }
+        
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        $enabled = isset($_POST['enabled']) ? (bool) $_POST['enabled'] : false;
+        
+        update_option('kura_ai_chatbot_enabled', $enabled);
+        
+        wp_send_json_success(array(
+            'message' => esc_html__('Chatbot setting updated successfully.', 'kura-ai')
+        ));
+    }
+
+    /**
+     * Handle save chatbot position request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_save_chatbot_position() {
+        if (!$this->is_valid_ajax_request()) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid request.', 'kura-ai')
+            ));
+        }
+        
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        $position = sanitize_text_field($_POST['position'] ?? 'bottom-right');
+        
+        if (!in_array($position, ['bottom-right', 'bottom-left'])) {
+            $position = 'bottom-right';
+        }
+        
+        update_option('kura_ai_chatbot_position', $position);
+        
+        wp_send_json_success(array(
+            'message' => esc_html__('Chatbot position updated successfully.', 'kura-ai')
         ));
     }
 
@@ -1465,7 +1538,7 @@ class Kura_AI_Admin {
             \wp_send_json_error(array('message' => \esc_html__('Insufficient permissions.', 'kura-ai')));
         }
 
-        $file_path = \sanitize_text_field(\wp_unslash($_POST['file_path'] ?? ''));
+        $file_path = \sanitize_text_field($_POST['file_path'] ?? '');
         
         if (empty($file_path)) {
             \wp_send_json_error(array('message' => \esc_html__('File path is required.', 'kura-ai')));
@@ -1497,7 +1570,7 @@ class Kura_AI_Admin {
             \wp_send_json_error(array('message' => \esc_html__('Insufficient permissions.', 'kura-ai')));
         }
 
-        $file_path = \sanitize_text_field(\wp_unslash($_POST['file_path'] ?? ''));
+        $file_path = \sanitize_text_field($_POST['file_path'] ?? '');
         
         if (empty($file_path)) {
             \wp_send_json_error(array('message' => \esc_html__('File path is required.', 'kura-ai')));
@@ -1601,7 +1674,7 @@ class Kura_AI_Admin {
      * @since    1.0.0
      */
     public function handle_get_chart_data() {
-        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!\wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
             \wp_send_json_error(array(
                 'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
