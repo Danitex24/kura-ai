@@ -1457,12 +1457,82 @@ class Kura_AI_Admin {
         wp_send_json_error(array('message' => __('Feedback submission not yet implemented.', 'kura-ai')));
     }
     
+    /**
+     * Handle apply htaccess rules AJAX request.
+     *
+     * @since    1.0.0
+     */
     public function handle_apply_htaccess_rules() {
-        wp_send_json_error(array('message' => __('Htaccess rules feature not yet implemented.', 'kura-ai')));
+        if (!$this->is_valid_ajax_request()) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid request.', 'kura-ai')
+            ));
+        }
+        
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        // Initialize the hardening class
+        $hardening = new \Kura_AI\Kura_AI_Hardening();
+        
+        // Apply the htaccess rules
+        $result = $hardening->apply_htaccess_rules();
+        
+        if ($result['success']) {
+            wp_send_json_success(array(
+                'message' => $result['message']
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => $result['message']
+            ));
+        }
     }
     
     public function handle_optimize_database() {
-        wp_send_json_error(array('message' => __('Database optimization not yet implemented.', 'kura-ai')));
+        if (!$this->is_valid_ajax_request()) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Invalid request.', 'kura-ai')
+            ));
+        }
+        
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        // Initialize the hardening class
+        $hardening = new \Kura_AI\Kura_AI_Hardening();
+        
+        // Optimize the database
+        $result = $hardening->optimize_database();
+        
+        if ($result['success']) {
+            wp_send_json_success(array(
+                'message' => $result['message'],
+                'details' => $result['details']
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => $result['message']
+            ));
+        }
     }
     
     public function handle_get_metrics() {
