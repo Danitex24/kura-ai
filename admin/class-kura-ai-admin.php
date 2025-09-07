@@ -411,15 +411,15 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
@@ -692,15 +692,15 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
@@ -752,15 +752,15 @@ class Kura_AI_Admin {
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
@@ -1386,15 +1386,15 @@ class Kura_AI_Admin {
      * @since    1.0.0
      */
     public function handle_get_chart_data() {
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
@@ -1404,7 +1404,7 @@ class Kura_AI_Admin {
         }
         
         $chart_data = $this->file_monitor->get_chart_data();
-        wp_send_json_success($chart_data);
+        \wp_send_json_success($chart_data);
     }
     
     /**
@@ -1433,14 +1433,14 @@ class Kura_AI_Admin {
         $result = $this->file_monitor->perform_automatic_scan();
         
         if ($result) {
-            $critical_files = $this->file_monitor->get_critical_files();
-            wp_send_json_success(array(
-                'message' => esc_html__('Security scan completed successfully.', 'kura-ai'),
-                'scanned_files' => count($critical_files)
+            $critical_files = \method_exists($this->file_monitor, 'get_critical_files') ? $this->file_monitor->get_critical_files() : array();
+            \wp_send_json_success(array(
+                'message' => \esc_html__('Security scan completed successfully.', 'kura-ai'),
+                'scanned_files' => \count($critical_files)
             ));
         } else {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security scan failed. Please try again.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security scan failed. Please try again.', 'kura-ai')
             ));
         }
     }
