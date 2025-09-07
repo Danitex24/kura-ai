@@ -3,7 +3,9 @@
 ## Supported AI Services
 Currently supports:
 - OpenAI (GPT-3.5-turbo and above)
-- Coming soon: Claude, Gemini
+- Claude (Claude-3-Opus)
+- DeepSeek (DeepSeek-Chat)
+- Gemini (Gemini-Pro)
 
 ## Obtaining API Keys
 

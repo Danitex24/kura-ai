@@ -14,6 +14,7 @@ use \Exception;
 use Kura_AI\Kura_AI_OpenAI;
 use Kura_AI\Kura_AI_Claude;
 use Kura_AI\Kura_AI_Gemini;
+use Kura_AI\Kura_AI_DeepSeek;
 
 class Kura_AI_AI_Handler {
     private $plugin_name;
@@ -76,6 +77,9 @@ class Kura_AI_AI_Handler {
                     break;
                 case 'gemini':
                     $ai_service = new Kura_AI_Gemini($api_key);
+                    break;
+                case 'deepseek':
+                    $ai_service = new Kura_AI_DeepSeek($api_key);
                     break;
                 default:
                     return new \WP_Error(

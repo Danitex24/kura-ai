@@ -806,7 +806,7 @@ class Kura_AI_Admin {
         }
         
         // Validate provider
-        $allowed_providers = array('openai', 'gemini');
+        $allowed_providers = array('openai', 'gemini', 'claude', 'deepseek');
         if (!in_array($provider, $allowed_providers, true)) {
             wp_send_json_error(array(
                 'message' => esc_html__('Invalid provider.', 'kura-ai')
@@ -898,7 +898,7 @@ class Kura_AI_Admin {
         }
         
         // Validate provider
-        $allowed_providers = array('openai', 'gemini');
+        $allowed_providers = array('openai', 'gemini', 'claude', 'deepseek');
         if (!in_array($provider, $allowed_providers, true)) {
             wp_send_json_error(array(
                 'message' => esc_html__('Invalid provider.', 'kura-ai')
@@ -1884,10 +1884,10 @@ class Kura_AI_Admin {
         // WordPress Information
         $debug_info[] = '=== WordPress Information ===';
         $debug_info[] = 'WordPress Version: ' . $wp_version;
-        $debug_info[] = 'Site URL: ' . \get_site_url();
-        $debug_info[] = 'Home URL: ' . \get_home_url();
+        $debug_info[] = 'Site URL: ' . get_site_url();
+        $debug_info[] = 'Home URL: ' . get_home_url();
         $debug_info[] = 'Admin Email: ' . \get_option('admin_email');
-        $debug_info[] = 'Language: ' . \get_locale();
+        $debug_info[] = 'Language: ' . get_locale();
         $debug_info[] = 'Timezone: ' . \get_option('timezone_string');
         $debug_info[] = 'Debug Mode: ' . (\defined('WP_DEBUG') && \WP_DEBUG ? 'Enabled' : 'Disabled');
         $debug_info[] = '';
@@ -1928,7 +1928,7 @@ class Kura_AI_Admin {
         $active_plugins = \get_option('active_plugins', array());
         $active_plugins = is_array($active_plugins) ? $active_plugins : array();
         foreach ($active_plugins as $plugin) {
-            $plugin_data = \get_plugin_data(\WP_PLUGIN_DIR . '/' . $plugin);
+            $plugin_data = get_plugin_data(\WP_PLUGIN_DIR . '/' . $plugin);
             if (isset($plugin_data['Name']) && isset($plugin_data['Version'])) {
                 $debug_info[] = $plugin_data['Name'] . ' v' . $plugin_data['Version'];
             }
@@ -1936,7 +1936,7 @@ class Kura_AI_Admin {
         $debug_info[] = '';
         
         // Theme Information
-        $theme = \wp_get_theme();
+        $theme = wp_get_theme();
         $debug_info[] = '=== Theme Information ===';
         $debug_info[] = 'Active Theme: ' . $theme->get('Name') . ' v' . $theme->get('Version');
         $debug_info[] = 'Theme Author: ' . $theme->get('Author');

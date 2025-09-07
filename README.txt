@@ -16,7 +16,7 @@ KuraAI is a comprehensive WordPress security plugin that combines automated scan
 Key features:
 
 * Automated security scanning for vulnerabilities
-* AI-powered fix suggestions (OpenAI integration)
+* AI-powered fix suggestions (OpenAI, Claude, DeepSeek, Gemini integration)
 * Email notifications for critical issues
 * Detailed security reports
 * Activity logging
@@ -34,7 +34,7 @@ Key features:
 
 = What AI services are supported? =
 
-Currently supports OpenAI. Claude and Gemini support coming soon.
+Currently supports OpenAI, Claude, DeepSeek, and Gemini. You can configure any of these providers in the settings page.
 
 = Do I need an API key? =
 

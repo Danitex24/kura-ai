@@ -48,7 +48,7 @@ if (!function_exists('esc_attr')) {
                     $settings = get_option('kura_ai_settings', array());
                     $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
                     
-                    foreach (['openai', 'gemini'] as $provider): 
+                    foreach (['openai', 'gemini', 'claude', 'deepseek'] as $provider): 
                         // Get existing API key for this provider
                         $existing_key = $wpdb->get_var($wpdb->prepare(
                             "SELECT api_key FROM $api_keys_table WHERE provider = %s AND status = %s",
@@ -60,11 +60,19 @@ if (!function_exists('esc_attr')) {
                         $is_selected = ($current_provider === $provider);
                     ?>
                         <div class="kura-ai-provider">
+                            <?php 
+                            // Check if SVG exists first, then PNG
+                            $svg_path = KURA_AI_PLUGIN_DIR . 'assets/images/' . $provider . '.svg';
+                            $png_path = KURA_AI_PLUGIN_DIR . 'assets/images/' . $provider . '.png';
+                            $logo_url = '';
+                            if (file_exists($svg_path)) {
+                                $logo_url = KURA_AI_PLUGIN_URL . 'assets/images/' . $provider . '.svg';
+                            } elseif (file_exists($png_path)) {
+                                $logo_url = KURA_AI_PLUGIN_URL . 'assets/images/' . $provider . '.png';
+                            }
+                            ?>
                             <div class="provider-logo <?php echo $provider; ?>-logo"
-                                style="background-image: url('<?php echo \esc_url(KURA_AI_PLUGIN_URL . 'assets/images/' . $provider . '.png'); ?>')">"
-    },
-    {
-      "old_str": 
+                                <?php if ($logo_url): ?>style="background-image: url('<?php echo \esc_url($logo_url); ?>')"<?php endif; ?>>
                             </div>
                             <h3><?php echo ucfirst($provider); ?></h3>
 
@@ -76,10 +84,13 @@ if (!function_exists('esc_attr')) {
                                 </button>
                             </div>
 
-                            <label>
-                                <input type="checkbox" class="enable-provider" data-provider="<?php echo $provider; ?>" <?php echo $is_selected ? 'checked' : ''; ?> />
-                                <?php \_e('Enable', 'kura-ai'); ?>
-                            </label>
+                            <div class="provider-toggle-section">
+                                <span class="toggle-label"><?php \_e('Enable', 'kura-ai'); ?></span>
+                                <label class="kura-ai-toggle">
+                                    <input type="checkbox" class="enable-provider" data-provider="<?php echo $provider; ?>" <?php echo $is_selected ? 'checked' : ''; ?> />
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>

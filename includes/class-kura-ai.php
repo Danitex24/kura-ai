@@ -57,6 +57,7 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-openai.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-gemini.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-claude.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/ai-integrations/class-kura-ai-deepseek.php';
         
         // Admin and public interfaces
         require_once KURA_AI_PLUGIN_DIR . 'admin/class-kura-ai-admin.php';

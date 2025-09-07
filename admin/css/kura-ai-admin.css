@@ -2814,6 +2814,21 @@ body:not(.swal2-shown) {
     height: 34px;
 }
 
+/* Provider Toggle Section */
+.provider-toggle-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding: 10px 0;
+}
+
+.provider-toggle-section .toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #23282d;
+}
+
 .kura-ai-toggle input {
     opacity: 0;
     width: 0;

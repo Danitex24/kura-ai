@@ -601,27 +601,39 @@ msgid "Invalid API key or connection failed"
 msgstr ""
 
 #: includes/ai-integrations/class-kura-ai-claude.php:12
-msgid "Claude Integration (Coming Soon)"
+msgid "Claude Integration"
 msgstr ""
 
-#: includes/ai-integrations/class-kura-ai-claude.php:22
-msgid "Claude AI integration is coming in a future update."
+#: includes/ai-integrations/class-kura-ai-claude.php:85
+msgid "Claude API Error: %s"
 msgstr ""
 
-#: includes/ai-integrations/class-kura-ai-claude.php:26
-msgid "Claude integration not yet available"
+#: includes/ai-integrations/class-kura-ai-claude.php:95
+msgid "Claude API Error: Received response code %d"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-deepseek.php:12
+msgid "DeepSeek Integration"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-deepseek.php:95
+msgid "DeepSeek API Error: %s"
+msgstr ""
+
+#: includes/ai-integrations/class-kura-ai-deepseek.php:105
+msgid "DeepSeek API Error: Received response code %d"
 msgstr ""
 
 #: includes/ai-integrations/class-kura-ai-gemini.php:12
-msgid "Gemini Integration (Coming Soon)"
+msgid "Gemini Integration"
 msgstr ""
 
-#: includes/ai-integrations/class-kura-ai-gemini.php:22
-msgid "Gemini AI integration is coming in a future update."
+#: includes/ai-integrations/class-kura-ai-gemini.php:85
+msgid "Gemini API Error: %s"
 msgstr ""
 
-#: includes/ai-integrations/class-kura-ai-gemini.php:26
-msgid "Gemini integration not yet available"
+#: includes/ai-integrations/class-kura-ai-gemini.php:95
+msgid "Gemini API Error: Received response code %d"
 msgstr ""
 
 #: includes/class-kura-ai-ai-handler.php:25
