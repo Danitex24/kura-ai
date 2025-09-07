@@ -2829,6 +2829,121 @@ body:not(.swal2-shown) {
     color: #23282d;
 }
 
+/* Reports Page Layout */
+.kura-ai-reports-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.kura-ai-scan-card,
+.kura-ai-summary-card,
+.kura-ai-details-card,
+.kura-ai-no-results-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.kura-ai-scan-actions {
+    padding: 10px 0;
+}
+
+.kura-ai-issue-counts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.kura-ai-issue-count {
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.kura-ai-issue-count.critical {
+    background: #fef2f2;
+    border-left-color: #dc2626;
+}
+
+.kura-ai-issue-count.high {
+    background: #fef3c7;
+    border-left-color: #f59e0b;
+}
+
+.kura-ai-issue-count.medium {
+    background: #f0fdf4;
+    border-left-color: #10b981;
+}
+
+.kura-ai-issue-count.low {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+}
+
+.kura-ai-issue-count .count {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.kura-ai-issue-count .label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.kura-ai-scan-timestamp {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.kura-ai-result-category {
+    margin-bottom: 30px;
+}
+
+.kura-ai-result-category h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.kura-ai-severity-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.kura-ai-severity-badge.critical {
+    background: #fecaca;
+    color: #991b1b;
+}
+
+.kura-ai-severity-badge.high {
+    background: #fed7aa;
+    color: #9a3412;
+}
+
+.kura-ai-severity-badge.medium {
+    background: #bbf7d0;
+    color: #166534;
+}
+
+.kura-ai-severity-badge.low {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
 .kura-ai-toggle input {
     opacity: 0;
     width: 0;

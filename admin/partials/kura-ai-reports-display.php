@@ -1,33 +1,57 @@
+<?php
+$settings = get_option('kura_ai_settings', array());
+
+// Validate and prepare scan results
+$scan_results = array();
+if (is_array($settings)) {
+    $scan_results = !empty($settings['scan_results']) && is_array($settings['scan_results']) 
+        ? $settings['scan_results'] 
+        : array();
+}
+
+$last_scan = !empty($settings['last_scan']) ? (int)$settings['last_scan'] : 0;
+?>
+
 <div class="wrap kura-ai-reports">
-    <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-    
-    <?php
-    $settings = get_option('kura_ai_settings', array());
-    
-    // Validate and prepare scan results
-    $scan_results = array();
-    if (is_array($settings)) {
-        $scan_results = !empty($settings['scan_results']) && is_array($settings['scan_results']) 
-            ? $settings['scan_results'] 
-            : array();
-    }
-    
-    $last_scan = !empty($settings['last_scan']) ? (int)$settings['last_scan'] : 0;
-    ?>
-    
-    <div class="kura-ai-scan-actions">
-        <button id="kura-ai-run-scan" class="button button-primary">
-            <?php _e('Run New Scan', 'kura-ai'); ?>
-        </button>
+    <div class="kura-ai-header">
+        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+        <div class="kura-ai-version">v<?php echo KURA_AI_VERSION; ?></div>
     </div>
-    
-    <?php if (empty($scan_results) || !is_array($scan_results)) : ?>
-        <div class="kura-ai-no-results">
-            <p><?php _e('No scan results available. Run a scan to check for vulnerabilities.', 'kura-ai'); ?></p>
+
+    <div class="kura-ai-reports-grid">
+        <!-- Scan Actions Card -->
+        <div class="kura-ai-card kura-ai-scan-card">
+            <div class="kura-ai-card-header">
+                <h2><?php _e('Reports', 'kura-ai'); ?></h2>
+            </div>
+            <div class="kura-ai-card-body">
+                <div class="kura-ai-scan-actions">
+                    <button id="kura-ai-run-scan" class="button button-primary">
+                        <?php _e('Run New Scan', 'kura-ai'); ?>
+                    </button>
+                </div>
+            </div>
         </div>
-    <?php else : ?>
-        <div class="kura-ai-results-summary">
-            <h2><?php _e('Scan Summary', 'kura-ai'); ?></h2>
+    
+        <?php if (empty($scan_results) || !is_array($scan_results)) : ?>
+            <!-- No Results Card -->
+            <div class="kura-ai-card kura-ai-no-results-card">
+                <div class="kura-ai-card-header">
+                    <h2><?php _e('Scan Results', 'kura-ai'); ?></h2>
+                </div>
+                <div class="kura-ai-card-body">
+                    <div class="kura-ai-no-results">
+                        <p><?php _e('No scan results available. Run a scan to check for vulnerabilities.', 'kura-ai'); ?></p>
+                    </div>
+                </div>
+            </div>
+        <?php else : ?>
+            <!-- Scan Summary Card -->
+            <div class="kura-ai-card kura-ai-summary-card">
+                <div class="kura-ai-card-header">
+                    <h2><?php _e('Scan Summary', 'kura-ai'); ?></h2>
+                </div>
+                <div class="kura-ai-card-body">
             
             <?php
             $issue_counts = array(
@@ -72,15 +96,21 @@
                 </div>
             </div>
             
-            <?php if ($last_scan > 0) : ?>
-                <p class="kura-ai-scan-timestamp">
-                    <?php printf(__('Last scanned: %s', 'kura-ai'), date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $last_scan)); ?>
-                </p>
-            <?php endif; ?>
-        </div>
-        
-        <div class="kura-ai-results-details">
-            <h2><?php _e('Detailed Results', 'kura-ai'); ?></h2>
+                    <?php if ($last_scan > 0) : ?>
+                        <p class="kura-ai-scan-timestamp">
+                            <?php printf(__('Last scanned: %s', 'kura-ai'), date('M j, Y g:i A', $last_scan)); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Detailed Results Card -->
+            <div class="kura-ai-card kura-ai-details-card">
+                <div class="kura-ai-card-header">
+                    <h2><?php _e('Detailed Results', 'kura-ai'); ?></h2>
+                </div>
+                <div class="kura-ai-card-body">
+                    <div class="kura-ai-results-details">
             
             <?php foreach ($scan_results as $category => $issues) : ?>
                 <?php if (is_array($issues) && !empty($issues)) : ?>
@@ -152,20 +182,23 @@
                                                     </button>
                                                 <?php endif; ?>
                                                 <button class="button kura-ai-get-suggestion" 
-                                                        data-issue='<?php echo wp_json_encode($issue); ?>'>
-                                                    <?php _e('AI Suggestion', 'kura-ai'); ?>
-                                                </button>
+                                        data-issue='<?php echo json_encode($issue); ?>'>
+                                    <?php _e('AI Suggestion', 'kura-ai'); ?>
+                                </button>
                                             </td>
                                         </tr>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
                     </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
     
     <div class="kura-ai-scan-progress" style="display: none;">
         <div class="kura-ai-progress-bar">
