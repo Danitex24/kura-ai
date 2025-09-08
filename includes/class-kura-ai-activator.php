@@ -55,7 +55,8 @@ class Kura_AI_Activator
             $wpdb->prefix . 'kura_ai_vulnerabilities',
             $wpdb->prefix . 'kura_ai_hardening_rules',
             $wpdb->prefix . 'kura_ai_ai_analysis',
-            $wpdb->prefix . 'kura_ai_file_versions'
+            $wpdb->prefix . 'kura_ai_file_versions',
+            $wpdb->prefix . 'kura_ai_feedback'
         );
         
         foreach ($tables as $table) {
@@ -246,6 +247,21 @@ class Kura_AI_Activator
             KEY created_at (created_at)
         ) $charset_collate;";
 
+        // Create feedback table
+        $feedback_table = $wpdb->prefix . 'kura_ai_feedback';
+        $feedback_sql = "CREATE TABLE $feedback_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            analysis_id bigint(20) NOT NULL DEFAULT 0,
+            user_id bigint(20) NOT NULL,
+            feedback varchar(20) NOT NULL,
+            comment text,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY analysis_id (analysis_id),
+            KEY user_id (user_id),
+            KEY feedback (feedback)
+        ) $charset_collate;";
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($logs_sql);
         dbDelta($api_keys_sql);
@@ -258,6 +274,7 @@ class Kura_AI_Activator
         dbDelta($hardening_rules_sql);
         dbDelta($ai_analysis_sql);
         dbDelta($file_versions_sql);
+        dbDelta($feedback_sql);
 
         // Add default API key for OpenAI if not exists
         $existing_key = $wpdb->get_var($wpdb->prepare(

@@ -3,41 +3,45 @@
 
     class KuraAIAnalysis {
         constructor() {
-            this.form = $('#code-analysis-form');
-            this.resultsContainer = $('#analysis-results');
-            this.vulnerabilitiesList = $('.vulnerabilities-list');
-            this.breakdownList = $('.breakdown-list');
-            this.overallConfidence = $('.overall-confidence .confidence-bar');
-            this.confidenceValue = $('.overall-confidence .confidence-value');
-            this.feedbackButtons = $('.feedback-btn');
+            this.analyzeBtn = $('#kura-ai-analyze');
+            this.codeInput = $('#code-input');
+            this.contextInput = $('#context-input');
+            this.resultsCard = $('#kura-ai-results');
+            this.feedbackCard = $('#kura-ai-feedback-card');
+            this.resultsContent = $('.kura-ai-results-content');
+            this.timestamp = $('.kura-ai-timestamp');
+            this.feedbackButtons = $('.kura-ai-feedback-btn');
+            this.feedbackComment = $('.kura-ai-feedback-comment');
+            this.submitFeedbackBtn = $('.kura-ai-submit-feedback');
 
             this.bindEvents();
         }
 
         bindEvents() {
-            this.form.on('submit', (e) => this.handleAnalysis(e));
+            this.analyzeBtn.on('click', (e) => this.handleAnalysis(e));
             this.feedbackButtons.on('click', (e) => this.handleFeedback(e));
+            this.submitFeedbackBtn.on('click', (e) => this.submitFeedback(e));
         }
 
         handleAnalysis(e) {
             e.preventDefault();
 
-            const code = $('#code-input').val().trim();
-            const context = $('#context-input').val().trim();
+            const code = this.codeInput.val().trim();
+            const context = this.contextInput.val().trim();
 
             if (!code) {
-                this.showNotice('error', kura_ai_ajax.empty_code_error);
+                this.showNotice('error', 'Please enter code to analyze.');
                 return;
             }
 
             this.showLoading();
 
             $.ajax({
-                url: kura_ai_ajax.ajax_url,
+                url: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.ajax_url : ajaxurl) || '/wp-admin/admin-ajax.php',
                 type: 'POST',
                 data: {
                     action: 'kura_ai_analyze_code',
-                    nonce: kura_ai_ajax.nonce,
+                    nonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
                     code: code,
                     context: context
                 },
@@ -45,11 +49,11 @@
                     if (response.success) {
                         this.displayResults(response.data);
                     } else {
-                        this.showNotice('error', response.data.message || kura_ai_ajax.analysis_error);
+                        this.showNotice('error', response.data?.message || 'Analysis failed. Please try again.');
                     }
                 },
                 error: () => {
-                    this.showNotice('error', kura_ai_ajax.analysis_error);
+                    this.showNotice('error', 'Analysis failed. Please try again.');
                 },
                 complete: () => {
                     this.hideLoading();
@@ -58,27 +62,20 @@
         }
 
         displayResults(data) {
-            // Clear previous results
-            this.vulnerabilitiesList.empty();
-            this.breakdownList.empty();
+            // Update timestamp
+            const now = new Date();
+            this.timestamp.text(`Analysis completed at ${now.toLocaleString()}`);
 
-            // Update overall confidence
-            const overallConfidence = Math.round(data.overall_confidence * 100);
-            this.overallConfidence.css('width', `${overallConfidence}%`);
-            this.confidenceValue.text(`${overallConfidence}%`);
+            // Display analysis content
+            if (data.analysis) {
+                this.resultsContent.html(`<div class="kura-ai-analysis-result">${data.analysis}</div>`);
+            } else {
+                this.resultsContent.html('<p>No analysis results available.</p>');
+            }
 
-            // Display vulnerabilities
-            data.vulnerabilities.forEach(vuln => {
-                this.vulnerabilitiesList.append(this.createVulnerabilityItem(vuln));
-            });
-
-            // Display provider breakdown
-            data.provider_results.forEach(provider => {
-                this.breakdownList.append(this.createBreakdownItem(provider));
-            });
-
-            // Show results section
-            this.resultsContainer.slideDown();
+            // Show results and feedback cards
+            this.resultsCard.slideDown();
+            this.feedbackCard.slideDown();
         }
 
         createVulnerabilityItem(vuln) {
@@ -120,77 +117,97 @@
 
         handleFeedback(e) {
             const button = $(e.currentTarget);
-            const feedbackValue = button.data('value');
+            const feedbackValue = button.data('feedback');
 
-            // Disable feedback buttons
-            this.feedbackButtons.prop('disabled', true);
+            // Update button states
+            this.feedbackButtons.removeClass('selected');
+            button.addClass('selected');
 
+            // Show comment section for negative feedback
+            if (feedbackValue === 'not_helpful') {
+                this.feedbackComment.slideDown();
+            } else {
+                this.feedbackComment.slideUp();
+                // Submit positive feedback immediately
+                this.submitFeedbackData(feedbackValue, '');
+            }
+        }
+
+        submitFeedback(e) {
+            e.preventDefault();
+            const feedbackValue = this.feedbackButtons.filter('.selected').data('feedback');
+            const comment = $('#kura-ai-feedback-text').val().trim();
+            
+            this.submitFeedbackData(feedbackValue, comment);
+        }
+
+        submitFeedbackData(feedback, comment) {
             $.ajax({
-                url: kura_ai_ajax.ajax_url,
+                url: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.ajax_url : ajaxurl) || '/wp-admin/admin-ajax.php',
                 type: 'POST',
                 data: {
                     action: 'kura_ai_submit_feedback',
-                    nonce: kura_ai_ajax.nonce,
-                    feedback: feedbackValue
+                    nonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
+                    feedback: feedback,
+                    comment: comment
                 },
                 success: (response) => {
                     if (response.success) {
-                        this.showNotice('success', kura_ai_ajax.feedback_success);
-                        // Highlight selected button
-                        button.addClass('button-primary').siblings().removeClass('button-primary');
+                        this.showNotice('success', 'Thank you for your feedback!');
+                        this.feedbackComment.slideUp();
                     } else {
-                        this.showNotice('error', response.data.message || kura_ai_ajax.feedback_error);
-                        // Re-enable feedback buttons on error
-                        this.feedbackButtons.prop('disabled', false);
+                        this.showNotice('error', response.data?.message || 'Failed to submit feedback.');
                     }
                 },
                 error: () => {
-                    this.showNotice('error', kura_ai_ajax.feedback_error);
-                    // Re-enable feedback buttons on error
-                    this.feedbackButtons.prop('disabled', false);
+                    this.showNotice('error', 'Failed to submit feedback.');
                 }
             });
         }
 
         showLoading() {
-            this.form.find('button[type="submit"]')
+            this.analyzeBtn
                 .prop('disabled', true)
-                .html('<i class="fas fa-spinner fa-spin"></i> ' + kura_ai_ajax.analyzing_text);
+                .html('<span class="dashicons dashicons-update-alt kura-ai-loading"></span> Analyzing...');
         }
 
         hideLoading() {
-            this.form.find('button[type="submit"]')
+            this.analyzeBtn
                 .prop('disabled', false)
-                .html('<i class="fas fa-search"></i> ' + kura_ai_ajax.analyze_text);
+                .html('<span class="dashicons dashicons-search"></span> Analyze Code');
         }
 
         showNotice(type, message) {
+            // Remove existing notices
+            $('.kura-ai-notice').remove();
+            
+            // Create new notice
+            const noticeClass = type === 'error' ? 'notice-error' : 'notice-success';
             const notice = $(`
-                <div class="notice notice-${type} is-dismissible">
-                    <p>${this.escapeHtml(message)}</p>
+                <div class="notice ${noticeClass} is-dismissible kura-ai-notice">
+                    <p>${message}</p>
+                    <button type="button" class="notice-dismiss">
+                        <span class="screen-reader-text">Dismiss this notice.</span>
+                    </button>
                 </div>
             `);
-
-            // Remove existing notices
-            $('.notice').remove();
-
-            // Add new notice before the first card
-            $('.kura-ai-card').first().before(notice);
-
-            // Make notice dismissible
+            
+            // Insert notice after header
+            $('.kura-ai-header').after(notice);
+            
+            // Auto-dismiss success notices
+            if (type === 'success') {
+                setTimeout(() => {
+                    notice.fadeOut(() => notice.remove());
+                }, 3000);
+            }
+            
+            // Handle dismiss button
             notice.find('.notice-dismiss').on('click', () => {
-                notice.fadeOut(300, function() { $(this).remove(); });
+                notice.fadeOut(() => notice.remove());
             });
         }
 
-        escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
     }
 
     // Initialize when document is ready

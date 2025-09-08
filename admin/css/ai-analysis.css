@@ -1,26 +1,256 @@
-.kura-ai-analysis .kura-ai-card {
-    background: #fff;
-    border: 1px solid #e2e4e7;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    margin-bottom: 20px;
+/* AI Analysis Page Styles */
+.kura-ai-analysis {
+    max-width: 1200px;
+    margin: 20px 0;
 }
 
-.kura-ai-analysis .card-header {
-    border-bottom: 1px solid #e2e4e7;
-    padding: 15px 20px;
+/* Header Section */
+.kura-ai-header {
+    margin-bottom: 30px;
 }
 
-.kura-ai-analysis .card-header h2 {
+.kura-ai-header h1 {
+    color: #23282d;
+    font-size: 24px;
+    font-weight: 600;
     margin: 0;
-    font-size: 1.2em;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.kura-ai-analysis .card-body {
-    padding: 20px;
+.kura-ai-header h1::before {
+    content: "\f179";
+    font-family: "dashicons";
+    color: #0073aa;
+    font-size: 28px;
+}
+
+/* Card Styles - Consistent with other pages */
+.kura-ai-analysis .kura-ai-card {
+    background: #fff;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+    transition: box-shadow 0.3s ease;
+}
+
+.kura-ai-analysis .kura-ai-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.kura-ai-analysis .kura-ai-card-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e1e1e1;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px 8px 0 0;
+}
+
+.kura-ai-analysis .kura-ai-card-header h2 {
+    margin: 0;
+    color: #23282d;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kura-ai-analysis .kura-ai-card-body {
+    padding: 25px;
+}
+
+/* Form Styles */
+.kura-ai-form-group {
+    margin-bottom: 20px;
+}
+
+.kura-ai-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.kura-ai-form-group textarea,
+.kura-ai-form-group input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.kura-ai-form-group textarea:focus,
+.kura-ai-form-group input[type="text"]:focus {
+    border-color: #0073aa;
+    box-shadow: 0 0 0 2px rgba(0, 115, 170, 0.1);
+    outline: none;
+}
+
+.kura-ai-form-group textarea {
+    min-height: 150px;
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+}
+
+/* Button Styles */
+.kura-ai-analyze-btn {
+    background: linear-gradient(135deg, #0073aa 0%, #005a87 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kura-ai-analyze-btn:hover {
+    background: linear-gradient(135deg, #005a87 0%, #004666 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 115, 170, 0.3);
+}
+
+.kura-ai-analyze-btn:active {
+    transform: translateY(0);
+}
+
+.kura-ai-analyze-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.kura-ai-analyze-btn .dashicons {
+    font-size: 16px;
+}
+
+/* Results Card */
+.kura-ai-results-card .kura-ai-card-header {
+    background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+}
+
+.kura-ai-results-card .kura-ai-card-header h2::before {
+    content: "\f147";
+    font-family: "dashicons";
+    color: #28a745;
+    margin-right: 8px;
+}
+
+.kura-ai-results-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.kura-ai-results-content {
+    line-height: 1.6;
+}
+
+/* Feedback Card */
+.kura-ai-feedback-card .kura-ai-card-header {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+}
+
+.kura-ai-feedback-card .kura-ai-card-header h2::before {
+    content: "\f175";
+    font-family: "dashicons";
+    color: #856404;
+    margin-right: 8px;
+}
+
+.kura-ai-feedback h3 {
+    margin: 0 0 15px 0;
+    color: #23282d;
+    font-size: 16px;
+}
+
+.kura-ai-feedback-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.kura-ai-feedback-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.kura-ai-feedback-btn:hover {
+    background: #e9ecef;
+    border-color: #0073aa;
+}
+
+.kura-ai-feedback-btn.selected {
+    background: #0073aa;
+    color: white;
+    border-color: #0073aa;
+}
+
+.kura-ai-feedback-comment {
+    margin-top: 15px;
+}
+
+.kura-ai-feedback-comment label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.kura-ai-feedback-comment textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    resize: vertical;
+}
+
+.kura-ai-submit-feedback {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.kura-ai-submit-feedback:hover {
+    background: #218838;
+}
+
+/* Loading States */
+.kura-ai-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+}
+
+.kura-ai-loading .dashicons {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Provider Grid Styles */
@@ -273,6 +503,22 @@
 .tip-item .content p {
     margin: 0;
     color: #50575e;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .kura-ai-analysis {
+        margin: 10px;
+    }
+    
+    .kura-ai-analysis .kura-ai-card-header,
+    .kura-ai-analysis .kura-ai-card-body {
+        padding: 15px;
+    }
+    
+    .kura-ai-feedback-actions {
+        flex-direction: column;
+    }
 }
 
 /* Responsive Adjustments */

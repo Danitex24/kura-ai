@@ -1565,11 +1565,88 @@ class Kura_AI_Admin {
      */
     
     public function handle_analyze_code() {
-        wp_send_json_error(array('message' => __('AI Analysis feature not yet implemented.', 'kura-ai')));
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+
+        // Get and sanitize input
+        $code = sanitize_textarea_field($_POST['code'] ?? '');
+        $context = sanitize_textarea_field($_POST['context'] ?? '');
+
+        if (empty($code)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Code cannot be empty.', 'kura-ai')
+            ));
+        }
+
+        // Check if OpenAI API key is configured
+        global $wpdb;
+        $api_key_table = $wpdb->prefix . 'kura_ai_api_keys';
+        $api_key = $wpdb->get_var($wpdb->prepare(
+            "SELECT api_key FROM $api_key_table WHERE provider = %s AND status = %s",
+            'openai',
+            'active'
+        ));
+
+        if (empty($api_key)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('OpenAI API key is not configured. Please configure your API key in the plugin settings first.', 'kura-ai')
+            ));
+        }
+
+        // Initialize analyzer
+        $analyzer = new \Kura_AI\Kura_AI_Analyzer();
+        
+        // Perform analysis
+        $result = $analyzer->analyze_code($code, $context);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error(array(
+                'message' => $result->get_error_message()
+            ));
+        }
+        
+        wp_send_json_success(array(
+            'analysis' => $result['analysis'],
+            'timestamp' => $result['timestamp']
+        ));
     }
     
     public function handle_submit_feedback() {
-        wp_send_json_error(array('message' => __('Feedback submission not yet implemented.', 'kura-ai')));
+        // Verify nonce
+        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+        }
+
+        // Check user permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('Insufficient permissions.', 'kura-ai')));
+        }
+
+        // Sanitize input
+        $feedback = sanitize_text_field($_POST['feedback'] ?? '');
+        $comment = sanitize_textarea_field($_POST['comment'] ?? '');
+
+        if (empty($feedback)) {
+            wp_send_json_error(array('message' => __('Feedback is required.', 'kura-ai')));
+        }
+
+        // For now, just acknowledge the feedback without storing it
+        // TODO: Create feedback table and implement proper storage
+        wp_send_json_success(array(
+            'message' => __('Thank you for your feedback!', 'kura-ai'),
+            'timestamp' => current_time('mysql')
+        ));
     }
     
     /**
@@ -2513,11 +2590,23 @@ class Kura_AI_Admin {
                 true
             );
         }
+        
+        if ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
+            wp_enqueue_script(
+                'kura-ai-ai-analysis',
+                $this->assets_url . 'js/ai-analysis.js',
+                array('jquery'),
+                $this->version,
+                true
+            );
+        }
 
         // Localize script for the appropriate handle based on page
         $script_handle = 'kura-ai-admin';
         if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
             $script_handle = 'kura-ai-file-monitor';
+        } elseif ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
+            $script_handle = 'kura-ai-ai-analysis';
         }
         
         wp_localize_script(
@@ -2610,6 +2699,16 @@ class Kura_AI_Admin {
             wp_enqueue_style(
                 'kura-ai-security-scanner-styles',
                 $this->assets_url . 'css/security-scanner.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
+        if ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
+            wp_enqueue_style(
+                'kura-ai-ai-analysis-styles',
+                $this->assets_url . 'css/ai-analysis.css',
                 array(),
                 $this->version,
                 'all'
