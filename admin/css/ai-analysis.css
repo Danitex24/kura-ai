@@ -4,6 +4,43 @@
     margin: 20px 0;
 }
 
+/* Recent Analyses Header */
+.recent-analyses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.recent-analyses-header h2 {
+    margin: 0;
+    color: #23282d;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#reset-recent-analyses {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+#reset-recent-analyses:hover {
+    background-color: #f0f0f1;
+    border-color: #999;
+}
+
+#reset-recent-analyses .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
 /* Header Section */
 .kura-ai-header {
     margin-bottom: 30px;

@@ -30,32 +30,83 @@
             const context = this.contextInput.val().trim();
 
             if (!code) {
-                this.showNotice('error', 'Please enter code to analyze.');
+                Swal.fire({
+                    title: 'Code Required',
+                    text: 'Please enter code to analyze.',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
 
-            this.showLoading();
+            // Show SweetAlert loading modal
+            Swal.fire({
+                title: 'Analyzing Code...',
+                text: 'Please wait while we analyze your code for security vulnerabilities and best practices.',
+                icon: 'info',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
             $.ajax({
                 url: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.ajax_url : ajaxurl) || '/wp-admin/admin-ajax.php',
                 type: 'POST',
                 data: {
                     action: 'kura_ai_analyze_code',
-                    nonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
+                    _wpnonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
                     code: code,
                     context: context
                 },
                 success: (response) => {
                     if (response.success) {
+                        // Close loading modal and show success
+                        Swal.fire({
+                            title: 'Analysis Complete!',
+                            text: `Code analysis completed successfully. Health Score: ${response.data.health_score || 'N/A'}`,
+                            icon: 'success',
+                            confirmButtonText: 'View Results',
+                            showCancelButton: true,
+                            cancelButtonText: 'View Dashboard'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Show results on current page
+                                this.displayResults(response.data);
+                            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                // Redirect to analytics dashboard
+                                window.location.href = 'admin.php?page=kura-ai-analytics-dashboard';
+                            }
+                        });
+                        
+                        // Always display results regardless of user choice
                         this.displayResults(response.data);
+                        
+                        // Trigger analytics dashboard refresh if it exists on the page
+                        if (typeof window.refreshAnalyticsDashboard === 'function') {
+                            window.refreshAnalyticsDashboard();
+                        }
                     } else {
-                        this.showNotice('error', response.data?.message || 'Analysis failed. Please try again.');
+                        Swal.fire({
+                            title: 'Analysis Failed',
+                            text: response.data?.message || 'Analysis failed. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     }
                 },
                 error: () => {
-                    this.showNotice('error', 'Analysis failed. Please try again.');
+                    Swal.fire({
+                        title: 'Analysis Failed',
+                        text: 'Analysis failed due to a network error. Please try again.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 },
                 complete: () => {
+                    // Ensure loading is hidden in case of any issues
                     this.hideLoading();
                 }
             });
@@ -147,7 +198,7 @@
                 type: 'POST',
                 data: {
                     action: 'kura_ai_submit_feedback',
-                    nonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
+                    _wpnonce: (typeof kura_ai_ajax !== 'undefined' ? kura_ai_ajax.nonce : $('#_wpnonce').val()) || '',
                     feedback: feedback,
                     comment: comment
                 },

@@ -19,17 +19,17 @@ if (!defined('WPINC')) {
 
 // Define plugin constants
 define('KURA_AI_VERSION', '1.0.1');
+
+// WordPress functions will be available when plugin is loaded
+// These constants will be properly defined by WordPress
 define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KURA_AI_BASENAME', plugin_basename(__FILE__));
 
-// Function stubs removed to prevent conflicts with WordPress core functions
-// WordPress will provide all necessary functions when the plugin is loaded
-
 /**
  * The code that runs during plugin activation.
  */
-require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-activator.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-kura-ai-activator.php';
 register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'));
 
 /**
@@ -38,15 +38,14 @@ register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'
 function kura_ai_ensure_tables() {
     global $wpdb;
     
-    $table_name = $wpdb->prefix . 'kura_ai_file_versions';
+    $charset_collate = $wpdb->get_charset_collate();
     
-    // Check if table exists
-    $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+    // Check and create file_versions table
+    $file_versions_table = $wpdb->prefix . 'kura_ai_file_versions';
+    $file_versions_exists = $wpdb->get_var("SHOW TABLES LIKE '$file_versions_table'");
     
-    if (!$table_exists) {
-        $charset_collate = $wpdb->get_charset_collate();
-        
-        $sql = "CREATE TABLE $table_name (
+    if (!$file_versions_exists) {
+        $file_versions_sql = "CREATE TABLE $file_versions_table (
             id bigint(20) NOT NULL AUTO_INCREMENT,
             file_path varchar(255) NOT NULL,
             content longtext NOT NULL,
@@ -60,7 +59,95 @@ function kura_ai_ensure_tables() {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        dbDelta($file_versions_sql);
+    }
+    
+    // Check and create analytics table
+    $analytics_table = $wpdb->prefix . 'kura_ai_analytics';
+    $analytics_exists = $wpdb->get_var("SHOW TABLES LIKE '$analytics_table'");
+    
+    if (!$analytics_exists) {
+        $analytics_sql = "CREATE TABLE $analytics_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            code_length int NOT NULL,
+            analysis_time float NOT NULL,
+            analysis_level varchar(20) NOT NULL DEFAULT 'standard',
+            health_score float NOT NULL DEFAULT 0,
+            pass_status varchar(10) NOT NULL DEFAULT 'fail',
+            analysis_type varchar(50) NOT NULL DEFAULT 'security',
+            provider varchar(50) NOT NULL DEFAULT 'openai',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY user_id (user_id),
+            KEY analysis_level (analysis_level),
+            KEY pass_status (pass_status),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        dbDelta($analytics_sql);
+        
+        // Insert sample data for testing if table was just created
+        $sample_data = array(
+            array(
+                'user_id' => 1,
+                'code_length' => 150,
+                'analysis_time' => 2.5,
+                'analysis_level' => 'standard',
+                'health_score' => 85.5,
+                'pass_status' => 'pass',
+                'analysis_type' => 'security',
+                'provider' => 'openai'
+            ),
+            array(
+                'user_id' => 1,
+                'code_length' => 200,
+                'analysis_time' => 3.2,
+                'analysis_level' => 'advanced',
+                'health_score' => 92.0,
+                'pass_status' => 'pass',
+                'analysis_type' => 'security',
+                'provider' => 'openai'
+            ),
+            array(
+                'user_id' => 1,
+                'code_length' => 75,
+                'analysis_time' => 1.8,
+                'analysis_level' => 'basic',
+                'health_score' => 65.0,
+                'pass_status' => 'fail',
+                'analysis_type' => 'security',
+                'provider' => 'openai'
+            ),
+            array(
+                'user_id' => 1,
+                'code_length' => 300,
+                'analysis_time' => 4.1,
+                'analysis_level' => 'advanced',
+                'health_score' => 78.5,
+                'pass_status' => 'pass',
+                'analysis_type' => 'security',
+                'provider' => 'openai'
+            ),
+            array(
+                'user_id' => 1,
+                'code_length' => 120,
+                'analysis_time' => 2.0,
+                'analysis_level' => 'standard',
+                'health_score' => 45.0,
+                'pass_status' => 'fail',
+                'analysis_type' => 'security',
+                'provider' => 'openai'
+            )
+        );
+        
+        foreach ($sample_data as $data) {
+            $wpdb->insert(
+                $analytics_table,
+                $data,
+                array('%d', '%d', '%f', '%s', '%f', '%s', '%s', '%s')
+            );
+        }
     }
 }
 
@@ -70,7 +157,7 @@ add_action('admin_init', 'kura_ai_ensure_tables');
 /**
  * The code that runs during plugin deactivation.
  */
-require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-deactivator.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-kura-ai-deactivator.php';
 register_deactivation_hook(__FILE__, array('Kura_AI\Kura_AI_Deactivator', 'deactivate'));
 
 /**

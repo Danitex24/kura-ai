@@ -1,22 +1,35 @@
 /* Main Admin Styles */
+.wrap {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 0;
+}
+
 .kura-ai-dashboard,
 .kura-ai-reports,
 .kura-ai-suggestions,
 .kura-ai-logs,
 .kura-ai-settings {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    background: #f1f1f1;
-    padding: 20px;
+    background: #f8f9fa;
+    padding: 30px;
     min-height: calc(100vh - 32px);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
 }
 
-.kura-ai-dashboard h1 {
-    color: #23282d;
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 30px;
+.kura-ai-dashboard h1,
+.kura-ai-reports h1,
+.kura-ai-suggestions h1,
+.kura-ai-logs h1,
+.kura-ai-settings h1 {
+    color: #1e293b;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 40px;
     padding: 0;
+    text-align: center;
+    letter-spacing: -0.025em;
 }
 
 /* Dashboard Header */
@@ -24,30 +37,45 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 30px;
-    gap: 20px;
+    margin-bottom: 40px;
+    gap: 24px;
 }
 
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
     flex: 1;
 }
 
 .stat-card {
-    background: #fff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
-    gap: 15px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    gap: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: 16px 16px 0 0;
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 

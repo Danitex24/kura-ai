@@ -44,6 +44,9 @@ if (!function_exists('wp_get_theme')) {
         return (object) array('get' => function($header) { return 'Default Theme'; });
     }
 }
+if (!function_exists('get_current_user_id')) {
+    function get_current_user_id() { return 1; }
+}
 
 // Define WordPress constants if not defined (for static analysis)
 if (!defined('DOING_AJAX')) {
@@ -476,7 +479,15 @@ class Kura_AI_Admin {
             'kura_ai_oauth_reconnect' => 'handle_oauth_reconnect',
             'kura_ai_reset_settings' => 'handle_reset_settings',
             'kura_ai_apply_fix' => 'handle_apply_fix',
-            'kura_ai_get_suggestions' => 'handle_get_suggestions'
+            'kura_ai_get_suggestions' => 'handle_get_suggestions',
+            'kura_ai_get_analytics_summary' => 'handle_get_analytics_summary',
+            'kura_ai_get_analytics_charts' => 'handle_get_analytics_charts',
+            'kura_ai_get_recent_analyses' => 'handle_get_recent_analyses',
+            'kura_ai_reset_recent_analyses' => 'handle_reset_recent_analyses',
+            'kura_ai_get_trends_data' => 'handle_get_trends_data',
+            'kura_ai_get_health_score_distribution' => 'handle_get_health_score_distribution',
+            'kura_ai_get_pass_fail_data' => 'handle_get_pass_fail_data',
+            'kura_ai_get_performance_data' => 'handle_get_performance_data'
         );
         
         foreach ($ajax_actions as $action => $method) {
@@ -625,7 +636,7 @@ class Kura_AI_Admin {
                 'message' => esc_html__('Invalid request.', 'kura-ai')
             ));
         }
-        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
             wp_send_json_error(array(
                 'message' => esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -1566,7 +1577,7 @@ class Kura_AI_Admin {
     
     public function handle_analyze_code() {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'] ?? '', 'kura_ai_nonce')) {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
             wp_send_json_error(array(
                 'message' => esc_html__('Security check failed.', 'kura-ai')
             ));
@@ -1607,6 +1618,9 @@ class Kura_AI_Admin {
         // Initialize analyzer
         $analyzer = new \Kura_AI\Kura_AI_Analyzer();
         
+        // Record start time for performance tracking
+        $start_time = microtime(true);
+        
         // Perform analysis
         $result = $analyzer->analyze_code($code, $context);
         
@@ -1616,15 +1630,35 @@ class Kura_AI_Admin {
             ));
         }
         
+        // Calculate analysis time
+        $analysis_time = microtime(true) - $start_time;
+        
+        // Calculate health score and pass status
+        $health_data = $this->calculate_health_score($result['analysis']);
+        
+        // Record analytics data
+        $this->record_analysis_metrics(array(
+            'user_id' => get_current_user_id(),
+            'code_length' => strlen($code),
+            'analysis_time' => $analysis_time,
+            'analysis_level' => 'standard', // Can be made dynamic based on context
+            'health_score' => $health_data['score'],
+            'pass_status' => $health_data['status'],
+            'analysis_type' => 'security',
+            'provider' => 'openai'
+        ));
+        
         wp_send_json_success(array(
             'analysis' => $result['analysis'],
-            'timestamp' => $result['timestamp']
+            'timestamp' => $result['timestamp'],
+            'health_score' => $health_data['score'],
+            'pass_status' => $health_data['status']
         ));
     }
     
     public function handle_submit_feedback() {
         // Verify nonce
-        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
             wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
         }
 
@@ -1647,6 +1681,85 @@ class Kura_AI_Admin {
             'message' => __('Thank you for your feedback!', 'kura-ai'),
             'timestamp' => current_time('mysql')
         ));
+    }
+
+    /**
+     * Calculate health score based on analysis results
+     *
+     * @param string $analysis The analysis text
+     * @return array Health score and pass status
+     */
+    private function calculate_health_score($analysis) {
+        $score = 100; // Start with perfect score
+        $analysis_lower = strtolower($analysis);
+        
+        // Define security issue keywords and their severity weights
+        $critical_issues = array('sql injection', 'xss', 'csrf', 'remote code execution', 'authentication bypass');
+        $high_issues = array('security vulnerability', 'insecure', 'exploit', 'malicious', 'backdoor');
+        $medium_issues = array('warning', 'deprecated', 'unsafe', 'risk', 'potential issue');
+        $low_issues = array('improvement', 'suggestion', 'consider', 'recommend');
+        
+        // Deduct points for each type of issue found
+        foreach ($critical_issues as $issue) {
+            if (strpos($analysis_lower, $issue) !== false) {
+                $score -= 25; // Critical issues deduct 25 points each
+            }
+        }
+        
+        foreach ($high_issues as $issue) {
+            if (strpos($analysis_lower, $issue) !== false) {
+                $score -= 15; // High issues deduct 15 points each
+            }
+        }
+        
+        foreach ($medium_issues as $issue) {
+            if (strpos($analysis_lower, $issue) !== false) {
+                $score -= 8; // Medium issues deduct 8 points each
+            }
+        }
+        
+        foreach ($low_issues as $issue) {
+            if (strpos($analysis_lower, $issue) !== false) {
+                $score -= 3; // Low issues deduct 3 points each
+            }
+        }
+        
+        // Ensure score doesn't go below 0
+        $score = max(0, $score);
+        
+        // Determine pass/fail status
+        $pass_status = $score >= 70 ? 'pass' : 'fail';
+        
+        return array(
+            'score' => $score,
+            'status' => $pass_status
+        );
+    }
+
+    /**
+     * Record analysis metrics to database
+     *
+     * @param array $metrics Analysis metrics data
+     */
+    private function record_analysis_metrics($metrics) {
+        global $wpdb;
+        
+        $analytics_table = $wpdb->prefix . 'kura_ai_analytics';
+        
+        $wpdb->insert(
+            $analytics_table,
+            array(
+                'user_id' => $metrics['user_id'],
+                'code_length' => $metrics['code_length'],
+                'analysis_time' => $metrics['analysis_time'],
+                'analysis_level' => $metrics['analysis_level'],
+                'health_score' => $metrics['health_score'],
+                'pass_status' => $metrics['pass_status'],
+                'analysis_type' => $metrics['analysis_type'],
+                'provider' => $metrics['provider']
+            ),
+            array('%d', '%d', '%f', '%s', '%f', '%s', '%s', '%s')
+        );
     }
     
     /**
@@ -2119,6 +2232,489 @@ class Kura_AI_Admin {
     }
 
     /**
+     * Handle get analytics summary request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_analytics_summary() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+        
+        if (!$table_exists) {
+            wp_send_json_success(array(
+                'total_analyses' => 0,
+                'avg_health_score' => 0,
+                'avg_analysis_time' => 0,
+                'passed_analyses' => 0,
+                'failed_analyses' => 0
+            ));
+            return;
+        }
+        
+        $summary = $wpdb->get_row(
+            "SELECT 
+                COUNT(*) as total_analyses,
+                COALESCE(AVG(health_score), 0) as avg_health_score,
+                COALESCE(AVG(analysis_time), 0) as avg_analysis_time,
+                SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as passed_analyses,
+                SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as failed_analyses
+            FROM {$table_name}"
+        );
+        
+        // Ensure we have valid data
+        $response_data = array(
+            'total_analyses' => intval($summary->total_analyses ?? 0),
+            'avg_health_score' => floatval($summary->avg_health_score ?? 0),
+            'avg_analysis_time' => floatval($summary->avg_analysis_time ?? 0),
+            'passed_analyses' => intval($summary->passed_analyses ?? 0),
+            'failed_analyses' => intval($summary->failed_analyses ?? 0)
+        );
+        
+        wp_send_json_success($response_data);
+    }
+
+    /**
+     * Handle get analytics charts data request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_analytics_charts() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Get trend data for last 30 days
+        $trend_data = $wpdb->get_results(
+            "SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as count,
+                AVG(health_score) as avg_score
+            FROM {$table_name} 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC"
+        );
+        
+        // Get health score distribution
+        $score_distribution = $wpdb->get_results(
+            "SELECT 
+                CASE 
+                    WHEN health_score >= 90 THEN 'Excellent'
+                    WHEN health_score >= 70 THEN 'Good'
+                    WHEN health_score >= 50 THEN 'Fair'
+                    ELSE 'Poor'
+                END as category,
+                COUNT(*) as count
+            FROM {$table_name}
+            GROUP BY category"
+        );
+        
+        // Get performance data
+        $performance_data = $wpdb->get_results(
+            "SELECT 
+                analysis_level,
+                AVG(analysis_time) as avg_time,
+                COUNT(*) as count
+            FROM {$table_name}
+            GROUP BY analysis_level"
+        );
+        
+        wp_send_json_success(array(
+            'trend' => $trend_data,
+            'distribution' => $score_distribution,
+            'performance' => $performance_data
+        ));
+    }
+
+    /**
+     * Handle get recent analyses request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_recent_analyses() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            // Return empty data if table doesn't exist
+            wp_send_json_success(array());
+            return;
+        }
+        
+        $recent_analyses = $wpdb->get_results(
+            "SELECT 
+                user_id,
+                code_length,
+                analysis_time,
+                analysis_level,
+                health_score,
+                created_at
+            FROM {$table_name}
+            ORDER BY created_at DESC
+            LIMIT 10"
+        );
+        
+        // Check for database errors
+        if ($wpdb->last_error) {
+            wp_send_json_error(array(
+                'message' => 'Database error: ' . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        wp_send_json_success($recent_analyses ?: array());
+    }
+
+    /**
+     * Handle reset recent analyses request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_reset_recent_analyses() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Analytics table does not exist.', 'kura-ai')
+            ));
+            return;
+        }
+        
+        // Delete all records from the analytics table
+        $result = $wpdb->query("TRUNCATE TABLE {$table_name}");
+        
+        if ($result === false) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Failed to reset recent analyses: ', 'kura-ai') . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'message' => esc_html__('Recent analyses have been reset successfully.', 'kura-ai')
+        ));
+    }
+
+    /**
+     * Handle get trends data request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_trends_data() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        $period = intval($_POST['period'] ?? 30);
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            // Return empty data if table doesn't exist
+            wp_send_json_success(array(
+                'labels' => array(),
+                'values' => array(),
+                'message' => 'No analytics data available yet.'
+            ));
+            return;
+        }
+        
+        $trend_data = $wpdb->get_results($wpdb->prepare(
+            "SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as count,
+                AVG(health_score) as avg_score
+            FROM {$table_name} 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC",
+            $period
+        ));
+        
+        // Check for database errors
+        if ($wpdb->last_error) {
+            wp_send_json_error(array(
+                'message' => 'Database error: ' . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        $labels = array();
+        $values = array();
+        
+        if ($trend_data) {
+            foreach ($trend_data as $data) {
+                $labels[] = date('M j', strtotime($data->date));
+                $values[] = floatval($data->avg_score);
+            }
+        }
+        
+        wp_send_json_success(array(
+            'labels' => $labels,
+            'values' => $values
+        ));
+    }
+
+    /**
+     * Handle get health score distribution request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_health_score_distribution() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            // Return empty data if table doesn't exist
+            wp_send_json_success(array(0, 0, 0, 0)); // [Excellent, Good, Fair, Poor]
+            return;
+        }
+        
+        $distribution = $wpdb->get_results(
+            "SELECT 
+                CASE 
+                    WHEN health_score >= 90 THEN 'Excellent'
+                    WHEN health_score >= 70 THEN 'Good'
+                    WHEN health_score >= 50 THEN 'Fair'
+                    ELSE 'Poor'
+                END as category,
+                COUNT(*) as count
+            FROM {$table_name}
+            GROUP BY category
+            ORDER BY 
+                CASE category
+                    WHEN 'Excellent' THEN 1
+                    WHEN 'Good' THEN 2
+                    WHEN 'Fair' THEN 3
+                    WHEN 'Poor' THEN 4
+                END"
+        );
+        
+        // Check for database errors
+        if ($wpdb->last_error) {
+            wp_send_json_error(array(
+                'message' => 'Database error: ' . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        $data = array();
+        if ($distribution) {
+            foreach ($distribution as $item) {
+                $data[] = intval($item->count);
+            }
+        } else {
+            $data = array(0, 0, 0, 0); // Default empty data
+        }
+        
+        wp_send_json_success($data);
+    }
+
+    /**
+     * Handle get pass fail data request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_pass_fail_data() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            // Return empty data if table doesn't exist
+            wp_send_json_success(array(
+                'pass' => 0,
+                'fail' => 0
+            ));
+            return;
+        }
+        
+        $pass_fail = $wpdb->get_row(
+            "SELECT 
+                SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as pass,
+                SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as fail
+            FROM {$table_name}"
+        );
+        
+        // Check for database errors
+        if ($wpdb->last_error) {
+            wp_send_json_error(array(
+                'message' => 'Database error: ' . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'pass' => intval($pass_fail->pass ?? 0),
+            'fail' => intval($pass_fail->fail ?? 0)
+        ));
+    }
+
+    /**
+     * Handle get performance data request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_get_performance_data() {
+        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+            ));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'kura_ai_analytics';
+        
+        // Check if table exists
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        
+        if (!$table_exists) {
+            // Return empty data if table doesn't exist
+            wp_send_json_success(array(
+                'labels' => array(),
+                'values' => array()
+            ));
+            return;
+        }
+        
+        $performance_data = $wpdb->get_results(
+            "SELECT 
+                analysis_level as level,
+                AVG(analysis_time) as avg_time
+            FROM {$table_name}
+            GROUP BY analysis_level
+            ORDER BY analysis_level"
+        );
+        
+        // Check for database errors
+        if ($wpdb->last_error) {
+            wp_send_json_error(array(
+                'message' => 'Database error: ' . $wpdb->last_error
+            ));
+            return;
+        }
+        
+        $labels = array();
+        $values = array();
+        
+        if ($performance_data) {
+            foreach ($performance_data as $data) {
+                $labels[] = ucfirst($data->level);
+                $values[] = floatval($data->avg_time);
+            }
+        }
+        
+        wp_send_json_success(array(
+            'labels' => $labels,
+            'values' => $values
+        ));
+    }
+
+    /**
      * Validation helper methods.
      *
      * @since    1.0.0
@@ -2293,6 +2889,8 @@ class Kura_AI_Admin {
             array($this, 'display_analysis_page')
         );
 
+
+
         add_submenu_page(
             'kura-ai',
             esc_html__('File Monitor', 'kura-ai'),
@@ -2416,6 +3014,7 @@ class Kura_AI_Admin {
             echo '<div class="wrap"><h1>' . esc_html__('AI Analysis', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
         }
     }
+
 
     /**
      * Display File Monitor page.
@@ -2581,6 +3180,8 @@ class Kura_AI_Admin {
             );
         }
         
+
+        
         if ($page === 'kura-ai-scanner' || strpos($page, 'scanner') !== false) {
             wp_enqueue_script(
                 'kura-ai-security-scanner',
@@ -2599,6 +3200,33 @@ class Kura_AI_Admin {
                 $this->version,
                 true
             );
+            
+            // Enqueue Chart.js for analytics charts
+            wp_enqueue_script(
+                'chartjs',
+                'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js',
+                array(),
+                '3.9.1',
+                true
+            );
+            
+            wp_enqueue_script(
+                'kura-ai-analytics-dashboard',
+                $this->assets_url . 'js/analytics-dashboard.js',
+                array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config', 'chartjs'),
+                $this->version,
+                true
+            );
+            
+            // Localize script specifically for analytics dashboard
+            wp_localize_script(
+                'kura-ai-analytics-dashboard',
+                'kuraAIAnalytics',
+                array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('kura_ai_nonce')
+                )
+            );
         }
 
         // Localize script for the appropriate handle based on page
@@ -2606,7 +3234,7 @@ class Kura_AI_Admin {
         if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
             $script_handle = 'kura-ai-file-monitor';
         } elseif ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
-            $script_handle = 'kura-ai-ai-analysis';
+            $script_handle = 'kura-ai-analytics-dashboard';
         }
         
         wp_localize_script(
@@ -2709,6 +3337,16 @@ class Kura_AI_Admin {
             wp_enqueue_style(
                 'kura-ai-ai-analysis-styles',
                 $this->assets_url . 'css/ai-analysis.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
+        if ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
+            wp_enqueue_style(
+                'kura-ai-analytics-dashboard-styles',
+                $this->assets_url . 'css/analytics-dashboard.css',
                 array(),
                 $this->version,
                 'all'
