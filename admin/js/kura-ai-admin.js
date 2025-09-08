@@ -331,9 +331,27 @@ jQuery(document).ready(function ($) {
       var $form = $(this);
       var issueType = $("#kura-ai-issue-type").val();
       var issueDescription = $("#kura-ai-issue-description").val();
+      
+      // Validate form data
+      if (!issueType || issueType.trim() === "") {
+          alert("Please select an issue type.");
+          return;
+      }
+      
+      if (!issueDescription.trim()) {
+          alert("Please enter an issue description.");
+          return;
+      }
   
       $("#kura-ai-suggestion-loading").show();
       $form.hide();
+      
+      // Create issue object matching the expected format
+      var issue = {
+          type: issueType,
+          message: issueDescription,
+          severity: "medium"
+      };
   
       $.ajax({
           url: kura_ai_ajax.ajax_url,
@@ -341,13 +359,11 @@ jQuery(document).ready(function ($) {
           data: {
               action: "kura_ai_get_suggestions",
               _wpnonce: kura_ai_ajax.nonce,
-              type: issueType,
-              message: issueDescription,
-              severity: "medium"
+              issue: JSON.stringify(issue)
           },
           success: function (response) {
               if (response.success) {
-                  var $results = $(".kura-ai-suggestions-results");
+                  var $results = $(".kura-ai-response-card");
                   $("#kura-ai-suggestion-result").html(
                       response.data.suggestion.replace(/\n/g, "<br>")
                   );
@@ -369,8 +385,9 @@ jQuery(document).ready(function ($) {
 
   // New AI Request
   $("#kura-ai-new-request").on("click", function () {
-    $(".kura-ai-suggestions-results").hide();
-    $("#kura-ai-suggestion-request").show().trigger("reset");
+    $(".kura-ai-response-card").hide();
+    $("#kura-ai-suggestion-request").show();
+    $("#kura-ai-suggestion-request")[0].reset();
   });
 
   // Export Logs

@@ -952,9 +952,17 @@ class Kura_AI_Admin {
         
         // Parse the JSON issue data
         $issue_json = wp_unslash($_POST['issue'] ?? '');
+        
+        // Debug logging (temporary)
+        error_log('Kura AI Debug - Received issue JSON: ' . $issue_json);
+        
         $issue = json_decode($issue_json, true);
         
+        // Debug logging (temporary)
+        error_log('Kura AI Debug - Decoded issue: ' . print_r($issue, true));
+        
         if (!$issue || !is_array($issue)) {
+            error_log('Kura AI Debug - Invalid issue data. JSON: ' . $issue_json . ', Decoded: ' . print_r($issue, true));
             wp_send_json_error(array(
                 'message' => esc_html__('Invalid issue data.', 'kura-ai')
             ));
