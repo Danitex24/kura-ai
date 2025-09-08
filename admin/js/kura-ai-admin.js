@@ -1131,6 +1131,11 @@ jQuery(document).ready(function ($) {
     function initMalwareScan() {
     const $startScanBtn = $('#start-malware-scan');
     const $cancelScanBtn = $('#cancel-malware-scan');
+    
+    // Only initialize if elements exist (avoid conflicts with malware-detection.js)
+    if ($startScanBtn.length === 0 || $cancelScanBtn.length === 0) {
+        return;
+    }
     const $progressBar = $('#scan-progress-bar');
     const $progressText = $('#scan-progress-text');
     const $resultsContainer = $('#scan-results');

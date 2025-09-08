@@ -40,6 +40,111 @@ function kura_ai_ensure_tables() {
     
     $charset_collate = $wpdb->get_charset_collate();
     
+    // Check and create security_reports table
+    $security_reports_table = $wpdb->prefix . 'kura_ai_security_reports';
+    $security_reports_exists = $wpdb->get_var("SHOW TABLES LIKE '$security_reports_table'");
+    
+    if (!$security_reports_exists) {
+        $security_reports_sql = "CREATE TABLE $security_reports_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            report_type varchar(50) NOT NULL,
+            report_data longtext NOT NULL,
+            compliance_standard varchar(50),
+            compliance_score float,
+            recommendations longtext,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY report_type (report_type),
+            KEY compliance_standard (compliance_standard)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($security_reports_sql);
+    }
+    
+    // Check and create malware_patterns table
+    $malware_patterns_table = $wpdb->prefix . 'kura_ai_malware_patterns';
+    $malware_patterns_exists = $wpdb->get_var("SHOW TABLES LIKE '$malware_patterns_table'");
+    
+    if (!$malware_patterns_exists) {
+        $malware_patterns_sql = "CREATE TABLE $malware_patterns_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            pattern_name varchar(100) NOT NULL,
+            pattern_type varchar(50) NOT NULL,
+            pattern_signature text NOT NULL,
+            severity varchar(20) NOT NULL DEFAULT 'medium',
+            ai_confidence float NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY pattern_type (pattern_type),
+            KEY severity (severity)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($malware_patterns_sql);
+    }
+    
+    // Check and create logs table
+    $logs_table = $wpdb->prefix . 'kura_ai_logs';
+    $logs_exists = $wpdb->get_var("SHOW TABLES LIKE '$logs_table'");
+    
+    if (!$logs_exists) {
+        $logs_sql = "CREATE TABLE $logs_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            log_type varchar(50) NOT NULL,
+            log_message text NOT NULL,
+            log_data longtext,
+            severity varchar(20) NOT NULL DEFAULT 'info',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY log_type (log_type),
+            KEY severity (severity),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($logs_sql);
+    }
+    
+    // Check and create api_keys table
+    $api_keys_table = $wpdb->prefix . 'kura_ai_api_keys';
+    $api_keys_exists = $wpdb->get_var("SHOW TABLES LIKE '$api_keys_table'");
+    
+    if (!$api_keys_exists) {
+        $api_keys_sql = "CREATE TABLE $api_keys_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            provider varchar(50) NOT NULL,
+            api_key text NOT NULL,
+            status varchar(20) NOT NULL DEFAULT 'active',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            UNIQUE KEY provider (provider)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($api_keys_sql);
+        
+        // Add default API key for OpenAI if not exists
+        $existing_key = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $api_keys_table WHERE provider = %s",
+            'openai'
+        ));
+
+        if ($existing_key == 0) {
+            $wpdb->insert(
+                $api_keys_table,
+                array(
+                    'provider' => 'openai',
+                    'api_key' => '',
+                    'status' => 'inactive'
+                ),
+                array('%s', '%s', '%s')
+            );
+        }
+    }
+    
     // Check and create file_versions table
     $file_versions_table = $wpdb->prefix . 'kura_ai_file_versions';
     $file_versions_exists = $wpdb->get_var("SHOW TABLES LIKE '$file_versions_table'");
@@ -85,6 +190,7 @@ function kura_ai_ensure_tables() {
             KEY created_at (created_at)
         ) $charset_collate;";
         
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($analytics_sql);
         
         // Insert sample data for testing if table was just created

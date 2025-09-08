@@ -8,6 +8,7 @@ if (!defined('ABSPATH')) {
 
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 require_once ABSPATH . 'wp-includes/formatting.php';
+require_once ABSPATH . 'wp-includes/http.php';
 
 use \WP_Error;
 
@@ -37,6 +38,15 @@ class Kura_AI_Analyzer {
      * @var      string    $api_key    The OpenAI API key
      */
     private $api_key;
+    
+    /**
+     * The WordPress database object
+     *
+     * @since    1.0.0
+     * @access   private
+     * @var      object    $wpdb    The WordPress database object
+     */
+    private $wpdb;
 
     /**
      * Initialize the class
@@ -45,9 +55,10 @@ class Kura_AI_Analyzer {
      */
     public function __construct() {
         global $wpdb;
+        $this->wpdb = $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_api_keys';
         $this->api_key = $wpdb->get_var($wpdb->prepare(
-            "SELECT api_key FROM $table_name WHERE provider = %s AND status = %s",
+            "SELECT api_key FROM {$table_name} WHERE provider = %s AND status = %s",
             'openai',
             'active'
         ));
@@ -81,12 +92,12 @@ class Kura_AI_Analyzer {
             )
         );
 
-        $response = \wp_remote_post($this->api_endpoint, array(
+        $response = wp_remote_post($this->api_endpoint, array(
             'headers' => array(
                 'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json'
             ),
-            'body' => \wp_json_encode(array(
+            'body' => wp_json_encode(array(
                 'model' => 'gpt-4',
                 'messages' => $messages,
                 'max_tokens' => 1000,
@@ -95,20 +106,20 @@ class Kura_AI_Analyzer {
             'timeout' => 30
         ));
 
-        if (\is_wp_error($response)) {
+        if (is_wp_error($response)) {
             return $response;
         }
 
-        $body = \wp_remote_retrieve_body($response);
-        $data = \json_decode($body, true);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
 
         if (empty($data['choices'][0]['message']['content'])) {
-            return new \WP_Error('api_error', \__('Failed to get analysis from OpenAI API', 'kura-ai'));
+            return new WP_Error('api_error', __('Failed to get analysis from OpenAI API', 'kura-ai'));
         }
 
         return array(
-            'analysis' => \wp_kses_post($data['choices'][0]['message']['content']),
-            'timestamp' => \current_time('mysql')
+            'analysis' => wp_kses_post($data['choices'][0]['message']['content']),
+            'timestamp' => current_time('mysql')
         );
     }
 
@@ -125,16 +136,16 @@ class Kura_AI_Analyzer {
         global $wpdb;
 
         $table_name = $wpdb->prefix . 'kura_ai_feedback';
-        $user_id = \get_current_user_id();
+        $user_id = get_current_user_id();
 
         $result = $wpdb->insert(
             $table_name,
             array(
                 'analysis_id' => $analysis_id,
                 'user_id' => $user_id,
-                'feedback' => \sanitize_text_field($feedback),
-                'comment' => \sanitize_textarea_field($comment),
-                'created_at' => \current_time('mysql')
+                'feedback' => sanitize_text_field($feedback),
+                'comment' => sanitize_textarea_field($comment),
+                'created_at' => current_time('mysql')
             ),
             array('%d', '%d', '%s', '%s', '%s')
         );
@@ -163,7 +174,10 @@ class Kura_AI_Analyzer {
         );
 
         $results = $wpdb->get_results(
-            "SELECT feedback, COUNT(*) as count FROM {$table_name} GROUP BY feedback",
+            $wpdb->prepare(
+                "SELECT feedback, COUNT(*) as count FROM %i GROUP BY feedback",
+                $table_name
+            ),
             \ARRAY_A
         );
 

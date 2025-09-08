@@ -1,5 +1,7 @@
 <?php
 
+namespace Kura_AI;
+
 // Mock WordPress functions if not available for testing
 if (!function_exists('wp_next_scheduled')) {
     function wp_next_scheduled($hook, $args = array()) { return false; }

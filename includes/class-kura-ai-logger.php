@@ -60,6 +60,21 @@ class Kura_AI_Logger
      */
     public function log($type, $message, $data = array(), $severity = 'info')
     {
+        return $this->log_event($type, $message, $data, $severity);
+    }
+    
+    /**
+     * Log an event to the database (alias for log method).
+     *
+     * @since    1.0.0
+     * @param    string    $type       The log type (scan, fix, alert, etc.)
+     * @param    string    $message    The log message
+     * @param    array     $data       Additional data to store with the log
+     * @param    string    $severity   The severity level (info, warning, error, critical)
+     * @return   int|false             The log ID or false on failure
+     */
+    public function log_event($type, $message, $data = array(), $severity = 'info')
+    {
         global $wpdb;
 
         $table_name = $wpdb->prefix . 'kura_ai_logs';
@@ -67,9 +82,9 @@ class Kura_AI_Logger
         $insert_data = array(
             'log_type' => \sanitize_text_field($type),
             'log_message' => \sanitize_text_field($message),
-            'log_data' => serialize($data),
+            'log_data' => \maybe_serialize($data),
             'severity' => \in_array($severity, array('info', 'warning', 'error', 'critical')) ? $severity : 'info',
-            'created_at' => date('Y-m-d H:i:s')
+            'created_at' => \current_time('mysql')
         );
 
         $result = $wpdb->insert($table_name, $insert_data);

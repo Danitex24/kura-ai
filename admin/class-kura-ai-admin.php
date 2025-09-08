@@ -18,6 +18,117 @@ if (!defined('ABSPATH')) {
 }
 
 // Define WordPress functions for static analysis
+global $wpdb;
+
+/**
+ * Define wpdb class for static analysis
+ * This helps the static analyzer understand WordPress database methods
+ */
+if (!class_exists('\wpdb')) {
+    /**
+     * WordPress Database Access Abstraction Object
+     */
+    class wpdb {
+        /**
+         * Table prefix
+         * @var string
+         */
+        public $prefix = 'wp_';
+        
+        /**
+         * Last error
+         * @var string
+         */
+        public $last_error = '';
+        
+        /**
+         * Last query
+         * @var string
+         */
+        public $last_query = '';
+        
+        /**
+         * Last result
+         * @var mixed
+         */
+        public $last_result = null;
+        
+        /**
+         * Rows affected/selected for the last query
+         * @var int
+         */
+        public $num_rows = 0;
+        
+        /**
+         * Insert ID for the last query
+         * @var int
+         */
+        public $insert_id = 0;
+        
+        /**
+         * Prepares a SQL query for safe execution
+         * @param string $query The query to prepare
+         * @param mixed $args Query arguments
+         * @return string|null Prepared query or null on failure
+         */
+        public function prepare($query, ...$args) { return $query; }
+        
+        /**
+         * Retrieves one variable from the database
+         * @param string $query SQL query
+         * @param int $x Optional column offset
+         * @param int $y Optional row offset
+         * @return string|null Database query result
+         */
+        public function get_var($query = null, $x = 0, $y = 0) { return ''; }
+        
+        /**
+         * Retrieves one row from the database
+         * @param string $query SQL query
+         * @param string $output Optional output type (ARRAY_A|ARRAY_N|OBJECT)
+         * @param int $y Optional row offset
+         * @return array|object|null Database query result
+         */
+        public function get_row($query = null, $output = OBJECT, $y = 0) { return new \stdClass(); }
+        
+        /**
+         * Retrieves multiple rows from the database
+         * @param string $query SQL query
+         * @param string $output Optional output type (ARRAY_A|ARRAY_N|OBJECT)
+         * @return array|null Database query results
+         */
+        public function get_results($query = null, $output = OBJECT) { return array(); }
+        
+        /**
+         * Inserts a row into a table
+         * @param string $table Table name
+         * @param array $data Data to insert
+         * @param array|string $format Optional format for each value
+         * @return int|false Number of rows affected or false on error
+         */
+        public function insert($table, $data, $format = null) { return 1; }
+        
+        /**
+         * Updates a row in a table
+         * @param string $table Table name
+         * @param array $data Data to update
+         * @param array $where WHERE clause
+         * @param array|string $format Optional format for $data values
+         * @param array|string $where_format Optional format for $where values
+         * @return int|false Number of rows affected or false on error
+         */
+        public function update($table, $data, $where, $format = null, $where_format = null) { return 1; }
+        
+        /**
+         * Executes an SQL query
+         * @param string $query SQL query
+         * @return int|bool Number of rows affected or false on error
+         */
+        public function query($query) { return true; }
+    }
+}
+
+global $wpdb;
 if (!function_exists('sanitize_file_name')) {
     function sanitize_file_name($filename) { return $filename; }
 }
@@ -75,9 +186,6 @@ if (!function_exists('is_admin')) {
 if (!function_exists('wp_unslash')) {
     function wp_unslash($value) { return is_string($value) ? stripslashes($value) : $value; }
 }
-if (!function_exists('check_ajax_referer')) {
-    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
-}
 if (!function_exists('get_option')) {
     function get_option($option, $default = false) { return is_array($default) ? $default : array(); }
 }
@@ -87,12 +195,7 @@ if (!function_exists('update_option')) {
 if (!function_exists('esc_html__')) {
     function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
 }
-if (!function_exists('wp_unslash')) {
-    function wp_unslash($value) { return stripslashes_deep($value); }
-}
-if (!function_exists('check_ajax_referer')) {
-    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
-}
+// wp_unslash already defined above
 if (!function_exists('wp_send_json_error')) {
     function wp_send_json_error($data = null, $status_code = null) { 
         wp_send_json(array('success' => false, 'data' => $data), $status_code);
@@ -126,11 +229,7 @@ if (!function_exists('wp_die')) {
         exit;
     }
 }
-if (!function_exists('get_option')) {
-    function get_option($option, $default = false) {
-        return $default;
-    }
-}
+// get_option already defined above
 if (!function_exists('status_header')) {
     function status_header($code, $description = '') {
         http_response_code($code);
@@ -365,9 +464,9 @@ class Kura_AI_Admin {
             return;
         }
 
-        // Register settings
-        add_action('admin_init', array($this, 'register_settings'));
-        add_action('admin_init', array($this, 'add_settings_sections'));
+        // Register settings directly
+        $this->register_settings();
+        $this->add_settings_sections();
     }
 
     /**
@@ -393,6 +492,7 @@ class Kura_AI_Admin {
             array($this, 'general_section_callback'),
             'kura_ai_settings'
         );
+
     }
 
     /**
@@ -2407,8 +2507,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name)) === $table_name;
         
         if (!$table_exists) {
             wp_send_json_success(array(
@@ -2422,13 +2522,16 @@ class Kura_AI_Admin {
         }
         
         $summary = $wpdb->get_row(
-            "SELECT 
-                COUNT(*) as total_analyses,
-                COALESCE(AVG(health_score), 0) as avg_health_score,
-                COALESCE(AVG(analysis_time), 0) as avg_analysis_time,
-                SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as passed_analyses,
-                SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as failed_analyses
-            FROM {$table_name}"
+            $wpdb->prepare(
+                "SELECT 
+                    COUNT(*) as total_analyses,
+                    COALESCE(AVG(health_score), 0) as avg_health_score,
+                    COALESCE(AVG(analysis_time), 0) as avg_analysis_time,
+                    SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as passed_analyses,
+                    SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as failed_analyses
+                FROM %i",
+                $table_name
+            )
         );
         
         // Ensure we have valid data
@@ -2466,28 +2569,34 @@ class Kura_AI_Admin {
         
         // Get trend data for last 30 days
         $trend_data = $wpdb->get_results(
-            "SELECT 
-                DATE(created_at) as date,
-                COUNT(*) as count,
-                AVG(health_score) as avg_score
-            FROM {$table_name} 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY DATE(created_at)
-            ORDER BY date ASC"
+            $wpdb->prepare(
+                "SELECT 
+                    DATE(created_at) as date,
+                    COUNT(*) as count,
+                    AVG(health_score) as avg_score
+                FROM %i 
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                GROUP BY DATE(created_at)
+                ORDER BY date ASC",
+                $table_name
+            )
         );
         
         // Get health score distribution
         $score_distribution = $wpdb->get_results(
-            "SELECT 
-                CASE 
-                    WHEN health_score >= 90 THEN 'Excellent'
-                    WHEN health_score >= 70 THEN 'Good'
-                    WHEN health_score >= 50 THEN 'Fair'
-                    ELSE 'Poor'
-                END as category,
-                COUNT(*) as count
-            FROM {$table_name}
-            GROUP BY category"
+            $wpdb->prepare(
+                "SELECT 
+                    CASE 
+                        WHEN health_score >= 90 THEN 'Excellent'
+                        WHEN health_score >= 70 THEN 'Good'
+                        WHEN health_score >= 50 THEN 'Fair'
+                        ELSE 'Poor'
+                    END as category,
+                    COUNT(*) as count
+                FROM %i
+                GROUP BY category",
+                $table_name
+            )
         );
         
         // Get performance data
@@ -2528,8 +2637,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             // Return empty data if table doesn't exist
@@ -2538,16 +2647,19 @@ class Kura_AI_Admin {
         }
         
         $recent_analyses = $wpdb->get_results(
-            "SELECT 
-                user_id,
-                code_length,
-                analysis_time,
-                analysis_level,
-                health_score,
-                created_at
-            FROM {$table_name}
-            ORDER BY created_at DESC
-            LIMIT 10"
+            $wpdb->prepare(
+                "SELECT 
+                    user_id,
+                    code_length,
+                    analysis_time,
+                    analysis_level,
+                    health_score,
+                    created_at
+                FROM %i
+                ORDER BY created_at DESC
+                LIMIT 10",
+                $table_name
+            )
         );
         
         // Check for database errors
@@ -2582,8 +2694,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             wp_send_json_error(array(
@@ -2593,7 +2705,7 @@ class Kura_AI_Admin {
         }
         
         // Delete all records from the analytics table
-        $result = $wpdb->query("TRUNCATE TABLE {$table_name}");
+        $result = $wpdb->query($wpdb->prepare("TRUNCATE TABLE %i", $table_name));
         
         if ($result === false) {
             wp_send_json_error(array(
@@ -2630,8 +2742,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             // Return empty data if table doesn't exist
@@ -2648,10 +2760,11 @@ class Kura_AI_Admin {
                 DATE(created_at) as date,
                 COUNT(*) as count,
                 AVG(health_score) as avg_score
-            FROM {$table_name} 
+            FROM %i 
             WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
             GROUP BY DATE(created_at)
             ORDER BY date ASC",
+            $table_name,
             $period
         ));
         
@@ -2700,8 +2813,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             // Return empty data if table doesn't exist
@@ -2710,23 +2823,26 @@ class Kura_AI_Admin {
         }
         
         $distribution = $wpdb->get_results(
-            "SELECT 
-                CASE 
-                    WHEN health_score >= 90 THEN 'Excellent'
-                    WHEN health_score >= 70 THEN 'Good'
-                    WHEN health_score >= 50 THEN 'Fair'
-                    ELSE 'Poor'
-                END as category,
-                COUNT(*) as count
-            FROM {$table_name}
-            GROUP BY category
-            ORDER BY 
-                CASE category
-                    WHEN 'Excellent' THEN 1
-                    WHEN 'Good' THEN 2
-                    WHEN 'Fair' THEN 3
-                    WHEN 'Poor' THEN 4
-                END"
+            $wpdb->prepare(
+                "SELECT 
+                    CASE 
+                        WHEN health_score >= 90 THEN 'Excellent'
+                        WHEN health_score >= 70 THEN 'Good'
+                        WHEN health_score >= 50 THEN 'Fair'
+                        ELSE 'Poor'
+                    END as category,
+                    COUNT(*) as count
+                FROM %i
+                GROUP BY category
+                ORDER BY 
+                    CASE category
+                        WHEN 'Excellent' THEN 1
+                        WHEN 'Good' THEN 2
+                        WHEN 'Fair' THEN 3
+                        WHEN 'Poor' THEN 4
+                    END",
+                $table_name
+            )
         );
         
         // Check for database errors
@@ -2771,7 +2887,7 @@ class Kura_AI_Admin {
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
         // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             // Return empty data if table doesn't exist
@@ -2783,10 +2899,13 @@ class Kura_AI_Admin {
         }
         
         $pass_fail = $wpdb->get_row(
-            "SELECT 
-                SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as pass,
-                SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as fail
-            FROM {$table_name}"
+            $wpdb->prepare(
+                "SELECT 
+                    SUM(CASE WHEN health_score >= 70 THEN 1 ELSE 0 END) as pass,
+                    SUM(CASE WHEN health_score < 70 THEN 1 ELSE 0 END) as fail
+                FROM %i",
+                $table_name
+            )
         );
         
         // Check for database errors
@@ -2824,8 +2943,8 @@ class Kura_AI_Admin {
         global $wpdb;
         $table_name = $wpdb->prefix . 'kura_ai_analytics';
         
-        // Check if table exists
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+        // Check if table exists - using prepare to prevent SQL injection
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
         
         if (!$table_exists) {
             // Return empty data if table doesn't exist
@@ -2836,14 +2955,14 @@ class Kura_AI_Admin {
             return;
         }
         
-        $performance_data = $wpdb->get_results(
-            "SELECT 
-                analysis_level as level,
-                AVG(analysis_time) as avg_time
-            FROM {$table_name}
-            GROUP BY analysis_level
-            ORDER BY analysis_level"
-        );
+        $performance_data = $wpdb->get_results($wpdb->prepare(
+                "SELECT 
+                    analysis_level as level,
+                    AVG(analysis_time) as avg_time
+                FROM {$table_name}
+                GROUP BY analysis_level
+                ORDER BY analysis_level"
+            ));
         
         // Check for database errors
         if ($wpdb->last_error) {
@@ -3372,6 +3491,33 @@ class Kura_AI_Admin {
                 array('jquery', 'sweetalert2', 'kura-ai-sweetalert-config'),
                 $this->version,
                 true
+            );
+            
+            // Localize script for malware detection
+            wp_localize_script(
+                'kura-ai-malware-detection',
+                'kura_ai_malware',
+                array(
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('kura_ai_nonce'),
+                    'scanning_message' => esc_html__('Scanning for malware...', 'kura-ai'),
+                    'scanning_progress' => esc_html__('Scanning %d of %d files...', 'kura-ai'),
+                    'cancel_scan' => esc_html__('Cancel Scan', 'kura-ai'),
+                    'scan_complete' => esc_html__('Scan completed successfully', 'kura-ai'),
+                    'scan_failed' => esc_html__('Scan failed', 'kura-ai'),
+                    'start_scan' => esc_html__('Start Scan', 'kura-ai'),
+                    'error_message' => esc_html__('An error occurred during the scan. Please try again.', 'kura-ai'),
+                    'file_information' => esc_html__('File Information', 'kura-ai'),
+                    'file_path' => esc_html__('File Path', 'kura-ai'),
+                    'severity' => esc_html__('Severity', 'kura-ai'),
+                    'ai_confidence' => esc_html__('AI Confidence', 'kura-ai'),
+                    'detected_patterns' => esc_html__('Detected Patterns', 'kura-ai'),
+                    'pattern_name' => esc_html__('Pattern Name', 'kura-ai'),
+                    'pattern_type' => esc_html__('Pattern Type', 'kura-ai'),
+                    'ai_analysis' => esc_html__('AI Analysis', 'kura-ai'),
+                    'detection_time' => esc_html__('Detection Time', 'kura-ai'),
+                    'confirm_quarantine' => esc_html__('Are you sure you want to quarantine this file? This will move the file to a secure location and may affect site functionality if it is a legitimate file.', 'kura-ai')
+                )
             );
         }
         

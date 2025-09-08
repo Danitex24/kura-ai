@@ -9,6 +9,9 @@
 
 namespace Kura_AI;
 
+// Include WordPress core files
+require_once ABSPATH . 'wp-includes/pluggable.php';
+
 // Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
@@ -64,7 +67,11 @@ class Kura_AI_Monitor {
         global $wpdb;
         $this->db = $wpdb;
         $this->logger = new Kura_AI_Logger();
-        $this->notifier = new Kura_AI_Notifier();
+        
+        // Check if the Kura_AI_Notifier class exists before instantiating
+        if (class_exists('Kura_AI\\Kura_AI_Notifier')) {
+            $this->notifier = new Kura_AI_Notifier();
+        }
 
         // Initialize monitoring hooks
         $this->init_hooks();
@@ -120,7 +127,8 @@ class Kura_AI_Monitor {
         
         return $this->db->get_results(
             $this->db->prepare(
-                "SELECT * FROM {$table_name} ORDER BY created_at DESC LIMIT %d",
+                "SELECT * FROM %i ORDER BY created_at DESC LIMIT %d",
+                $table_name,
                 $limit
             )
         );
@@ -200,7 +208,7 @@ class Kura_AI_Monitor {
      */
     public function monitor_file_upload($attachment_id) {
         $file = get_attached_file($attachment_id);
-        $file_type = wp_check_filetype($file);
+        $file_type = \wp_check_filetype($file);
 
         $this->logger->log_event(
             'file_upload',
@@ -256,7 +264,7 @@ class Kura_AI_Monitor {
      * @param    int    $user_id    The user ID.
      */
     public function monitor_user_deletion($user_id) {
-        $user = get_userdata($user_id);
+        $user = \get_userdata($user_id);
 
         $this->logger->log_event(
             'user_deletion',
@@ -350,9 +358,12 @@ class Kura_AI_Monitor {
         $table_name = $this->db->prefix . 'kura_ai_logs';
         
         return (int) $this->db->get_var(
-            "SELECT COUNT(*) FROM {$table_name} 
-            WHERE event_type = 'failed_login' 
-            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM %i 
+                WHERE event_type = 'failed_login' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                $table_name
+            )
         );
     }
 
@@ -366,9 +377,12 @@ class Kura_AI_Monitor {
         $table_name = $this->db->prefix . 'kura_ai_logs';
         
         return (int) $this->db->get_var(
-            "SELECT COUNT(*) FROM {$table_name} 
-            WHERE event_type IN ('file_upload', 'file_deletion') 
-            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM %i 
+                WHERE event_type IN ('file_upload', 'file_deletion') 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                $table_name
+            )
         );
     }
 
@@ -382,9 +396,12 @@ class Kura_AI_Monitor {
         $table_name = $this->db->prefix . 'kura_ai_logs';
         
         return (int) $this->db->get_var(
-            "SELECT COUNT(*) FROM {$table_name} 
-            WHERE event_type = 'malware_detection' 
-            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM %i 
+                WHERE event_type = 'malware_detection' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                $table_name
+            )
         );
     }
 
@@ -398,9 +415,12 @@ class Kura_AI_Monitor {
         $table_name = $this->db->prefix . 'kura_ai_logs';
         
         return (int) $this->db->get_var(
-            "SELECT COUNT(*) FROM {$table_name} 
-            WHERE event_type IN ('login', 'admin_access', 'user_creation', 'user_deletion') 
-            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM %i 
+                WHERE event_type IN ('login', 'admin_access', 'user_creation', 'user_deletion') 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                $table_name
+            )
         );
     }
 
@@ -414,9 +434,12 @@ class Kura_AI_Monitor {
         $table_name = $this->db->prefix . 'kura_ai_logs';
         
         return (int) $this->db->get_var(
-            "SELECT COUNT(*) FROM {$table_name} 
-            WHERE event_type = 'system_alert' 
-            AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            $this->db->prepare(
+                "SELECT COUNT(*) FROM %i 
+                WHERE event_type = 'system_alert' 
+                AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                $table_name
+            )
         );
     }
 }
