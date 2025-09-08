@@ -155,6 +155,10 @@ class Kura_AI_Cron_Fix {
         $cron_array = get_option('cron', array());
         $cleaned = false;
         
+        if (!is_array($cron_array)) {
+            return;
+        }
+        
         foreach ($cron_array as $timestamp => $cron) {
             // Remove events older than 24 hours that haven't run
             if ($timestamp < ($current_time - 86400)) {
@@ -194,6 +198,18 @@ class Kura_AI_Cron_Fix {
         $schedules['kura_ai_reduced'] = array(
             'interval' => 21600, // 6 hours
             'display' => 'Every 6 Hours (Kura AI Reduced)'
+        );
+        
+        // Add weekly schedule for compliance scans
+        $schedules['weekly'] = array(
+            'interval' => 604800, // 7 days
+            'display' => 'Once Weekly'
+        );
+        
+        // Add monthly schedule for compliance scans
+        $schedules['monthly'] = array(
+            'interval' => 2635200, // 30.5 days
+            'display' => 'Once Monthly'
         );
         
         return $schedules;

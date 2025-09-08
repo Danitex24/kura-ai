@@ -1123,11 +1123,12 @@ jQuery(document).ready(function ($) {
 
 
 // Malware Detection
-let activeScanId = null;
-let scanProgressInterval = null;
+(function($) {
+    let activeScanId = null;
+    let scanProgressInterval = null;
 
-// Initialize malware scan controls
-function initMalwareScan() {
+    // Initialize malware scan controls
+    function initMalwareScan() {
     const $startScanBtn = $('#start-malware-scan');
     const $cancelScanBtn = $('#cancel-malware-scan');
     const $progressBar = $('#scan-progress-bar');
@@ -1368,9 +1369,11 @@ function resetScanControls() {
     $('#cancel-malware-scan').prop('disabled', true);
 }
 
-// Initialize malware scan when on malware detection page
-jQuery(document).ready(function($) {
-    if ($('#malware-detection-page').length) {
-        initMalwareScan();
-    }
-});
+    // Initialize malware scan when on malware detection page
+    jQuery(document).ready(function() {
+        if ($('#malware-detection-page').length) {
+            initMalwareScan();
+        }
+    });
+
+})(jQuery);
