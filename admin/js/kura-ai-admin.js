@@ -68,11 +68,8 @@ jQuery(document).ready(function ($) {
       url: kura_ai_ajax.ajax_url,
       type: "POST",
       data: {
-        action: "kura_ai_scan",
-        nonce: kura_ai_ajax.nonce,
-        scan_type: "security",
-        target: "website",
-        email: kura_ai_ajax.admin_email || "admin@example.com"
+        action: "kura_ai_run_scan",
+        _wpnonce: kura_ai_ajax.nonce
       },
       beforeSend: function () {
         updateScanProgress(0, 'Initializing scan...');
@@ -85,7 +82,19 @@ jQuery(document).ready(function ($) {
           // Show results after a brief delay
           setTimeout(function() {
             hideScanModal();
-            showScanResults(response.data);
+            
+            // Check if no security issues found
+            if (response.data && response.data.issues_found === 0) {
+              Swal.fire({
+                title: 'Scan Summary',
+                text: 'No security issues found. Your site appears to be secure.',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#10b981'
+              });
+            } else {
+              showScanResults(response.data);
+            }
             
             // Update dashboard stats if available
             if (response.data && response.data.stats) {
