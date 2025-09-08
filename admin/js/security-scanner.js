@@ -29,6 +29,12 @@
                 this.runSecurityScan();
             });
 
+            // Reset scan results button
+            $('#reset-scan-results').on('click', (e) => {
+                e.preventDefault();
+                this.resetScanResults();
+            });
+
             // Result item actions
             $('.result-actions .button').on('click', (e) => {
                 e.preventDefault();
@@ -425,6 +431,91 @@
                     showConfirmButton: false
                 });
             }
+        }
+
+        resetScanResults() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Reset Scan Results',
+                    text: 'Are you sure you want to reset all scan results? This will clear all security findings and statistics.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Reset Results',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#d33',
+                    customClass: {
+                        confirmButton: 'button button-primary',
+                        cancelButton: 'button'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.performReset();
+                    }
+                });
+            } else {
+                if (confirm('Are you sure you want to reset all scan results?')) {
+                    this.performReset();
+                }
+            }
+        }
+
+        performReset() {
+            // Show loading state
+            const resetButton = $('#reset-scan-results');
+            const originalText = resetButton.html();
+            resetButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Resetting...');
+
+            // Make AJAX request to reset scan results
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'kura_ai_reset_scan_results',
+                    nonce: kura_ai_ajax.nonce
+                },
+                success: (response) => {
+                    if (response.success) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Reset Complete',
+                                text: 'All scan results have been cleared successfully.',
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            alert('Scan results have been reset successfully.');
+                            location.reload();
+                        }
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Error',
+                                text: response.data || 'Failed to reset scan results.',
+                                icon: 'error'
+                            });
+                        } else {
+                            alert('Error: ' + (response.data || 'Failed to reset scan results.'));
+                        }
+                    }
+                },
+                error: () => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Network error occurred while resetting scan results.',
+                            icon: 'error'
+                        });
+                    } else {
+                        alert('Network error occurred while resetting scan results.');
+                    }
+                },
+                complete: () => {
+                    resetButton.prop('disabled', false).html(originalText);
+                }
+            });
         }
     }
 

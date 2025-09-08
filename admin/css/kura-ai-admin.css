@@ -185,6 +185,10 @@
     justify-content: center;
 }
 
+.scan-progress-modal.show {
+    display: flex;
+}
+
 .scan-progress-modal .modal-content {
     background: #fff;
     border-radius: 12px;

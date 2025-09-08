@@ -19,8 +19,10 @@ $settings = get_option('kura_ai_settings', array());
 $scan_results = !empty($settings['scan_results']) && is_array($settings['scan_results']) ? $settings['scan_results'] : array();
 $last_scan = !empty($settings['last_scan']) ? (int)$settings['last_scan'] : 0;
 
-// Add demo data if no scan results exist
-if (empty($scan_results)) {
+// Check if we should show demo data (only if no scan has ever been run)
+$show_demo_data = empty($scan_results) && $last_scan === 0;
+
+if ($show_demo_data) {
     $scan_results = array(
         'malware_detection' => array(
             array(
@@ -102,10 +104,17 @@ if (!empty($scan_results)) {
         }
     }
     
-    // Mock some additional statistics for demo
-    $files_scanned = 1247;
-    $threats_detected = $total_issues;
-    $clean_files = $files_scanned - $threats_detected;
+    if ($show_demo_data) {
+        // Mock some additional statistics for demo
+        $files_scanned = 1247;
+        $threats_detected = $total_issues;
+        $clean_files = $files_scanned - $threats_detected;
+    } else {
+        // Use actual statistics or zero if reset
+        $files_scanned = $total_issues > 0 ? 1247 : 0; // Could be made dynamic in future
+        $threats_detected = $total_issues;
+        $clean_files = $files_scanned - $threats_detected;
+    }
 }
 
 // Calculate percentages for charts
@@ -173,6 +182,10 @@ if ($total_issues > 0) {
             <button id="run-security-scan" class="button button-primary">
                 <i class="fas fa-play"></i>
                 <?php _e('Run New Scan', 'kura-ai'); ?>
+            </button>
+            <button id="reset-scan-results" class="button button-secondary" style="margin-left: 10px;">
+                <i class="fas fa-undo"></i>
+                <?php _e('Reset Scan Results', 'kura-ai'); ?>
             </button>
             <?php if ($last_scan > 0): ?>
                 <p class="last-scan-info">

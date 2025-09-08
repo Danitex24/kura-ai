@@ -487,7 +487,8 @@ class Kura_AI_Admin {
             'kura_ai_get_trends_data' => 'handle_get_trends_data',
             'kura_ai_get_health_score_distribution' => 'handle_get_health_score_distribution',
             'kura_ai_get_pass_fail_data' => 'handle_get_pass_fail_data',
-            'kura_ai_get_performance_data' => 'handle_get_performance_data'
+            'kura_ai_get_performance_data' => 'handle_get_performance_data',
+            'kura_ai_reset_scan_results' => 'handle_reset_scan_results'
         );
         
         foreach ($ajax_actions as $action => $method) {
@@ -3477,5 +3478,56 @@ class Kura_AI_Admin {
         
         wp_mail($email, $subject, $message);
     }
+
+    /**
+     * Handle reset scan results request.
+     *
+     * @since    1.0.0
+     */
+    public function handle_reset_scan_results() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('Security check failed.', 'kura-ai')
+            ));
+        }
+
+        // Check user capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => esc_html__('You do not have permission to perform this action.', 'kura-ai')
+            ));
+        }
+
+        // Clear scan results from database
+        delete_option('kura_ai_scan_results');
+        delete_option('kura_ai_last_scan');
+        delete_option('kura_ai_scan_statistics');
+        delete_option('kura_ai_security_issues');
+        delete_option('kura_ai_scan_history');
+        
+        // Clear scan results from main settings (used by security scanner page)
+        $settings = get_option('kura_ai_settings', array());
+        if (isset($settings['scan_results'])) {
+            unset($settings['scan_results']);
+        }
+        if (isset($settings['last_scan'])) {
+            unset($settings['last_scan']);
+        }
+        update_option('kura_ai_settings', $settings);
+        
+        // Reset dashboard statistics
+        update_option('kura_ai_scan_statistics', array(
+            'files_scanned' => 0,
+            'threats_detected' => 0,
+            'clean_files' => 0,
+            'security_score' => 100,
+            'last_scan' => 0
+        ));
+        
+        wp_send_json_success(array(
+             'message' => esc_html__('Scan results have been reset successfully.', 'kura-ai')
+         ));
+     }
 
 }
