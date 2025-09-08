@@ -25,6 +25,17 @@ global $wpdb;
  * This helps the static analyzer understand WordPress database methods
  */
 if (!class_exists('\wpdb')) {
+    // Define constants needed for wpdb
+    if (!defined('ARRAY_A')) {
+        define('ARRAY_A', 'ARRAY_A');
+    }
+    if (!defined('ARRAY_N')) {
+        define('ARRAY_N', 'ARRAY_N');
+    }
+    if (!defined('OBJECT')) {
+        define('OBJECT', 'OBJECT');
+    }
+    
     /**
      * WordPress Database Access Abstraction Object
      */
@@ -89,7 +100,7 @@ if (!class_exists('\wpdb')) {
          * @param int $y Optional row offset
          * @return array|object|null Database query result
          */
-        public function get_row($query = null, $output = OBJECT, $y = 0) { return new \stdClass(); }
+        public function get_row($query = null, $output = 'OBJECT', $y = 0) { return new \stdClass(); }
         
         /**
          * Retrieves multiple rows from the database
@@ -97,7 +108,9 @@ if (!class_exists('\wpdb')) {
          * @param string $output Optional output type (ARRAY_A|ARRAY_N|OBJECT)
          * @return array|null Database query results
          */
-        public function get_results($query = null, $output = OBJECT) { return array(); }
+        public function get_results($query = null, $output = 'OBJECT') { return array(); }
+        
+        // Method removed to avoid duplicate declaration
         
         /**
          * Inserts a row into a table
@@ -447,7 +460,24 @@ class Kura_AI_Admin {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
         add_action('kura_ai_compliance_scan', array($this, 'run_scheduled_compliance_scan'));
+        
+        // Add navigation menu to all admin pages
+        add_action('admin_notices', array($this, 'include_navigation_menu'));
+        
         $this->register_ajax_actions();
+    }
+    
+    /**
+     * Include the navigation menu in admin pages.
+     *
+     * @since    1.0.0
+     */
+    public function include_navigation_menu() {
+        // Only include on Kura AI admin pages
+        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        if (strpos($page, 'kura-ai') !== false) {
+            include_once plugin_dir_path(__FILE__) . 'partials/kura-ai-navigation-menu.php';
+        }
     }
 
     /**
@@ -3624,6 +3654,17 @@ class Kura_AI_Admin {
             $this->version,
             'all'
         );
+        
+        // Navigation menu styles for all Kura AI admin pages
+        if (strpos($page, 'kura-ai') !== false) {
+            wp_enqueue_style(
+                'kura-ai-navigation-styles',
+                $this->assets_url . 'css/kura-ai-navigation.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
         
         // Page-specific styles
         if ($page === 'kura-ai-compliance' || strpos($page, 'compliance') !== false) {
