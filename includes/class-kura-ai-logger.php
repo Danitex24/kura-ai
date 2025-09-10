@@ -14,6 +14,177 @@ if (!defined('\ABSPATH')) {
     exit;
 }
 
+// Check if WordPress functions are available
+if (!function_exists('maybe_serialize')) {
+    require_once ABSPATH . 'wp-includes/functions.php';
+}
+
+// Check if WordPress time functions are available
+if (!function_exists('current_time')) {
+    require_once ABSPATH . 'wp-includes/functions.php';
+}
+
+// Make sure WordPress database functions are available
+if (!isset($GLOBALS['wpdb'])) {
+    require_once ABSPATH . 'wp-includes/wp-db.php';
+    global $wpdb;
+}
+
+// Define a wpdb class if it doesn't exist in this namespace
+if (!class_exists('\Kura_AI\wpdb')) {
+    /**
+     * Proxy class for WordPress global $wpdb
+     */
+    class wpdb {
+        /**
+         * Table prefix
+         * @var string
+         */
+        public $prefix = '';
+        
+        /**
+         * Last insert ID
+         * @var int
+         */
+        public $insert_id = 0;
+        
+        /**
+         * Last error
+         * @var string
+         */
+        public $last_error = '';
+        
+        /**
+         * Constructor
+         */
+        public function __construct() {
+            global $wpdb;
+            if (isset($wpdb)) {
+                $this->prefix = $wpdb->prefix;
+            }
+        }
+        
+        /**
+         * Get a variable from the database
+         * 
+         * @param string $query The query to run
+         * @return mixed The result
+         */
+        public function get_var($query) {
+            global $wpdb;
+            return $wpdb->get_var($query);
+        }
+        
+        /**
+         * Get a row from the database
+         * 
+         * @param string $query The query to run
+         * @param string $output The output format
+         * @return array|object|null The result
+         */
+        public function get_row($query, $output = OBJECT) {
+            global $wpdb;
+            return $wpdb->get_row($query, $output);
+        }
+        
+        /**
+         * Get results from the database
+         * 
+         * @param string $query The query to run
+         * @param string $output The output format
+         * @return array|object|null The results
+         */
+        public function get_results($query, $output = OBJECT) {
+            global $wpdb;
+            return $wpdb->get_results($query, $output);
+        }
+        
+        /**
+         * Insert data into the database
+         * 
+         * @param string $table The table to insert into
+         * @param array $data The data to insert
+         * @return int|false The number of rows affected
+         */
+        public function insert($table, $data) {
+            global $wpdb;
+            $result = $wpdb->insert($table, $data);
+            if ($result !== false) {
+                $this->insert_id = $wpdb->insert_id;
+            }
+            return $result;
+        }
+        
+        /**
+         * Update data in the database
+         * 
+         * @param string $table The table to update
+         * @param array $data The data to update
+         * @param array $where The where clause
+         * @return int|false The number of rows affected
+         */
+        public function update($table, $data, $where) {
+            global $wpdb;
+            return $wpdb->update($table, $data, $where);
+        }
+        
+        /**
+         * Run a query
+         * 
+         * @param string $query The query to run
+         * @return int|false The number of rows affected
+         */
+        public function query($query) {
+            global $wpdb;
+            return $wpdb->query($query);
+        }
+        
+        /**
+         * Prepare a query
+         * 
+         * @param string $query The query to prepare
+         * @param mixed $args The arguments to prepare with
+         * @return string The prepared query
+         */
+        public function prepare($query, ...$args) {
+            global $wpdb;
+            // Make sure the query has placeholders before calling prepare
+            if (strpos($query, '%') !== false) {
+                return $wpdb->prepare($query, ...$args);
+            }
+            return $query; // Return the query as is if no placeholders
+        }
+        
+        /**
+         * Escape like wildcards
+         * 
+         * @param string $text The text to escape
+         * @return string The escaped text
+         */
+        public function esc_like($text) {
+            global $wpdb;
+            return $wpdb->esc_like($text);
+        }
+        
+        /**
+         * Get the insert ID
+         * 
+         * @return int The insert ID
+         */
+        public function __get($name) {
+            global $wpdb;
+            if ($name === 'insert_id') {
+                return $wpdb->insert_id;
+            } elseif ($name === 'last_error') {
+                return $wpdb->last_error;
+            } elseif ($name === 'prefix') {
+                return $wpdb->prefix;
+            }
+            return null;
+        }
+    }
+}
+
 class Kura_AI_Logger
 {
 
@@ -75,7 +246,7 @@ class Kura_AI_Logger
      */
     public function log_event($type, $message, $data = array(), $severity = 'info')
     {
-        global $wpdb;
+        $wpdb = new \Kura_AI\wpdb();
 
         $table_name = $wpdb->prefix . 'kura_ai_logs';
 
@@ -106,7 +277,7 @@ class Kura_AI_Logger
      */
     public function get_logs($args = array())
     {
-        global $wpdb;
+        $wpdb = new \Kura_AI\wpdb();
 
         $table_name = $wpdb->prefix . 'kura_ai_logs';
 
@@ -147,7 +318,9 @@ class Kura_AI_Logger
         // Count total items for pagination
         $count_query = "SELECT COUNT(*) FROM $table_name $where_clause";
         if (!empty($query_params)) {
-            $count_query = $wpdb->prepare($count_query, $query_params);
+            // Create placeholders based on the number of parameters
+            $placeholders = array_fill(0, count($query_params), '%s');
+            $count_query = $wpdb->prepare($count_query, ...$query_params);
         }
 
         $total_items = $wpdb->get_var($count_query);
@@ -160,7 +333,9 @@ class Kura_AI_Logger
             // Export all records without pagination
             $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order";
             if (!empty($query_params)) {
-                $query = $wpdb->prepare($query, $query_params);
+                // Create placeholders based on the number of parameters
+                $placeholders = array_fill(0, count($query_params), '%s');
+                $query = $wpdb->prepare($query, ...$query_params);
             }
         } else {
             // Apply pagination
@@ -168,7 +343,7 @@ class Kura_AI_Logger
             $query = "SELECT * FROM $table_name $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
             $query_params[] = $args['per_page'];
             $query_params[] = $offset;
-            $query = $wpdb->prepare($query, $query_params);
+            $query = $wpdb->prepare($query, ...$query_params);
         }
         $items = $wpdb->get_results($query, ARRAY_A);
 
@@ -194,7 +369,7 @@ class Kura_AI_Logger
      */
     public function clear_logs($args = array())
     {
-        global $wpdb;
+        $wpdb = new \Kura_AI\wpdb();
 
         $table_name = $wpdb->prefix . 'kura_ai_logs';
 
@@ -233,7 +408,9 @@ class Kura_AI_Logger
         $query = "DELETE FROM $table_name $where_clause";
 
         if (!empty($query_params)) {
-            $query = $wpdb->prepare($query, $query_params);
+            // Create placeholders based on the number of parameters
+            $placeholders = array_fill(0, count($query_params), '%s');
+            $query = $wpdb->prepare($query, ...$query_params);
         }
 
         return $wpdb->query($query);

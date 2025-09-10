@@ -32,6 +32,9 @@ class Kura_AI {
         $this->set_locale();
         $this->define_admin_hooks();
         $this->define_public_hooks();
+        
+        // Initialize brute force protection
+        $this->init_brute_force_protection();
     }
 
     private function load_dependencies() {
@@ -50,6 +53,7 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-hardening.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-monitor.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-cron-fix.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-brute-force.php';
         
         // AI Integration
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-ai-handler.php';
@@ -111,6 +115,16 @@ class Kura_AI {
         new \Kura_AI_Cron_Fix();
         
         $this->loader->run();
+    }
+    
+    /**
+     * Initialize the brute force protection functionality.
+     *
+     * @since    1.0.0
+     */
+    private function init_brute_force_protection() {
+        $brute_force = new Kura_AI_Brute_Force();
+        $brute_force->init();
     }
 
     public function get_plugin_name() {

@@ -153,6 +153,7 @@ class Kura_AI_Hardening {
      * @return   array    The result of the operation.
      */
     public function optimize_database() {
+        // Use WordPress global $wpdb for core tables
         global $wpdb;
 
         $optimizations = array(
@@ -174,7 +175,7 @@ class Kura_AI_Hardening {
         }
 
         // Optimize tables
-        $tables = $wpdb->get_results('SHOW TABLES', \ARRAY_N);
+        $tables = $wpdb->get_results('SHOW TABLES', ARRAY_N);
         foreach ($tables as $table) {
             $wpdb->query("OPTIMIZE TABLE {$table[0]}");
         }
@@ -207,14 +208,26 @@ class Kura_AI_Hardening {
         );
 
         // Check database status
+        // Use WordPress global $wpdb for core tables
         global $wpdb;
-        $status['database'] = array(
-            'post_revisions' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'revision'"),
-            'auto_drafts' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'auto-draft'"),
-            'trashed_posts' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'trash'"),
-            'spam_comments' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'spam'"),
-            'trashed_comments' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'trash'")
-        );
+        // Make sure we have access to WordPress core tables
+        if (isset($wpdb->posts) && isset($wpdb->comments)) {
+            $status['database'] = array(
+                'post_revisions' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'revision'"),
+                'auto_drafts' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'auto-draft'"),
+                'trashed_posts' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'trash'"),
+                'spam_comments' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'spam'"),
+                'trashed_comments' => $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_approved = 'trash'")
+            );
+        } else {
+            $status['database'] = array(
+                'post_revisions' => 0,
+                'auto_drafts' => 0,
+                'trashed_posts' => 0,
+                'spam_comments' => 0,
+                'trashed_comments' => 0
+            );
+        }
 
         return $status;
     }

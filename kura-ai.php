@@ -20,8 +20,17 @@ if (!defined('WPINC')) {
 // Define plugin constants
 define('KURA_AI_VERSION', '1.0.1');
 
-// WordPress functions will be available when plugin is loaded
-// These constants will be properly defined by WordPress
+// Make sure WordPress core functions are available
+if (!function_exists('plugin_dir_path') || !function_exists('plugin_dir_url') || !function_exists('plugin_basename')) {
+    require_once ABSPATH . 'wp-includes/plugin.php';
+}
+
+// Make sure WordPress database functions are available
+if (!function_exists('dbDelta')) {
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+}
+
+// Define plugin constants
 define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KURA_AI_BASENAME', plugin_basename(__FILE__));
@@ -167,6 +176,27 @@ function kura_ai_ensure_tables() {
         dbDelta($file_versions_sql);
     }
     
+    // Check and create brute force protection table
+    $brute_force_table = $wpdb->prefix . 'kura_ai_brute_force';
+    $brute_force_exists = $wpdb->get_var("SHOW TABLES LIKE '$brute_force_table'");
+    
+    if (!$brute_force_exists) {
+        $brute_force_sql = "CREATE TABLE $brute_force_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            ip_address varchar(45) NOT NULL,
+            username varchar(60) NOT NULL,
+            attempt_count int NOT NULL DEFAULT 1,
+            last_attempt datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            blocked_until datetime,
+            PRIMARY KEY (id),
+            KEY ip_address (ip_address),
+            KEY username (username)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($brute_force_sql);
+    }
+    
     // Check and create analytics table
     $analytics_table = $wpdb->prefix . 'kura_ai_analytics';
     $analytics_exists = $wpdb->get_var("SHOW TABLES LIKE '$analytics_table'");
@@ -306,6 +336,11 @@ function get_core_files($directory)
  */
 function run_kura_ai()
 {
+    // Make sure WordPress functions are available
+    if (!function_exists('add_action')) {
+        return;
+    }
+    
     $plugin = new Kura_AI\Kura_AI();
     $plugin->run();
 }

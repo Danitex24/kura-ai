@@ -17,27 +17,28 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define WordPress functions for static analysis
+// Make sure WordPress core functions are available
+if (!function_exists('add_action') || !function_exists('plugin_dir_path')) {
+    require_once ABSPATH . 'wp-includes/plugin.php';
+}
+
+// Make sure WordPress translation functions are available
+if (!function_exists('esc_html__')) {
+    require_once ABSPATH . 'wp-includes/l10n.php';
+}
+
+// Make sure WordPress database functions are available
+if (!function_exists('maybe_serialize')) {
+    require_once ABSPATH . 'wp-includes/functions.php';
+}
+
+// Import the global WordPress database class
 global $wpdb;
 
-/**
- * Define wpdb class for static analysis
- * This helps the static analyzer understand WordPress database methods
- */
-if (!class_exists('\wpdb')) {
-    // Define constants needed for wpdb
-    if (!defined('ARRAY_A')) {
-        define('ARRAY_A', 'ARRAY_A');
-    }
-    if (!defined('ARRAY_N')) {
-        define('ARRAY_N', 'ARRAY_N');
-    }
-    if (!defined('OBJECT')) {
-        define('OBJECT', 'OBJECT');
-    }
-    
+// Define a wpdb class if it doesn't exist in this namespace
+if (!class_exists('\Kura_AI\wpdb')) {
     /**
-     * WordPress Database Access Abstraction Object
+     * Proxy class for WordPress global $wpdb
      */
     class wpdb {
         /**
@@ -77,69 +78,224 @@ if (!class_exists('\wpdb')) {
         public $insert_id = 0;
         
         /**
-         * Prepares a SQL query for safe execution
+         * Posts table
+         * @var string
+         */
+        public $posts = 'wp_posts';
+        
+        /**
+         * Comments table
+         * @var string
+         */
+        public $comments = 'wp_comments';
+        
+        /**
+         * Constructor
+         */
+        public function __construct() {
+            global $wpdb;
+            if (isset($wpdb)) {
+                $this->prefix = $wpdb->prefix;
+            }
+        }
+        
+        /**
+         * Magic method to handle method calls dynamically
+         * This will forward all undefined method calls to the global $wpdb object
+         *
+         * @param string $name Method name
+         * @param array $arguments Method arguments
+         * @return mixed Result from the global $wpdb method call
+         */
+        public function __call($name, $arguments) {
+            global $wpdb;
+            if (isset($wpdb) && method_exists($wpdb, $name)) {
+                return call_user_func_array(array($wpdb, $name), $arguments);
+            }
+            return null;
+        }
+        
+        // Method already defined at line 107
+        
+        // Method already defined at line 130
+        
+        // Method already defined at line 151
+        
+        // Method already defined at line 163
+        
+        /**
+         * Get a variable from the database
+         * 
+         * @param string $query The query to run
+         * @return mixed The result
+         */
+        public function get_var($query) {
+            global $wpdb;
+            return $wpdb->get_var($query);
+        }
+        
+        /**
+         * Delete a row from the table
+         *
+         * @param string $table Table name
+         * @param array $where A named array of WHERE clauses
+         * @param array|string $format Optional. An array of formats to be mapped to each value in $where.
+         * @return int|false The number of rows affected, or false on error
+         */
+        public function delete($table, $where, $format = null) {
+            global $wpdb;
+            if (isset($wpdb) && method_exists($wpdb, 'delete')) {
+                return $wpdb->delete($table, $where, $format);
+            }
+            
+            // Fallback implementation
+            $where_clause = '';
+            $placeholders = array();
+            
+            foreach ($where as $field => $value) {
+                if (!empty($where_clause)) {
+                    $where_clause .= ' AND ';
+                }
+                $where_clause .= $field . ' = %s';
+                $placeholders[] = $value;
+            }
+            
+            $query = "DELETE FROM $table WHERE $where_clause";
+            $prepared_query = $this->prepare($query, $placeholders);
+            
+            return $this->query($prepared_query);
+        }
+        
+        /**
+         * Get a row from the database
+         * 
+         * @param string $query The query to run
+         * @param string $output The output format
+         * @return object|array|null The result
+         */
+        public function get_row($query, $output = OBJECT) {
+            global $wpdb;
+            return $wpdb->get_row($query, $output);
+        }
+        
+        /**
+         * Get results from the database
+         * 
+         * @param string $query The query to run
+         * @param string $output The output format
+         * @return array The results
+         */
+        public function get_results($query, $output = OBJECT) {
+            global $wpdb;
+            return $wpdb->get_results($query, $output);
+        }
+        
+        /**
+         * Insert data into the database
+         * 
+         * @param string $table The table to insert into
+         * @param array $data The data to insert
+         * @return int|false The number of rows affected
+         */
+        public function insert($table, $data) {
+            global $wpdb;
+            $result = $wpdb->insert($table, $data);
+            if ($result !== false) {
+                $this->insert_id = $wpdb->insert_id;
+            }
+            return $result;
+        }
+        
+        /**
+         * Update data in the database
+         * 
+         * @param string $table The table to update
+         * @param array $data The data to update
+         * @param array $where The where clause
+         * @return int|false The number of rows affected
+         */
+        public function update($table, $data, $where) {
+            global $wpdb;
+            return $wpdb->update($table, $data, $where);
+        }
+        
+        /**
+         * Run a query
+         * 
+         * @param string $query The query to run
+         * @return int|false The number of rows affected
+         */
+        public function query($query) {
+            global $wpdb;
+            return $wpdb->query($query);
+        }
+        
+        /**
+         * Prepare a query
+         * 
          * @param string $query The query to prepare
-         * @param mixed $args Query arguments
-         * @return string|null Prepared query or null on failure
+         * @param mixed $args The arguments to prepare with
+         * @return string The prepared query
          */
-        public function prepare($query, ...$args) { return $query; }
+        public function prepare($query, ...$args) {
+            global $wpdb;
+            // Make sure the query has placeholders before calling prepare
+            if (strpos($query, '%') !== false) {
+                return $wpdb->prepare($query, ...$args);
+            }
+            return $query; // Return the query as is if no placeholders
+        }
         
         /**
-         * Retrieves one variable from the database
-         * @param string $query SQL query
-         * @param int $x Optional column offset
-         * @param int $y Optional row offset
-         * @return string|null Database query result
+         * Escape like wildcards
+         * 
+         * @param string $text The text to escape
+         * @return string The escaped text
          */
-        public function get_var($query = null, $x = 0, $y = 0) { return ''; }
+        public function esc_like($text) {
+            global $wpdb;
+            return $wpdb->esc_like($text);
+        }
         
         /**
-         * Retrieves one row from the database
-         * @param string $query SQL query
-         * @param string $output Optional output type (ARRAY_A|ARRAY_N|OBJECT)
-         * @param int $y Optional row offset
-         * @return array|object|null Database query result
+         * Get the insert ID
+         * 
+         * @return int The insert ID
          */
-        public function get_row($query = null, $output = 'OBJECT', $y = 0) { return new \stdClass(); }
-        
-        /**
-         * Retrieves multiple rows from the database
-         * @param string $query SQL query
-         * @param string $output Optional output type (ARRAY_A|ARRAY_N|OBJECT)
-         * @return array|null Database query results
-         */
-        public function get_results($query = null, $output = 'OBJECT') { return array(); }
-        
-        // Method removed to avoid duplicate declaration
-        
-        /**
-         * Inserts a row into a table
-         * @param string $table Table name
-         * @param array $data Data to insert
-         * @param array|string $format Optional format for each value
-         * @return int|false Number of rows affected or false on error
-         */
-        public function insert($table, $data, $format = null) { return 1; }
-        
-        /**
-         * Updates a row in a table
-         * @param string $table Table name
-         * @param array $data Data to update
-         * @param array $where WHERE clause
-         * @param array|string $format Optional format for $data values
-         * @param array|string $where_format Optional format for $where values
-         * @return int|false Number of rows affected or false on error
-         */
-        public function update($table, $data, $where, $format = null, $where_format = null) { return 1; }
-        
-        /**
-         * Executes an SQL query
-         * @param string $query SQL query
-         * @return int|bool Number of rows affected or false on error
-         */
-        public function query($query) { return true; }
+        public function __get($name) {
+            global $wpdb;
+            if ($name === 'insert_id') {
+                return $wpdb->insert_id;
+            } elseif ($name === 'last_error') {
+                return $wpdb->last_error;
+            } elseif ($name === 'prefix') {
+                return $wpdb->prefix;
+            }
+            return null;
+        }
     }
 }
+if (!isset($GLOBALS['wpdb'])) {
+    require_once ABSPATH . 'wp-includes/wp-db.php';
+    global $wpdb;
+}
+
+/**
+ * Define constants needed for wpdb if not already defined
+ */
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+if (!defined('ARRAY_N')) {
+    define('ARRAY_N', 'ARRAY_N');
+}
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
+
+/**
+ * Make sure WordPress database class is loaded
+ */
 
 global $wpdb;
 if (!function_exists('sanitize_file_name')) {
@@ -302,7 +458,7 @@ if (!function_exists('current_time')) {
     function current_time($type, $gmt = 0) { return time(); }
 }
 if (!function_exists('update_option')) {
-    function update_option($option, $value, $autoload = null) {}
+    // Function removed to avoid duplicate declaration with line 256
 }
 if (!function_exists('wp_send_json_success')) {
     function wp_send_json_success($data = null) {}
@@ -2735,7 +2891,7 @@ class Kura_AI_Admin {
         }
         
         // Delete all records from the analytics table
-        $result = $wpdb->query($wpdb->prepare("TRUNCATE TABLE %i", $table_name));
+        $result = $wpdb->query($wpdb->prepare("TRUNCATE TABLE %s", $table_name));
         
         if ($result === false) {
             wp_send_json_error(array(
@@ -3192,6 +3348,15 @@ class Kura_AI_Admin {
             'kura-ai-logs',
             array($this, 'display_logs_page')
         );
+        
+        add_submenu_page(
+            'kura-ai',
+            esc_html__('Brute Force Protection', 'kura-ai'),
+            esc_html__('Brute Force Protection', 'kura-ai'),
+            'manage_options',
+            'kura-ai-brute-force',
+            array($this, 'display_brute_force_page')
+        );
 
         add_submenu_page(
             'kura-ai',
@@ -3383,6 +3548,26 @@ class Kura_AI_Admin {
         }
     }
 
+    /**
+     * Display brute force protection page.
+     *
+     * @since    1.0.0
+     */
+    public function display_brute_force_page() {
+        // Make sure WordPress functions are available
+        if (!function_exists('esc_html__')) {
+            require_once ABSPATH . 'wp-includes/l10n.php';
+        }
+        
+        $template_path = trailingslashit($this->template_path) . 'kura-ai-brute-force-settings.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('Brute Force Protection', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+    
     /**
      * Display settings page.
      *

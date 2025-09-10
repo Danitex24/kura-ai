@@ -17,80 +17,28 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// WordPress function stubs for static analysis
-if (!function_exists('get_template_directory')) {
-    function get_template_directory() { return '/path/to/theme'; }
-}
-if (!function_exists('is_child_theme')) {
-    function is_child_theme() { return false; }
-}
-if (!function_exists('get_stylesheet_directory')) {
-    function get_stylesheet_directory() { return '/path/to/stylesheet'; }
-}
-if (!function_exists('wp_next_scheduled')) {
-    function wp_next_scheduled($hook, $args = array()) { return false; }
-}
-if (!function_exists('wp_schedule_event')) {
-    function wp_schedule_event($timestamp, $recurrence, $hook, $args = array()) { return true; }
-}
-if (!function_exists('dbDelta')) {
-    function dbDelta($queries = '', $execute = true) { return array(); }
-}
-if (!function_exists('current_time')) {
-    function current_time($type, $gmt = 0) { return date('Y-m-d H:i:s'); }
-}
-if (!function_exists('esc_html__')) {
-    function esc_html__($text, $domain = 'default') { return htmlspecialchars($text, ENT_QUOTES, 'UTF-8'); }
-}
-if (!function_exists('is_wp_error')) {
-    function is_wp_error($thing) { return is_a($thing, 'WP_Error'); }
-}
-if (!function_exists('check_ajax_referer')) {
-    function check_ajax_referer($action = -1, $query_arg = false, $die = true) { return true; }
-}
-if (!function_exists('current_user_can')) {
-    function current_user_can($capability, $object_id = null) { return true; }
-}
-if (!function_exists('wp_die')) {
-    function wp_die($message = '', $title = '', $args = array()) { die($message); }
-}
-if (!function_exists('sanitize_text_field')) {
-    function sanitize_text_field($str) { return trim(strip_tags($str)); }
-}
-if (!function_exists('wp_send_json_error')) {
-    function wp_send_json_error($data = null, $status_code = null) { wp_die(json_encode(array('success' => false, 'data' => $data))); }
-}
-if (!function_exists('wp_send_json_success')) {
-    function wp_send_json_success($data = null, $status_code = null) { wp_die(json_encode(array('success' => true, 'data' => $data))); }
-}
-if (!function_exists('update_option')) {
-    function update_option($option, $value, $autoload = null) { return true; }
-}
-if (!function_exists('get_option')) {
-    function get_option($option, $default = false) { return $default; }
-}
-if (!class_exists('WP_Error')) {
-    class WP_Error {
-        public $errors = array();
-        public $error_data = array();
-        public function __construct($code = '', $message = '', $data = '') {
-            if (empty($code)) return;
-            $this->errors[$code][] = $message;
-            if (!empty($data)) $this->error_data[$code] = $data;
-        }
-        public function get_error_message($code = '') { return isset($this->errors[$code]) ? $this->errors[$code][0] : ''; }
-    }
-}
-if (!defined('ARRAY_A')) {
-    define('ARRAY_A', 'ARRAY_A');
-}
-
 // Import WordPress core files and functions
 require_once ABSPATH . 'wp-admin/includes/file.php';
 require_once ABSPATH . 'wp-includes/pluggable.php';
 require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+require_once ABSPATH . 'wp-includes/theme.php';
 
-// WordPress functions are accessed globally in namespaced context
+// Use WordPress functions from global namespace
+use function \get_template_directory;
+use function \is_child_theme;
+use function \get_stylesheet_directory;
+use function \wp_next_scheduled;
+use function \wp_schedule_event;
+use function \dbDelta;
+use function \current_time;
+use function \check_ajax_referer;
+use function \update_option;
+use function \get_option;
+use function \esc_html__;
+
+// Use WordPress classes from global namespace
+use \wpdb;
+use \WP_Error;
 
 class Kura_AI_File_Monitor {
     private $monitored_files;

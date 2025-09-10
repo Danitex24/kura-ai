@@ -11,6 +11,27 @@
 
 namespace Kura_AI;
 
+// Make sure WordPress core functions are available
+if (!function_exists('add_action')) {
+    require_once ABSPATH . 'wp-includes/plugin.php';
+}
+
+// Make sure WordPress database functions are available
+if (!function_exists('dbDelta')) {
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+}
+
+// Make sure WordPress database access is available
+if (!isset($GLOBALS['wpdb'])) {
+    require_once ABSPATH . 'wp-includes/wp-db.php';
+    global $wpdb;
+}
+
+// Make sure WordPress option functions are available
+if (!function_exists('add_option')) {
+    require_once ABSPATH . 'wp-includes/option.php';
+}
+
 class Kura_AI_Activator
 {
     /**
@@ -57,7 +78,8 @@ class Kura_AI_Activator
             $wpdb->prefix . 'kura_ai_ai_analysis',
             $wpdb->prefix . 'kura_ai_file_versions',
             $wpdb->prefix . 'kura_ai_feedback',
-            $wpdb->prefix . 'kura_ai_analytics'
+            $wpdb->prefix . 'kura_ai_analytics',
+            $wpdb->prefix . 'kura_ai_brute_force'
         );
         
         foreach ($tables as $table) {
@@ -282,6 +304,20 @@ class Kura_AI_Activator
             KEY pass_status (pass_status),
             KEY created_at (created_at)
         ) $charset_collate;";
+        
+        // Create brute force protection table
+        $brute_force_table = $wpdb->prefix . 'kura_ai_brute_force';
+        $brute_force_sql = "CREATE TABLE $brute_force_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            ip_address varchar(45) NOT NULL,
+            username varchar(60) NOT NULL,
+            attempt_count int NOT NULL DEFAULT 1,
+            last_attempt datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            blocked_until datetime,
+            PRIMARY KEY (id),
+            KEY ip_address (ip_address),
+            KEY username (username)
+        ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($logs_sql);
@@ -297,6 +333,7 @@ class Kura_AI_Activator
         dbDelta($file_versions_sql);
         dbDelta($feedback_sql);
         dbDelta($analytics_sql);
+        dbDelta($brute_force_sql);
 
         // Add default API key for OpenAI if not exists
         $existing_key = $wpdb->get_var($wpdb->prepare(
@@ -370,6 +407,12 @@ class Kura_AI_Activator
                 'enabled' => true,
                 'providers' => array('openai'),
                 'confidence_threshold' => 0.7
+            ),
+            'brute_force_protection' => array(
+                'enabled' => true,
+                'max_attempts' => 5,
+                'lockout_time' => 30, // minutes
+                'ip_blacklist' => array()
             )
         );
 
