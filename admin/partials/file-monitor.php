@@ -45,10 +45,10 @@ $chart_data = $file_monitor->get_chart_data();
 $recent_scans = $file_monitor->get_recent_scan_results(5);
 
 // Ensure we have arrays to work with
-$critical_files = \is_array($critical_files) ? $critical_files : [];
-$monitored_files = \is_array($monitored_files) ? $monitored_files : [];
-$chart_data = \is_array($chart_data) ? $chart_data : [];
-$recent_scans = \is_array($recent_scans) ? $recent_scans : [];
+$critical_files = is_array($critical_files) ? $critical_files : [];
+$monitored_files = is_array($monitored_files) ? $monitored_files : [];
+$chart_data = is_array($chart_data) ? $chart_data : [];
+$recent_scans = is_array($recent_scans) ? $recent_scans : [];
 
 // Handle form submissions
 if ($_POST) {

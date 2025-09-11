@@ -35,6 +35,9 @@ class Kura_AI {
         
         // Initialize brute force protection
         $this->init_brute_force_protection();
+        
+        // Initialize login security module
+        $this->init_login_security();
     }
 
     private function load_dependencies() {
@@ -54,6 +57,13 @@ class Kura_AI {
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-monitor.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-cron-fix.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-brute-force.php';
+        
+        // Login Security components
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-login-security.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-2fa.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-captcha.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-password-security.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-xmlrpc-security.php';
         
         // AI Integration
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-ai-handler.php';
@@ -125,6 +135,16 @@ class Kura_AI {
     private function init_brute_force_protection() {
         $brute_force = new Kura_AI_Brute_Force();
         $brute_force->init();
+    }
+    
+    /**
+     * Initialize the login security module functionality.
+     *
+     * @since    1.1.0
+     */
+    private function init_login_security() {
+        $login_security = new Kura_AI_Login_Security($this->plugin_name, $this->version);
+        $login_security->init();
     }
 
     public function get_plugin_name() {

@@ -13,24 +13,10 @@ if (!defined('ABSPATH')) {
 }
 
 // Make sure WordPress functions are available
-if (!function_exists('wp_nonce_field') || !function_exists('esc_html__')) {
-    require_once ABSPATH . 'wp-includes/pluggable.php';
-}
-
-// Make sure WordPress formatting functions are available
-if (!function_exists('esc_attr__')) {
-    require_once ABSPATH . 'wp-includes/formatting.php';
-}
-
-// Make sure WordPress date functions are available
-if (!function_exists('date_i18n')) {
-    require_once ABSPATH . 'wp-includes/functions.php';
-}
-
-// Make sure WordPress admin functions are available
-if (!function_exists('check_admin_referer')) {
-    require_once ABSPATH . 'wp-admin/includes/admin.php';
-}
+require_once ABSPATH . 'wp-includes/pluggable.php';
+require_once ABSPATH . 'wp-includes/formatting.php';
+require_once ABSPATH . 'wp-includes/functions.php';
+require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 // Get current settings
 $brute_force = new Kura_AI\Kura_AI_Brute_Force();
@@ -66,9 +52,10 @@ if (isset($_POST['kura_ai_reset_lockouts']) && check_admin_referer('kura_ai_rese
 }
 ?>
 
-<div class="wrap kura-ai-wrap">
+<div class="wrap kura-ai-settings">
     <h1><?php echo esc_html__('Brute Force Protection', 'kura-ai'); ?></h1>
     
+    <div class="kura-ai-settings-grid">    
     <div class="kura-ai-card">
         <h2><?php echo esc_html__('Settings', 'kura-ai'); ?></h2>
         
@@ -187,5 +174,6 @@ if (isset($_POST['kura_ai_reset_lockouts']) && check_admin_referer('kura_ai_rese
                        value="<?php echo esc_attr__('Reset All Lockouts', 'kura-ai'); ?>">
             </p>
         </form>
+    </div>
     </div>
 </div>

@@ -1,4 +1,33 @@
 jQuery(document).ready(function ($) {
+  // Toggle CAPTCHA settings visibility
+  $('#enable_captcha').on('change', function() {
+    if ($(this).is(':checked')) {
+      $('.captcha-settings').show();
+      // Also check if we need to show reCAPTCHA settings
+      if ($('#captcha_type').val() === 'recaptcha_v2' || $('#captcha_type').val() === 'recaptcha_v3') {
+        $('.recaptcha-settings').show();
+      }
+    } else {
+      $('.captcha-settings, .recaptcha-settings').hide();
+    }
+  });
+  
+  // Toggle reCAPTCHA settings visibility based on CAPTCHA type
+  $('#captcha_type').on('change', function() {
+    if ($(this).val() === 'recaptcha_v2' || $(this).val() === 'recaptcha_v3') {
+      $('.recaptcha-settings').show();
+      
+      // Show/hide v3 specific settings
+      if ($(this).val() === 'recaptcha_v3') {
+        $('.recaptcha-v3-settings').show();
+      } else {
+        $('.recaptcha-v3-settings').hide();
+      }
+    } else {
+      $('.recaptcha-settings, .recaptcha-v3-settings').hide();
+    }
+  });
+  
   // Dashboard Scan Progress Modal
   function showScanModal() {
     $('.scan-progress-modal').css('display', 'flex');

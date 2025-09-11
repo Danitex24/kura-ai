@@ -12,23 +12,27 @@ namespace Kura_Ai;
  * @subpackage Kura_Ai/admin
  */
 
-// Prevent direct access
+// Define WordPress ABSPATH if not defined
 if (!defined('ABSPATH')) {
-    exit;
+    if (defined('\ABSPATH')) {
+        define('ABSPATH', \ABSPATH);
+    } else {
+        define('ABSPATH', dirname(__FILE__, 4) . '/');
+    }
 }
 
 // Make sure WordPress core functions are available
-if (!function_exists('add_action') || !function_exists('plugin_dir_path')) {
+if (!function_exists('\add_action') || !function_exists('\plugin_dir_path')) {
     require_once ABSPATH . 'wp-includes/plugin.php';
 }
 
 // Make sure WordPress translation functions are available
-if (!function_exists('esc_html__')) {
+if (!function_exists('\esc_html__')) {
     require_once ABSPATH . 'wp-includes/l10n.php';
 }
 
 // Make sure WordPress database functions are available
-if (!function_exists('maybe_serialize')) {
+if (!function_exists('\maybe_serialize')) {
     require_once ABSPATH . 'wp-includes/functions.php';
 }
 
@@ -239,11 +243,14 @@ if (!class_exists('\Kura_AI\wpdb')) {
          */
         public function prepare($query, ...$args) {
             global $wpdb;
-            // Make sure the query has placeholders before calling prepare
-            if (strpos($query, '%') !== false) {
+            // Make sure we have arguments and the query has placeholders before calling prepare
+            // This prevents WordPress warnings about incorrect usage of wpdb::prepare
+            if (!empty($args) && count($args) > 0 && strpos($query, '%') !== false) {
                 return $wpdb->prepare($query, ...$args);
             }
-            return $query; // Return the query as is if no placeholders
+            // If no placeholders or no args, just return the query
+            // This avoids the WordPress warning about prepare without placeholders
+            return $query;
         }
         
         /**
@@ -507,7 +514,7 @@ if (!function_exists('wp_mail')) {
  * @subpackage Kura_Ai/admin
  * @author     Kura AI <support@kura.ai>
  */
-class Kura_AI_Admin {
+class Kura_Ai_Admin {
 
     /**
      * The ID of this plugin.
@@ -646,7 +653,7 @@ class Kura_AI_Admin {
             return;
         }
         
-        if (!current_user_can('manage_options')) {
+        if (!\current_user_can('manage_options')) {
             return;
         }
 
@@ -802,8 +809,8 @@ class Kura_AI_Admin {
      */
     public function handle_scan_request() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
@@ -819,36 +826,36 @@ class Kura_AI_Admin {
             ));
         }
         
-        $scan_type = sanitize_text_field(wp_unslash($_POST['scan_type'] ?? ''));
-        $target = sanitize_text_field(wp_unslash($_POST['target'] ?? ''));
-        $email = sanitize_email(wp_unslash($_POST['email'] ?? ''));
+        $scan_type = \sanitize_text_field(\wp_unslash($_POST['scan_type'] ?? ''));
+        $target = \sanitize_text_field(\wp_unslash($_POST['target'] ?? ''));
+        $email = \sanitize_email(\wp_unslash($_POST['email'] ?? ''));
         
         if (empty($scan_type) || empty($target) || empty($email)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('All fields are required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('All fields are required.', 'kura-ai')
             ));
         }
         
-        if (!is_email($email)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid email address.', 'kura-ai')
+        if (!\is_email($email)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid email address.', 'kura-ai')
             ));
         }
         
-        $timestamp = wp_next_scheduled('kura_ai_scan_cron');
+        $timestamp = \wp_next_scheduled('kura_ai_scan_cron');
         if ($timestamp) {
-            wp_unschedule_event($timestamp, 'kura_ai_scan_cron');
+            \wp_unschedule_event($timestamp, 'kura_ai_scan_cron');
         }
         
         if ($scan_type === 'scheduled') {
-            wp_send_json_error(array(
-                'message' => esc_html__('Scheduled scan setup failed.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Scheduled scan setup failed.', 'kura-ai')
             ));
         }
         
-        wp_schedule_event(time(), 'daily', 'kura_ai_scan_cron', array($target, $email));
+        \wp_schedule_event(\time(), 'daily', 'kura_ai_scan_cron', array($target, $email));
         
-        $scan_id = uniqid('scan_', true);
+        $scan_id = \uniqid('scan_', true);
         
         // Generate mock scan results for display
         $scan_results = array(
@@ -920,43 +927,43 @@ class Kura_AI_Admin {
      */
     public function handle_save_settings() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
-        $settings_data = sanitize_textarea_field(wp_unslash($_POST['settings'] ?? ''));
-        $notification_email = sanitize_text_field(wp_unslash($_POST['notification_email'] ?? ''));
+        $settings_data = \sanitize_textarea_field(\wp_unslash($_POST['settings'] ?? ''));
+        $notification_email = \sanitize_text_field(\wp_unslash($_POST['notification_email'] ?? ''));
         
         if (empty($settings_data)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Settings data is required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Settings data is required.', 'kura-ai')
             ));
         }
         
         if (empty($notification_email)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Notification email is required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Notification email is required.', 'kura-ai')
             ));
         }
         
-        if (!is_email($notification_email)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid email address.', 'kura-ai')
+        if (!\is_email($notification_email)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid email address.', 'kura-ai')
             ));
         }
         
-        wp_send_json_success(array(
+        \wp_send_json_success(array(
             'message' => 'Settings saved successfully.'
         ));
     }
@@ -968,29 +975,29 @@ class Kura_AI_Admin {
      */
     public function handle_save_chatbot_settings() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
-        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
         $enabled = isset($_POST['enabled']) ? (bool) $_POST['enabled'] : false;
         
-        update_option('kura_ai_chatbot_enabled', $enabled);
+        \update_option('kura_ai_chatbot_enabled', $enabled);
         
-        wp_send_json_success(array(
-            'message' => esc_html__('Chatbot setting updated successfully.', 'kura-ai')
+        \wp_send_json_success(array(
+            'message' => \esc_html__('Chatbot setting updated successfully.', 'kura-ai')
         ));
     }
 
@@ -1001,33 +1008,33 @@ class Kura_AI_Admin {
      */
     public function handle_save_chatbot_position() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
-        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\wp_verify_nonce($_POST['_wpnonce'] ?? '', 'kura_ai_nonce')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
-        $position = sanitize_text_field($_POST['position'] ?? 'bottom-right');
+        $position = \sanitize_text_field($_POST['position'] ?? 'bottom-right');
         
-        if (!in_array($position, ['bottom-right', 'bottom-left'])) {
+        if (!\in_array($position, ['bottom-right', 'bottom-left'])) {
             $position = 'bottom-right';
         }
         
-        update_option('kura_ai_chatbot_position', $position);
+        \update_option('kura_ai_chatbot_position', $position);
         
-        wp_send_json_success(array(
-            'message' => esc_html__('Chatbot position updated successfully.', 'kura-ai')
+        \wp_send_json_success(array(
+            'message' => \esc_html__('Chatbot position updated successfully.', 'kura-ai')
         ));
     }
 
@@ -1038,30 +1045,30 @@ class Kura_AI_Admin {
      */
     public function handle_get_scan_results() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
         // Return mock scan results for now
-        wp_send_json_success(array(
+        \wp_send_json_success(array(
             'results' => array(
                 'status' => 'completed',
                 'threats_found' => 0,
                 'files_scanned' => 100,
-                'scan_time' => current_time('mysql')
+                'scan_time' => \current_time('mysql')
             )
         ));
     }
@@ -1073,43 +1080,43 @@ class Kura_AI_Admin {
      */
     public function handle_save_api_key() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
-        if (!check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', 'nonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
         
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
         
-        $api_key = sanitize_text_field(wp_unslash($_POST['api_key'] ?? ''));
-        $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? ''));
+        $api_key = \sanitize_text_field(\wp_unslash($_POST['api_key'] ?? ''));
+        $provider = \sanitize_text_field(\wp_unslash($_POST['provider'] ?? ''));
         
         if (empty($api_key)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('API key is required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('API key is required.', 'kura-ai')
             ));
         }
         
         if (empty($provider)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Provider is required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Provider is required.', 'kura-ai')
             ));
         }
         
         // Validate provider
         $allowed_providers = array('openai', 'gemini', 'claude', 'deepseek');
-        if (!in_array($provider, $allowed_providers, true)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid provider.', 'kura-ai')
+        if (!\in_array($provider, $allowed_providers, true)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid provider.', 'kura-ai')
             ));
         }
         
@@ -1130,7 +1137,7 @@ class Kura_AI_Admin {
                 array(
                     'api_key' => $api_key,
                     'status' => 'active',
-                    'updated_at' => current_time('mysql')
+                    'updated_at' => \current_time('mysql')
                 ),
                 array('provider' => $provider),
                 array('%s', '%s', '%s'),
@@ -1144,23 +1151,23 @@ class Kura_AI_Admin {
                     'provider' => $provider,
                     'api_key' => $api_key,
                     'status' => 'active',
-                    'created_at' => current_time('mysql'),
-                    'updated_at' => current_time('mysql')
+                    'created_at' => \current_time('mysql'),
+                    'updated_at' => \current_time('mysql')
                 ),
                 array('%s', '%s', '%s', '%s', '%s')
             );
         }
         
         if ($result === false) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Failed to save API key to database.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Failed to save API key to database.', 'kura-ai')
             ));
         }
         
-        wp_send_json_success(array(
-            'message' => sprintf(
-                esc_html__('%s API key saved successfully!', 'kura-ai'),
-                ucfirst($provider)
+        \wp_send_json_success(array(
+            'message' => \sprintf(
+                \esc_html__('%s API key saved successfully!', 'kura-ai'),
+                \ucfirst($provider)
             )
         ));
     }
@@ -1172,8 +1179,8 @@ class Kura_AI_Admin {
      */
     public function handle_save_ai_service_provider() {
         if (!$this->is_valid_ajax_request()) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid request.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid request.', 'kura-ai')
             ));
         }
         
@@ -1189,24 +1196,24 @@ class Kura_AI_Admin {
             ));
         }
         
-        $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? ''));
+        $provider = \sanitize_text_field(\wp_unslash($_POST['provider'] ?? ''));
         
         if (empty($provider)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Provider is required.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Provider is required.', 'kura-ai')
             ));
         }
         
         // Validate provider
         $allowed_providers = array('openai', 'gemini', 'claude', 'deepseek');
-        if (!in_array($provider, $allowed_providers, true)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Invalid provider.', 'kura-ai')
+        if (!\in_array($provider, $allowed_providers, true)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Invalid provider.', 'kura-ai')
             ));
         }
         
         // Update the ai_service setting
-        $settings = get_option('kura_ai_settings', array());
+        $settings = \get_option('kura_ai_settings', array());
         $settings['ai_service'] = $provider;
         
         $result = update_option('kura_ai_settings', $settings);
@@ -1865,26 +1872,26 @@ class Kura_AI_Admin {
     
     public function handle_analyze_code() {
         // Verify nonce
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Security check failed.', 'kura-ai')
+        if (!\check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Security check failed.', 'kura-ai')
             ));
         }
 
         // Check user permissions
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Insufficient permissions.', 'kura-ai')
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Insufficient permissions.', 'kura-ai')
             ));
         }
 
         // Get and sanitize input
-        $code = sanitize_textarea_field($_POST['code'] ?? '');
-        $context = sanitize_textarea_field($_POST['context'] ?? '');
+        $code = \sanitize_textarea_field($_POST['code'] ?? '');
+        $context = \sanitize_textarea_field($_POST['context'] ?? '');
 
         if (empty($code)) {
-            wp_send_json_error(array(
-                'message' => esc_html__('Code cannot be empty.', 'kura-ai')
+            \wp_send_json_error(array(
+                'message' => \esc_html__('Code cannot be empty.', 'kura-ai')
             ));
         }
 
@@ -1946,28 +1953,28 @@ class Kura_AI_Admin {
     
     public function handle_submit_feedback() {
         // Verify nonce
-        if (!check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
-            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+        if (!\check_ajax_referer('kura_ai_nonce', '_wpnonce', false)) {
+            \wp_send_json_error(array('message' => \__('Security check failed.', 'kura-ai')));
         }
 
         // Check user permissions
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Insufficient permissions.', 'kura-ai')));
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array('message' => \__('Insufficient permissions.', 'kura-ai')));
         }
 
         // Sanitize input
-        $feedback = sanitize_text_field($_POST['feedback'] ?? '');
-        $comment = sanitize_textarea_field($_POST['comment'] ?? '');
+        $feedback = \sanitize_text_field($_POST['feedback'] ?? '');
+        $comment = \sanitize_textarea_field($_POST['comment'] ?? '');
 
         if (empty($feedback)) {
-            wp_send_json_error(array('message' => __('Feedback is required.', 'kura-ai')));
+            \wp_send_json_error(array('message' => \__('Feedback is required.', 'kura-ai')));
         }
 
         // For now, just acknowledge the feedback without storing it
         // TODO: Create feedback table and implement proper storage
-        wp_send_json_success(array(
-            'message' => __('Thank you for your feedback!', 'kura-ai'),
-            'timestamp' => current_time('mysql')
+        \wp_send_json_success(array(
+            'message' => \__('Thank you for your feedback!', 'kura-ai'),
+            'timestamp' => \current_time('mysql')
         ));
     }
 
@@ -2138,49 +2145,49 @@ class Kura_AI_Admin {
     
     public function handle_start_malware_scan() {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
-            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+        if (!\wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            \wp_send_json_error(array('message' => \__('Security check failed.', 'kura-ai')));
         }
 
         // Check user capabilities
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => __('Insufficient permissions.', 'kura-ai')));
+        if (!\current_user_can('manage_options')) {
+            \wp_send_json_error(array('message' => \__('Insufficient permissions.', 'kura-ai')));
         }
 
         try {
             // Initialize malware detector
-            require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-malware-detector.php';
+            require_once \plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-malware-detector.php';
             $detector = new Kura_AI_Malware_Detector();
             
             // Run scan immediately for demo purposes
             $results = $detector->run_scan();
             
-            wp_send_json_success(array(
-                'scan_id' => 'demo_scan_' . time(),
+            \wp_send_json_success(array(
+                'scan_id' => 'demo_scan_' . \time(),
                 'results' => $results,
-                'message' => __('Malware scan completed successfully.', 'kura-ai')
+                'message' => \__('Malware scan completed successfully.', 'kura-ai')
             ));
         } catch (\Exception $e) {
-            wp_send_json_error(array('message' => $e->getMessage()));
+            \wp_send_json_error(array('message' => $e->getMessage()));
         }
     }
     
     public function handle_get_scan_progress() {
         // Verify nonce
-        if (!wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
-            wp_send_json_error(array('message' => __('Security check failed.', 'kura-ai')));
+        if (!\wp_verify_nonce($_POST['nonce'], 'kura_ai_nonce')) {
+            \wp_send_json_error(array('message' => \__('Security check failed.', 'kura-ai')));
         }
 
-        $scan_id = sanitize_text_field($_POST['scan_id'] ?? '');
+        $scan_id = \sanitize_text_field($_POST['scan_id'] ?? '');
         
         if (empty($scan_id)) {
-            wp_send_json_error(array('message' => __('Invalid scan ID.', 'kura-ai')));
+            \wp_send_json_error(array('message' => \__('Invalid scan ID.', 'kura-ai')));
         }
 
         // For demo purposes, return completed status
-        wp_send_json_success(array(
+        \wp_send_json_success(array(
             'progress' => 100,
-            'status' => __('Scan completed', 'kura-ai'),
+            'status' => \__('Scan completed', 'kura-ai'),
             'completed' => true,
             'threats' => array(),
             'files_scanned' => 150,
@@ -2352,10 +2359,10 @@ class Kura_AI_Admin {
         }
         
         // Remove file from monitoring
-        $key = \array_search($file_path, $monitored_files);
+        $key = array_search($file_path, $monitored_files);
         if ($key !== false) {
             unset($monitored_files[$key]);
-            $monitored_files = \array_values($monitored_files); // Re-index array
+            $monitored_files = array_values($monitored_files); // Re-index array
             
             // Update option
             if (\update_option('kura_ai_monitored_files', $monitored_files)) {
@@ -2663,7 +2670,7 @@ class Kura_AI_Admin {
             $critical_files = \method_exists($this->file_monitor, 'get_critical_wordpress_files') ? $this->file_monitor->get_critical_wordpress_files() : array();
             \wp_send_json_success(array(
                 'message' => \esc_html__('Security scan completed successfully.', 'kura-ai'),
-                'scanned_files' => \count($critical_files)
+                'scanned_files' => count($critical_files)
             ));
         } else {
             \wp_send_json_error(array(
@@ -3357,6 +3364,15 @@ class Kura_AI_Admin {
             'kura-ai-brute-force',
             array($this, 'display_brute_force_page')
         );
+        
+        add_submenu_page(
+            'kura-ai',
+            esc_html__('Login Security', 'kura-ai'),
+            esc_html__('Login Security', 'kura-ai'),
+            'manage_options',
+            'kura-ai-login-security',
+            array($this, 'display_login_security_page')
+        );
 
         add_submenu_page(
             'kura-ai',
@@ -3545,6 +3561,21 @@ class Kura_AI_Admin {
             include $template_path;
         } else {
             echo '<div class="wrap"><h1>' . esc_html__('Security Hardening', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
+        }
+    }
+    
+    /**
+     * Display login security page.
+     *
+     * @since    1.1.0
+     */
+    public function display_login_security_page() {
+        $template_path = trailingslashit($this->template_path) . 'kura-ai-login-security-settings.php';
+        
+        if (file_exists($template_path)) {
+            include $template_path;
+        } else {
+            echo '<div class="wrap"><h1>' . esc_html__('Login Security', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
         }
     }
 
@@ -3851,6 +3882,17 @@ class Kura_AI_Admin {
             );
         }
         
+        // Login Security Settings styles
+        if ($page === 'kura-ai-login-security' || strpos($page, 'login-security') !== false) {
+            wp_enqueue_style(
+                'kura-ai-settings-styles',
+                $this->assets_url . 'css/kura-ai-settings.css',
+                array(),
+                $this->version,
+                'all'
+            );
+        }
+        
         // Page-specific styles
         if ($page === 'kura-ai-compliance' || strpos($page, 'compliance') !== false) {
             wp_enqueue_style(
@@ -4046,8 +4088,8 @@ class Kura_AI_Admin {
             'last_scan' => 0
         ));
         
-        wp_send_json_success(array(
-             'message' => esc_html__('Scan results have been reset successfully.', 'kura-ai')
+        \wp_send_json_success(array(
+             'message' => \esc_html__('Scan results have been reset successfully.', 'kura-ai')
          ));
      }
 

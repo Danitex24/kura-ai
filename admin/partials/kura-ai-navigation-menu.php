@@ -43,6 +43,10 @@ $menu_items = array(
         'title' => __('Hardening', 'kura-ai'),
         'icon' => 'dashicons-shield-alt',
     ),
+    'kura-ai-login-security' => array(
+        'title' => __('Login Security', 'kura-ai'),
+        'icon' => 'dashicons-lock',
+    ),
     'kura-ai-reports' => array(
         'title' => __('Reports', 'kura-ai'),
         'icon' => 'dashicons-chart-bar',

@@ -9,18 +9,22 @@
 
 namespace Kura_AI;
 
-// Exit if accessed directly
-if (!defined('\ABSPATH')) {
-    exit;
+// Define WordPress ABSPATH if not defined
+if (!defined('ABSPATH')) {
+    if (defined('\ABSPATH')) {
+        define('ABSPATH', \ABSPATH);
+    } else {
+        define('ABSPATH', dirname(__FILE__, 3) . '/');
+    }
 }
 
 // Check if WordPress functions are available
-if (!function_exists('maybe_serialize')) {
+if (!function_exists('\maybe_serialize')) {
     require_once ABSPATH . 'wp-includes/functions.php';
 }
 
 // Check if WordPress time functions are available
-if (!function_exists('current_time')) {
+if (!function_exists('\current_time')) {
     require_once ABSPATH . 'wp-includes/functions.php';
 }
 
@@ -148,11 +152,14 @@ if (!class_exists('\Kura_AI\wpdb')) {
          */
         public function prepare($query, ...$args) {
             global $wpdb;
-            // Make sure the query has placeholders before calling prepare
-            if (strpos($query, '%') !== false) {
+            // Make sure we have arguments and the query has placeholders before calling prepare
+            // This prevents WordPress warnings about incorrect usage of wpdb::prepare
+            if (!empty($args) && count($args) > 0 && strpos($query, '%') !== false) {
                 return $wpdb->prepare($query, ...$args);
             }
-            return $query; // Return the query as is if no placeholders
+            // If no placeholders or no args, just return the query
+            // This avoids the WordPress warning about prepare without placeholders
+            return $query;
         }
         
         /**

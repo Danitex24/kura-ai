@@ -1292,6 +1292,29 @@ body:not(.swal2-shown) {
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.kura-ai-card > h2 {
+    padding: 15px 25px;
+    margin: 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.kura-ai-card > form,
+.kura-ai-card > p,
+.kura-ai-card > table {
+    padding: 20px 25px;
+}
+
+.kura-ai-card p.submit {
+    margin-top: 20px;
+    padding: 0;
+}
+
+.kura-ai-card table.wp-list-table {
+    margin: 15px 25px;
+    width: calc(100% - 50px);
 }
 
 .kura-ai-card-header {
