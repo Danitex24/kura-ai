@@ -95,6 +95,7 @@
     font-weight: 500;
     margin-bottom: 8px;
     color: #1e293b;
+    cursor: pointer;
 }
 
 .description {
@@ -118,6 +119,8 @@
     opacity: 0;
     width: 0;
     height: 0;
+    position: absolute;
+    z-index: -1;
 }
 
 .toggle-slider {
@@ -130,6 +133,8 @@
     background-color: #cbd5e1;
     transition: .4s;
     border-radius: 24px;
+    box-sizing: border-box;
+    z-index: 1;
 }
 
 .toggle-slider:before {
@@ -142,6 +147,7 @@
     background-color: white;
     transition: .4s;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 input:checked + .toggle-slider {
@@ -150,6 +156,20 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
     transform: translateX(26px);
+}
+
+/* Improve toggle switch focus and hover states */
+.toggle-switch:hover .toggle-slider {
+    box-shadow: 0 0 1px #3b82f6;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #3b82f6;
+}
+
+/* Ensure toggle switch is clickable */
+.toggle-switch {
+    user-select: none;
 }
 
 /* Checkbox Group */

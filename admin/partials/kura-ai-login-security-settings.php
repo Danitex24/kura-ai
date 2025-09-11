@@ -12,6 +12,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include necessary WordPress core files
+require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+require_once(ABSPATH . 'wp-includes/pluggable.php');
+require_once(ABSPATH . 'wp-includes/formatting.php');
+require_once(ABSPATH . 'wp-includes/functions.php');
+require_once(ABSPATH . 'wp-admin/includes/admin.php');
+
 // Get the login security settings
 $login_security = new Kura_AI\Kura_AI_Login_Security(KURA_AI_PLUGIN_NAME, KURA_AI_VERSION);
 $settings = $login_security->get_settings();
@@ -225,6 +232,25 @@ $roles = \wp_roles()->get_names();
 
 <script>
 jQuery(document).ready(function($) {
+    // Improve toggle switch functionality
+    $('.toggle-switch').on('click', function(e) {
+        // Only handle clicks on the toggle-switch or toggle-slider, not the input itself
+        if (!$(e.target).is('input')) {
+            var checkbox = $(this).find('input[type="checkbox"]');
+            checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
+            e.preventDefault();
+        }
+    });
+    
+    // Make setting labels clickable to toggle the associated checkbox
+    $('.setting-label').on('click', function() {
+        var forAttr = $(this).attr('for');
+        if (forAttr) {
+            var checkbox = $('#' + forAttr);
+            checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
+        }
+    });
+    
     // Toggle 2FA settings
     $('#enable_2fa').on('change', function() {
         if ($(this).is(':checked')) {
@@ -250,6 +276,12 @@ jQuery(document).ready(function($) {
         } else {
             $('.password-security-settings').hide();
         }
+    });
+    
+    // Fix for toggle switches - ensure proper state is reflected
+    $('.toggle-switch input[type="checkbox"]').each(function() {
+        // Make sure the toggle state matches the checkbox state
+        $(this).trigger('change');
     });
 });
 </script>
