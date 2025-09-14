@@ -776,7 +776,7 @@ jQuery(document).ready(function ($) {
           // Reset Settings functionality is handled in the main document ready block below
   
           // Modal close handlers
-          $('.kura-ai-modal-close, .kura-ai-modal-close-btn').on('click', function(e) {
+          $(document).on('click', '.kura-ai-modal-close, .kura-ai-modal-close-btn', function(e) {
             e.preventDefault();
             var $modal = $(this).closest('.kura-ai-modal');
             $modal.removeClass('show');
@@ -786,10 +786,13 @@ jQuery(document).ready(function ($) {
         });
   
           // Close modal when clicking outside
-          $('.kura-ai-modal-overlay').on('click', function(e) {
-              e.preventDefault();
-              $('#kura-ai-confirm-reset-modal').hide();
-          });
+          $(document).on('click', '.kura-ai-modal-overlay', function(e) {
+            e.preventDefault();
+            $(this).closest('.kura-ai-modal').removeClass('show');
+            setTimeout(function() {
+                $(this).closest('.kura-ai-modal').hide();
+            }, 300);
+        });
   
           // Debug Info functionality is handled in the main document ready block below
   
@@ -920,7 +923,7 @@ jQuery(document).ready(function ($) {
       }
   })(jQuery);
   // View Log Details
-  $(document).on("click", ".kura-ai-view-details", function () {
+  $(document).on("click", ".kura-ai-view-details, .kura-ai-view-audit-details", function () {
     var logData = $(this).data("log-data");
     var $modal = $("#kura-ai-log-details-modal");
     var $content = $("#kura-ai-log-details-content");
@@ -1411,3 +1414,120 @@ function resetScanControls() {
     });
 
 })(jQuery);
+
+// Export to CSV functionality
+$('#kura-ai-export-csv, #kura-ai-export-audit-csv').on('click', function(e) {
+  e.preventDefault();
+  var logType = $(this).attr('id') === 'kura-ai-export-audit-csv' ? 'audit' : 'activity';
+  window.location.href = ajaxurl + '?action=kura_ai_export_logs&format=csv&log_type=' + logType + '&_wpnonce=' + kuraAiData.nonce;
+});
+
+// Export to JSON functionality
+$('#kura-ai-export-audit-json').on('click', function(e) {
+  e.preventDefault();
+  window.location.href = ajaxurl + '?action=kura_ai_export_logs&format=json&log_type=audit&_wpnonce=' + kuraAiData.nonce;
+});
+
+// Clear logs confirmation
+$('#kura-ai-clear-logs, #kura-ai-clear-audit-logs').on('click', function(e) {
+  e.preventDefault();
+  var logType = $(this).attr('id') === 'kura-ai-clear-audit-logs' ? 'audit' : 'activity';
+  $('#kura-ai-confirm-clear-modal').data('log-type', logType);
+  $('#kura-ai-confirm-clear-modal').css('display', 'block');
+  setTimeout(function() {
+      $('#kura-ai-confirm-clear-modal').addClass('show');
+  }, 10);
+});
+
+// Confirm clear logs
+$('#kura-ai-confirm-clear').on('click', function(e) {
+  e.preventDefault();
+  var logType = $('#kura-ai-confirm-clear-modal').data('log-type') || 'activity';
+  $.post(ajaxurl, {
+      action: 'kura_ai_clear_logs',
+      log_type: logType,
+      _wpnonce: kuraAiData.nonce
+  }, function(response) {
+      if (response.success) {
+          window.location.reload();
+      } else {
+          alert(response.data.message || 'Error clearing logs');
+      }
+  }).fail(function() {
+      alert('Error clearing logs');
+  });
+});
+
+// Handle tab navigation
+$('.kura-ai-tab').on('click', function(e) {
+  e.preventDefault();
+  var tab = $(this).data('tab');
+  
+  // Update URL with tab parameter
+  var url = new URL(window.location.href);
+  url.searchParams.set('tab', tab);
+  window.history.pushState({}, '', url);
+  
+  // Update active tab
+  $('.kura-ai-tab').removeClass('active');
+  $(this).addClass('active');
+  
+  // Show/hide tab content
+  $('.kura-ai-tab-content').hide();
+  $('#kura-ai-tab-' + tab).show();
+});
+
+// Handle audit settings toggle
+$('#kura-ai-audit-settings-toggle').on('click', function(e) {
+  e.preventDefault();
+  var $settings = $('#kura-ai-audit-settings');
+  var $icon = $(this).find('span.dashicons');
+  
+  if ($settings.is(':visible')) {
+      $settings.slideUp();
+      $icon.removeClass('dashicons-arrow-up').addClass('dashicons-arrow-down');
+      $(this).find('span.text').text(kuraAiData.showSettings || 'Show Settings');
+  } else {
+      $settings.slideDown();
+      $icon.removeClass('dashicons-arrow-down').addClass('dashicons-arrow-up');
+      $(this).find('span.text').text(kuraAiData.hideSettings || 'Hide Settings');
+  }
+});
+
+// Initialize audit settings visibility
+$('#kura-ai-audit-settings').hide();
+
+// Initialize tooltips
+$('.kura-ai-tooltip').hover(
+  function() {
+      var $tooltip = $(this);
+      var tooltipText = $tooltip.data('tooltip');
+      
+      $('<div class="kura-ai-tooltip-text">' + tooltipText + '</div>')
+          .appendTo('body')
+          .css({
+              top: $tooltip.offset().top - 30,
+              left: $tooltip.offset().left - 10
+          })
+          .fadeIn('fast');
+  },
+  function() {
+      $('.kura-ai-tooltip-text').remove();
+  }
+);
+
+// Handle API key visibility
+$('#enable_ai').on('change', function() {
+  const isEnabled = $(this).is(':checked');
+  $('.kura-ai-api-key-section').toggle(isEnabled);
+});
+
+// Handle audit log scope change
+$('#kura_ai_audit_log_scope').on('change', function() {
+  var scope = $(this).val();
+  $('#kura_ai_audit_log_scope_description').text(
+      scope === 'all' ? 
+      kuraAiData.allEventsDesc || 'Logs all security events including minor changes.' : 
+      kuraAiData.significantEventsDesc || 'Logs only significant security events (auth, config, plugins/themes).'
+  );
+}).trigger('change');

@@ -227,7 +227,7 @@ class Kura_AI_2FA {
         if (isset($_POST['kura_ai_2fa_code'])) {
             $code = \sanitize_text_field($_POST['kura_ai_2fa_code']);
             
-            if ($this->verify_2fa_code($user_id, $code)) {
+            if ($this->verify_code($user_id, $code)) {
                 // Code is valid, log the user in
                 \wp_set_auth_cookie($user_id, $transient_data['remember']);
                 \delete_transient('kura_ai_2fa_' . $transient_key);
@@ -278,6 +278,29 @@ class Kura_AI_2FA {
         
         return $secret;
     }
+    
+    /**
+     * Generate a new secret key (alias for generate_secret).
+     *
+     * @since    1.0.0
+     * @return   string    The new secret key.
+     */
+    public function generate_secret_key() {
+        return $this->generate_secret();
+    }
+    
+    /**
+     * Generate a QR code URL for the 2FA secret.
+     *
+     * @since    1.0.0
+     * @param    string    $username    The username.
+     * @param    string    $secret      The secret key.
+     * @param    string    $site_name   The site name.
+     * @return   string                 The QR code URL.
+     */
+    public function get_qr_code_url($username, $secret, $site_name) {
+        return 'https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=' . \urlencode("otpauth://totp/{$username}?secret={$secret}&issuer={$site_name}");
+    }
 
     /**
      * Generate backup codes for a user.
@@ -321,9 +344,10 @@ class Kura_AI_2FA {
      * @since    1.0.0
      * @param    int       $user_id    User ID.
      * @param    string    $code       The 2FA code to verify.
+     * @param    bool      $is_woocommerce Whether this is a WooCommerce verification.
      * @return   bool                  True if the code is valid, false otherwise.
      */
-    public function verify_2fa_code($user_id, $code) {
+    public function verify_code($user_id, $code, $is_woocommerce = false) {
         // Check if the code is a backup code
         $backup_codes = \get_user_meta($user_id, 'kura_ai_2fa_backup_codes', true);
         
@@ -346,6 +370,19 @@ class Kura_AI_2FA {
         }
         
         return $this->verify_totp_code($secret, $code);
+    }
+    
+    /**
+     * Verify a 2FA code (legacy method for backward compatibility).
+     *
+     * @since    1.0.0
+     * @param    int       $user_id    User ID.
+     * @param    string    $code       The 2FA code to verify.
+     * @return   bool                  True if the code is valid, false otherwise.
+     * @deprecated Use verify_code() instead.
+     */
+    public function verify_2fa_code($user_id, $code) {
+        return $this->verify_code($user_id, $code);
     }
 
     /**
@@ -668,9 +705,8 @@ class Kura_AI_2FA {
         // Verify the 2FA code if provided
         if (isset($_POST['kura_ai_2fa_code']) && !empty($_POST['kura_ai_2fa_code'])) {
             $code = \sanitize_text_field($_POST['kura_ai_2fa_code']);
-            $secret = \get_user_meta($user_id, 'kura_ai_2fa_secret', true);
             
-            if ($secret && $this->verify_totp_code($secret, $code)) {
+            if ($this->verify_code($user_id, $code)) {
                 \update_user_meta($user_id, 'kura_ai_2fa_verified', true);
             } else {
                 \add_settings_error('kura_ai_2fa', 'invalid_code', \__('Invalid verification code. Please try again.', 'kura-ai'));
@@ -765,7 +801,7 @@ class Kura_AI_2FA {
         
         $code = \sanitize_text_field($_POST['kura_ai_2fa_code']);
         
-        if (!$this->verify_2fa_code($user->ID, $code)) {
+        if (!$this->verify_code($user->ID, $code, true)) {
             return new \WP_Error('invalid_2fa_code', \__('Invalid authentication code. Please try again.', 'kura-ai'));
         }
         
@@ -817,13 +853,7 @@ class Kura_AI_2FA {
             \wp_send_json_error(array('message' => \__('You do not have permission to perform this action.', 'kura-ai')));
         }
         
-        $secret = \get_user_meta($user_id, 'kura_ai_2fa_secret', true);
-        
-        if (!$secret) {
-            \wp_send_json_error(array('message' => \__('No secret key found. Please generate a new secret key.', 'kura-ai')));
-        }
-        
-        if ($this->verify_totp_code($secret, $code)) {
+        if ($this->verify_code($user_id, $code)) {
             \update_user_meta($user_id, 'kura_ai_2fa_verified', true);
             \wp_send_json_success(array('message' => \__('Verification successful.', 'kura-ai')));
         } else {

@@ -20,6 +20,7 @@ Key features:
 * Email notifications for critical issues
 * Detailed security reports
 * Activity logging
+* Security Audit Log with tamper-resistant tracking
 * Quick fix buttons for common issues
 * Multilingual support
 
@@ -53,6 +54,12 @@ We recommend daily scans for most sites. High-traffic or e-commerce sites may wa
 5. Settings page
 
 == Changelog ==
+
+= 1.1.0 =
+* Added Security Audit Log feature
+* Implemented tamper-resistant logging of security events
+* Added email reporting for audit logs
+* Integrated audit log UI with existing logs page
 
 = 1.0.0 =
 * Initial release

@@ -23,6 +23,15 @@ class Kura_AI {
     protected $loader;
     protected $plugin_name;
     protected $version;
+    
+    /**
+     * The audit log instance.
+     *
+     * @since    1.1.0
+     * @access   protected
+     * @var      Kura_AI_Audit_Log    $audit_log    Handles security audit logging.
+     */
+    protected $audit_log;
 
     public function __construct() {
         $this->version = KURA_AI_VERSION;
@@ -38,6 +47,9 @@ class Kura_AI {
         
         // Initialize login security module
         $this->init_login_security();
+        
+        // Initialize audit log module
+        $this->init_audit_log();
     }
 
     private function load_dependencies() {
@@ -48,6 +60,7 @@ class Kura_AI {
         // Security components
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-security-scanner.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-logger.php';
+        require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-audit-log.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-notifier.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-malware-detector.php';
         require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai-file-monitor.php';
@@ -143,8 +156,39 @@ class Kura_AI {
      * @since    1.1.0
      */
     private function init_login_security() {
-        $login_security = new Kura_AI_Login_Security($this->plugin_name, $this->version);
+        $login_security = new Kura_AI_Login_Security($this->get_plugin_name(), $this->get_version());
         $login_security->init();
+    }
+    
+    /**
+     * Initialize the audit log functionality
+     *
+     * @since    1.0.0
+     * @access   private
+     */
+    private function init_audit_log() {
+        // Load the audit log class
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-audit-log.php';
+        
+        // Initialize the audit log
+        $this->audit_log = new Kura_AI_Audit_Log($this->get_plugin_name(), $this->get_version());
+        
+        // If we're in the admin area, load the admin-specific functionality
+		if (is_admin()) {
+			require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-kura-ai-audit-log-admin.php';
+			
+			// Create a global instance of the audit log admin
+			global $kura_ai_audit_log_admin;
+			$kura_ai_audit_log_admin = new Kura_AI_Audit_Log_Admin($this->get_plugin_name(), $this->get_version(), $this->audit_log);
+			
+			// Register hooks for the admin area
+			$this->loader->add_action('admin_enqueue_scripts', $kura_ai_audit_log_admin, 'enqueue_styles');
+			$this->loader->add_action('admin_enqueue_scripts', $kura_ai_audit_log_admin, 'enqueue_scripts');
+			$this->loader->add_action('admin_init', $kura_ai_audit_log_admin, 'add_admin_menu');
+			$this->loader->add_action('admin_init', $kura_ai_audit_log_admin, 'register_ajax_handlers');
+			$this->loader->add_action('admin_init', $kura_ai_audit_log_admin, 'schedule_log_cleanup');
+			$this->loader->add_action('admin_init', $kura_ai_audit_log_admin, 'setup_email_reports');
+		}
     }
 
     public function get_plugin_name() {

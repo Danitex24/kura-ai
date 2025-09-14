@@ -1,0 +1,340 @@
+/**
+ * Admin CSS for the Kura AI Security Audit Log.
+ *
+ * Styles for the audit log page including:
+ * - Filters and settings
+ * - Log table
+ * - Modal
+ * - Pagination
+ * - Tooltips
+ */
+
+/* Container Styles */
+.kura-ai-audit-log-container {
+    margin: 20px 0;
+}
+
+/* Settings Toggle */
+.kura-ai-audit-settings-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.kura-ai-audit-settings-toggle .button {
+    display: flex;
+    align-items: center;
+}
+
+.kura-ai-audit-settings-toggle .dashicons {
+    margin-right: 5px;
+}
+
+/* Settings Panel */
+.kura-ai-audit-settings {
+    background-color: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.kura-ai-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.kura-ai-filter-group {
+    margin-right: 20px;
+    margin-bottom: 10px;
+    min-width: 200px;
+}
+
+.kura-ai-filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.kura-ai-filter-group select,
+.kura-ai-filter-group input[type="text"],
+.kura-ai-filter-group input[type="date"] {
+    width: 100%;
+}
+
+.kura-ai-search-group {
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.kura-ai-filter-actions {
+    display: flex;
+    align-items: flex-end;
+    margin-left: auto;
+}
+
+.kura-ai-filter-actions .button {
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.kura-ai-filter-actions .dashicons {
+    margin-right: 5px;
+}
+
+/* Action Buttons */
+.kura-ai-audit-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.kura-ai-export-actions,
+.kura-ai-clear-actions {
+    display: flex;
+    align-items: center;
+}
+
+.kura-ai-export-actions .button,
+.kura-ai-clear-actions .button {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.kura-ai-export-actions .dashicons,
+.kura-ai-clear-actions .dashicons {
+    margin-right: 5px;
+}
+
+/* Table Styles */
+.kura-ai-audit-log-table-container {
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.kura-ai-audit-log-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.kura-ai-audit-log-table th {
+    text-align: left;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-bottom: 1px solid #ccc;
+}
+
+.kura-ai-audit-log-table td {
+    padding: 10px;
+    vertical-align: top;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+/* Severity Styles */
+.kura-ai-severity {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.kura-ai-severity-critical {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.kura-ai-severity-high {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.kura-ai-severity-medium {
+    background-color: #fff3cd;
+    color: #856404;
+    opacity: 0.8;
+}
+
+.kura-ai-severity-low {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.kura-ai-severity-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    opacity: 0.8;
+}
+
+/* Log Details */
+.kura-ai-log-details {
+    display: none;
+}
+
+.kura-ai-view-details {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 5px;
+}
+
+.kura-ai-view-details .dashicons {
+    margin-right: 0;
+    font-size: 16px;
+}
+
+/* Modal Styles */
+.kura-ai-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.kura-ai-modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.kura-ai-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.kura-ai-modal-close:hover,
+.kura-ai-modal-close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#kura-ai-modal-content pre {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 3px;
+    overflow-x: auto;
+    max-height: 300px;
+}
+
+/* Pagination */
+.kura-ai-pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.kura-ai-pagination .page-numbers {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 2px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-decoration: none;
+}
+
+.kura-ai-pagination .page-numbers.current {
+    background-color: #0073aa;
+    color: white;
+    border-color: #0073aa;
+}
+
+/* Tooltips */
+.kura-ai-tooltip {
+    position: relative;
+    display: inline-block;
+    margin-left: 5px;
+    cursor: help;
+}
+
+.kura-ai-tooltip .dashicons {
+    color: #0073aa;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.kura-ai-tooltiptext {
+    display: none;
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.kura-ai-tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+/* Loading Animation */
+.kura-ai-spin {
+    animation: kura-ai-spin 2s infinite linear;
+}
+
+@keyframes kura-ai-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 782px) {
+    .kura-ai-filter-row {
+        flex-direction: column;
+    }
+    
+    .kura-ai-filter-group {
+        width: 100%;
+        margin-right: 0;
+    }
+    
+    .kura-ai-audit-actions {
+        flex-direction: column;
+    }
+    
+    .kura-ai-export-actions,
+    .kura-ai-clear-actions {
+        margin-bottom: 10px;
+    }
+    
+    .kura-ai-modal-content {
+        width: 95%;
+        margin: 5% auto;
+    }
+}

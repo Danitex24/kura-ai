@@ -254,33 +254,44 @@ class Kura_AI_Password_Security {
      */
     public function check_password_pwned($password) {
         // Generate the SHA-1 hash of the password
-        $hash = strtoupper(sha1($password));
-        $prefix = substr($hash, 0, 5);
-        $suffix = substr($hash, 5);
+        $hash = \strtoupper(\sha1($password));
+        $prefix = \substr($hash, 0, 5);
+        $suffix = \substr($hash, 5);
         
         // Make a request to the HaveIBeenPwned API
-        $response = wp_remote_get('https://api.pwnedpasswords.com/range/' . $prefix, array(
+        $response = \wp_remote_get('https://api.pwnedpasswords.com/range/' . $prefix, array(
             'timeout' => 10,
             'headers' => array(
                 'User-Agent' => 'Kura-AI-WordPress-Plugin',
             ),
         ));
         
-        if (is_wp_error($response)) {
+        if (\is_wp_error($response)) {
             return 0;
         }
         
-        $body = wp_remote_retrieve_body($response);
-        $lines = explode("\n", $body);
+        $body = \wp_remote_retrieve_body($response);
+        $lines = \explode("\n", $body);
         
         foreach ($lines as $line) {
-            $parts = explode(':', $line);
+            $parts = \explode(':', $line);
             
-            if (count($parts) === 2 && $parts[0] === $suffix) {
-                return intval($parts[1]);
+            if (\count($parts) === 2 && $parts[0] === $suffix) {
+                return \intval($parts[1]);
             }
         }
         
         return 0;
+    }
+    
+    /**
+     * Alias for check_password_pwned.
+     *
+     * @since    1.0.0
+     * @param    string    $password    The password to check.
+     * @return   bool                   True if the password has been pwned, false otherwise.
+     */
+    public function is_password_pwned($password) {
+        return $this->check_password_pwned($password) > 0;
     }
 }

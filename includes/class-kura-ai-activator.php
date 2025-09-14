@@ -21,6 +21,9 @@ if (!function_exists('dbDelta')) {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 }
 
+// Import WordPress functions for use within namespace
+use function \dbDelta;
+
 // Make sure WordPress database access is available
 if (!isset($GLOBALS['wpdb'])) {
     require_once ABSPATH . 'wp-includes/wp-db.php';
@@ -79,7 +82,8 @@ class Kura_AI_Activator
             $wpdb->prefix . 'kura_ai_file_versions',
             $wpdb->prefix . 'kura_ai_feedback',
             $wpdb->prefix . 'kura_ai_analytics',
-            $wpdb->prefix . 'kura_ai_brute_force'
+            $wpdb->prefix . 'kura_ai_brute_force',
+            $wpdb->prefix . 'kura_ai_audit_logs'
         );
         
         foreach ($tables as $table) {
@@ -111,6 +115,31 @@ class Kura_AI_Activator
             KEY severity (severity),
             KEY created_at (created_at)
         ) $charset_collate;";
+        
+        // Create audit logs table
+        $audit_logs_table = $wpdb->prefix . 'kura_ai_audit_logs';
+        $audit_logs_sql = "CREATE TABLE $audit_logs_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            event_type varchar(50) NOT NULL,
+            action varchar(50) DEFAULT NULL,
+            severity varchar(20) NOT NULL DEFAULT 'info',
+            message text NOT NULL,
+            user_id bigint(20) DEFAULT NULL,
+            user_role varchar(50) DEFAULT NULL,
+            ip_address varchar(45) DEFAULT NULL,
+            object_type varchar(50) DEFAULT NULL,
+            object_id varchar(50) DEFAULT NULL,
+            data longtext DEFAULT NULL,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY event_type (event_type),
+            KEY action (action),
+            KEY severity (severity),
+            KEY user_id (user_id),
+            KEY object_type (object_type),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        \dbDelta($audit_logs_sql);
 
         // Create API keys table
         $api_keys_table = $wpdb->prefix . 'kura_ai_api_keys';
@@ -320,20 +349,20 @@ class Kura_AI_Activator
         ) $charset_collate;";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($logs_sql);
-        dbDelta($api_keys_sql);
-        dbDelta($malware_patterns_sql);
-        dbDelta($file_integrity_sql);
-        dbDelta($user_activity_sql);
-        dbDelta($api_security_sql);
-        dbDelta($security_reports_sql);
-        dbDelta($vulnerabilities_sql);
-        dbDelta($hardening_rules_sql);
-        dbDelta($ai_analysis_sql);
-        dbDelta($file_versions_sql);
-        dbDelta($feedback_sql);
-        dbDelta($analytics_sql);
-        dbDelta($brute_force_sql);
+        \dbDelta($logs_sql);
+        \dbDelta($api_keys_sql);
+        \dbDelta($malware_patterns_sql);
+        \dbDelta($file_integrity_sql);
+        \dbDelta($user_activity_sql);
+        \dbDelta($api_security_sql);
+        \dbDelta($security_reports_sql);
+        \dbDelta($vulnerabilities_sql);
+        \dbDelta($hardening_rules_sql);
+        \dbDelta($ai_analysis_sql);
+        \dbDelta($file_versions_sql);
+        \dbDelta($feedback_sql);
+        \dbDelta($analytics_sql);
+        \dbDelta($brute_force_sql);
 
         // Add default API key for OpenAI if not exists
         $existing_key = $wpdb->get_var($wpdb->prepare(
@@ -437,14 +466,14 @@ class Kura_AI_Activator
         // Space out the scheduling to prevent conflicts
         $delay = 0;
         foreach ($schedules as $hook => $frequency) {
-            if (!wp_next_scheduled($hook)) {
+            if (!\wp_next_scheduled($hook)) {
                 // Add delay between events to prevent cron conflicts
-                $schedule_time = time() + $delay;
-                $result = wp_schedule_event($schedule_time, $frequency, $hook);
+                $schedule_time = \time() + $delay;
+                $result = \wp_schedule_event($schedule_time, $frequency, $hook);
                 
                 // Log if scheduling fails
                 if ($result === false) {
-                    error_log("Kura AI: Failed to schedule cron event: $hook");
+                    \error_log("Kura AI: Failed to schedule cron event: $hook");
                 }
                 
                 $delay += 300; // 5 minute delay between events

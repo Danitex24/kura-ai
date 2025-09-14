@@ -171,6 +171,123 @@
     font-weight: 600;
 }
 
+/* Severity Styles */
+.severity-critical {
+    color: #dc3232;
+    font-weight: 600;
+}
+
+.severity-high {
+    color: #dc3232;
+    font-weight: 600;
+}
+
+.severity-medium {
+    color: #ffb900;
+    font-weight: 600;
+}
+
+.severity-low {
+    color: #46b450;
+    font-weight: 600;
+}
+
+.severity-info {
+    color: #2271b1;
+    font-weight: 600;
+}
+
+/* Tabs Navigation */
+.kura-ai-tabs {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccd0d4;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.kura-ai-tab {
+    padding: 10px 15px;
+    margin-right: 5px;
+    margin-bottom: -1px;
+    background: #f1f1f1;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+    border-radius: 3px 3px 0 0;
+    transition: all 0.2s ease;
+}
+
+.kura-ai-tab:hover {
+    background: #fff;
+    color: #2271b1;
+}
+
+.kura-ai-tab.active {
+    background: #fff;
+    color: #2271b1;
+    border-bottom: 1px solid #fff;
+}
+
+/* Audit Settings Toggle */
+.kura-ai-settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin: 15px 0;
+    padding: 8px 12px;
+    background: #f1f1f1;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.kura-ai-settings-toggle:hover {
+    background: #f9f9f9;
+    color: #2271b1;
+}
+
+.kura-ai-settings-toggle .dashicons {
+    margin-left: 5px;
+}
+
+/* Tooltips */
+.kura-ai-tooltip {
+    position: relative;
+    display: inline-block;
+    margin-left: 5px;
+    color: #777;
+    cursor: help;
+}
+
+.kura-ai-tooltip-text {
+    position: absolute;
+    z-index: 1000;
+    background: #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+    width: 200px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.kura-ai-tooltip-text:after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 10px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #333;
+}
+
 /* Scan Progress Modal */
 .scan-progress-modal {
     display: none;

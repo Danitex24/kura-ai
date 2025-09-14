@@ -212,6 +212,12 @@ class Kura_AI_Cron_Fix {
             'display' => 'Once Monthly'
         );
         
+        // Add every minute schedule for Action Scheduler
+        $schedules['every_minute'] = array(
+            'interval' => 60, // 60 seconds
+            'display' => 'Every Minute'
+        );
+        
         return $schedules;
     }
 }

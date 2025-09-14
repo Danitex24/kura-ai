@@ -45,7 +45,7 @@ if (!function_exists('esc_attr')) {
                     <?php 
                     global $wpdb;
                     $api_keys_table = $wpdb->prefix . 'kura_ai_api_keys';
-                    $settings = get_option('kura_ai_settings', array());
+                    $settings = \get_option('kura_ai_settings', array());
                     $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
                     
                     foreach (['openai', 'gemini', 'claude', 'deepseek'] as $provider): 
@@ -77,8 +77,8 @@ if (!function_exists('esc_attr')) {
                             <h3><?php echo ucfirst($provider); ?></h3>
 
                             <div class="api-key-section" style="display: <?php echo $has_key ? 'block' : 'none'; ?>;">
-                                <input type="text" id="<?php echo $provider; ?>-api-key" placeholder="Enter API Key" value="<?php echo esc_attr($display_key); ?>" />
-                                <button class="button button-primary save-api-key" data-provider="<?php echo $provider; ?>" data-nonce="<?php echo wp_create_nonce('kura_ai_nonce'); ?>">
+                                <input type="text" id="<?php echo $provider; ?>-api-key" placeholder="Enter API Key" value="<?php echo \esc_attr($display_key); ?>" />
+                                <button class="button button-primary save-api-key" data-provider="<?php echo $provider; ?>" data-nonce="<?php echo \wp_create_nonce('kura_ai_nonce'); ?>">
                                     <span class="button-text"><?php \_e($has_key ? 'Update API Key' : 'Save API Key', 'kura-ai'); ?></span>
                                     <span class="spinner" style="display: none;"></span>
                                 </button>
@@ -115,7 +115,7 @@ if (!function_exists('esc_attr')) {
                         </div>
                         <div class="setting-control">
                             <?php 
-                            $chatbot_enabled = get_option('kura_ai_chatbot_enabled', false);
+                            $chatbot_enabled = \get_option('kura_ai_chatbot_enabled', false);
                             ?>
                             <label class="kura-ai-toggle">
                                 <input type="checkbox" id="kura-ai-chatbot-enabled" <?php echo $chatbot_enabled ? 'checked' : ''; ?> />
@@ -131,7 +131,7 @@ if (!function_exists('esc_attr')) {
                         </div>
                         <div class="setting-control">
                             <?php 
-                            $chatbot_position = get_option('kura_ai_chatbot_position', 'bottom-right');
+                            $chatbot_position = \get_option('kura_ai_chatbot_position', 'bottom-right');
                             ?>
                             <select id="kura-ai-chatbot-position">
                                 <option value="bottom-right" <?php echo $chatbot_position === 'bottom-right' ? 'selected' : ''; ?>><?php \_e('Bottom Right', 'kura-ai'); ?></option>

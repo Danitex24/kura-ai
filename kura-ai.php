@@ -17,52 +17,90 @@ if (!defined('WPINC')) {
     die;
 }
 
-/**
- * WordPress constants and functions
- * 
- * These constants and functions are defined by WordPress core.
- * They are marked as undefined by some IDEs but are available at runtime.
- * @see https://developer.wordpress.org/reference/
- */
-
-// Define ABSPATH if not already defined (for IDE compatibility)
-if (!defined('ABSPATH')) {
-    define('ABSPATH', dirname(__FILE__) . '/../../../');
+// Ensure WordPress core files are loaded
+if (!function_exists('add_action')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
 }
 
-// Define plugin constants
-define('KURA_AI_VERSION', '1.0.1');
+if (!function_exists('plugins_url')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
+}
 
-// Define plugin constants - these use WordPress functions that are available at runtime
-if (function_exists('plugin_dir_path') && function_exists('plugin_dir_url') && function_exists('plugin_basename')) {
-    define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
-    define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
+if (!function_exists('dbDelta')) {
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+}
+
+if (!function_exists('wp_get_current_user')) {
+    require_once(ABSPATH . 'wp-includes/pluggable.php');
+}
+
+/**
+ * Current plugin version.
+ * Start at version 1.0.0 and use SemVer - https://semver.org
+ */
+define('KURA_AI_VERSION', '1.0.0');
+
+/**
+ * Define plugin constants
+ */
+define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('KURA_AI_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+// Define additional plugin constants
+if (!defined('KURA_AI_BASENAME')) {
     define('KURA_AI_BASENAME', plugin_basename(__FILE__));
+}
+if (!defined('KURA_AI_PLUGIN_NAME')) {
     define('KURA_AI_PLUGIN_NAME', 'kura-ai');
-} else {
-    // Fallback definitions if WordPress functions aren't available (shouldn't happen in normal operation)
+}
+
+// Ensure all WordPress functions needed by the plugin are available
+if (!function_exists('register_activation_hook')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
+}
+
+if (!function_exists('get_plugin_data')) {
+    require_once(ABSPATH . 'wp-admin/includes/plugin.php');
+}
+
+if (!function_exists('get_post_type_object')) {
+    require_once(ABSPATH . 'wp-includes/post.php');
+}
+
+if (!function_exists('wp_is_post_revision')) {
+    require_once(ABSPATH . 'wp-includes/post.php');
+}
+
+if (!function_exists('maybe_serialize')) {
+    require_once(ABSPATH . 'wp-includes/functions.php');
+}
+
+// Fallback definitions if WordPress functions aren't available (shouldn't happen in normal operation)
+if (!defined('KURA_AI_PLUGIN_DIR')) {
     define('KURA_AI_PLUGIN_DIR', dirname(__FILE__) . '/');
+}
+
+if (!defined('KURA_AI_PLUGIN_URL')) {
     define('KURA_AI_PLUGIN_URL', plugins_url('', __FILE__) . '/');
-    define('KURA_AI_BASENAME', basename(dirname(__FILE__)) . '/' . basename(__FILE__));
-    define('KURA_AI_PLUGIN_NAME', 'kura-ai');
 }
 
 /**
  * Include WordPress core files if functions are missing
  */
-if (!function_exists('wp_verify_nonce')) {
+if (!\function_exists('wp_verify_nonce')) {
     require_once ABSPATH . 'wp-includes/pluggable.php';
 }
 
-if (!function_exists('sanitize_text_field')) {
+if (!\function_exists('sanitize_text_field')) {
     require_once ABSPATH . 'wp-includes/formatting.php';
 }
 
-if (!function_exists('dbDelta')) {
+if (!\function_exists('dbDelta')) {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 }
 
-if (!function_exists('get_bloginfo')) {
+if (!\function_exists('get_bloginfo')) {
     require_once ABSPATH . 'wp-includes/general-template.php';
 }
 
@@ -71,15 +109,46 @@ if (!function_exists('get_bloginfo')) {
  * 
  * @since 1.0.0
  */
-if (function_exists('plugin_dir_path')) {
-    require_once plugin_dir_path(__FILE__) . 'includes/class-kura-ai-activator.php';
+if (\function_exists('plugin_dir_path')) {
+    require_once \plugin_dir_path(__FILE__) . 'includes/class-kura-ai-activator.php';
 } else {
-    require_once dirname(__FILE__) . '/includes/class-kura-ai-activator.php';
+    require_once \dirname(__FILE__) . '/includes/class-kura-ai-activator.php';
 }
 
-if (function_exists('register_activation_hook')) {
-    register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'));
+if (\function_exists('register_activation_hook')) {
+    \register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'));
 }
+
+// Register the audit log functionality
+function kura_ai_register_audit_log() {
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    $table_name = $wpdb->prefix . 'kura_ai_audit_logs';
+    
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        event_type varchar(50) NOT NULL,
+        severity varchar(20) NOT NULL DEFAULT 'info',
+        message text NOT NULL,
+        user_id bigint(20) DEFAULT NULL,
+        user_role varchar(50) DEFAULT NULL,
+        ip_address varchar(45) DEFAULT NULL,
+        object_type varchar(50) DEFAULT NULL,
+        object_id varchar(50) DEFAULT NULL,
+        data longtext DEFAULT NULL,
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        KEY event_type (event_type),
+        KEY severity (severity),
+        KEY user_id (user_id),
+        KEY object_type (object_type),
+        KEY created_at (created_at)
+    ) $charset_collate;";
+    
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta($sql);
+}
+\add_action('plugins_loaded', 'kura_ai_register_audit_log');
 
 /**
  * Ensure required tables exist on plugin load
@@ -90,7 +159,7 @@ function kura_ai_ensure_tables() {
     global $wpdb;
     
     // Check if wpdb is available
-    if (!isset($wpdb) || !is_object($wpdb)) {
+    if (!isset($wpdb) || !\is_object($wpdb)) {
         return;
     }
     
@@ -227,6 +296,40 @@ function kura_ai_ensure_tables() {
                 ),
                 array('%s', '%s', '%s')
             );
+        }
+    }
+    
+    // Check and create audit_logs table
+    $audit_logs_table = $wpdb->prefix . 'kura_ai_audit_logs';
+    $audit_logs_exists = $wpdb->get_var("SHOW TABLES LIKE '$audit_logs_table'");
+    
+    if (!$audit_logs_exists) {
+        $audit_logs_sql = "CREATE TABLE $audit_logs_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            event_type varchar(50) NOT NULL,
+            action varchar(50) NOT NULL,
+            summary text NOT NULL,
+            details longtext,
+            severity varchar(20) NOT NULL DEFAULT 'info',
+            user_id bigint(20) NOT NULL DEFAULT 0,
+            ip_address varchar(100) NOT NULL DEFAULT '0.0.0.0',
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY event_type (event_type),
+            KEY action (action),
+            KEY severity (severity),
+            KEY user_id (user_id),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        // Load WordPress upgrade functions if available
+        if (defined('ABSPATH')) {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            if (function_exists('dbDelta')) {
+                dbDelta($audit_logs_sql);
+            } else {
+                $wpdb->query($audit_logs_sql);
+            }
         }
     }
     

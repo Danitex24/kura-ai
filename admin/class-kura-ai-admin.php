@@ -589,8 +589,8 @@ class Kura_Ai_Admin {
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-        $this->plugin_path = trailingslashit(plugin_dir_path(__FILE__));
-        $this->assets_url = trailingslashit(plugin_dir_url(__FILE__));
+        $this->plugin_path = \trailingslashit(\plugin_dir_path(__FILE__));
+        $this->assets_url = \trailingslashit(\plugin_dir_url(__FILE__));
         $this->template_path = $this->plugin_path . 'partials/';
         
         // Initialize file monitor
@@ -618,14 +618,14 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     private function init() {
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'admin_init'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
-        add_action('kura_ai_compliance_scan', array($this, 'run_scheduled_compliance_scan'));
+        \add_action('admin_menu', array($this, 'add_admin_menu'));
+        \add_action('admin_init', array($this, 'admin_init'));
+        \add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+        \add_action('admin_enqueue_scripts', array($this, 'enqueue_styles'));
+        \add_action('kura_ai_compliance_scan', array($this, 'run_scheduled_compliance_scan'));
         
         // Add navigation menu to all admin pages
-        add_action('admin_notices', array($this, 'include_navigation_menu'));
+        \add_action('admin_notices', array($this, 'include_navigation_menu'));
         
         $this->register_ajax_actions();
     }
@@ -637,9 +637,9 @@ class Kura_Ai_Admin {
      */
     public function include_navigation_menu() {
         // Only include on Kura AI admin pages
-        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
-        if (strpos($page, 'kura-ai') !== false) {
-            include_once plugin_dir_path(__FILE__) . 'partials/kura-ai-navigation-menu.php';
+        $page = isset($_GET['page']) ? \sanitize_text_field($_GET['page']) : '';
+        if (\strpos($page, 'kura-ai') !== false) {
+            include_once \plugin_dir_path(__FILE__) . 'partials/kura-ai-navigation-menu.php';
         }
     }
 
@@ -649,7 +649,7 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     public function admin_init() {
-        if (!is_admin()) {
+        if (!\is_admin()) {
             return;
         }
         
@@ -668,7 +668,7 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     public function register_settings() {
-        register_setting(
+        \register_setting(
             'kura_ai_settings',
             'kura_ai_settings',
             array(
@@ -676,7 +676,7 @@ class Kura_Ai_Admin {
             )
         );
 
-        $settings = get_option('kura_ai_settings', array());
+        $settings = \get_option('kura_ai_settings', array());
 
         // Add settings sections
         add_settings_section(
@@ -703,7 +703,7 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     public function general_section_callback() {
-        echo '<p>' . esc_html__('Configure your Kura AI security settings below.', 'kura-ai') . '</p>';
+        echo '<p>' . \esc_html__('Configure your Kura AI security settings below.', 'kura-ai') . '</p>';
     }
 
     /**
@@ -717,11 +717,11 @@ class Kura_Ai_Admin {
         $sanitized = array();
         
         if (isset($input['api_key'])) {
-            $sanitized['api_key'] = sanitize_text_field($input['api_key']);
+            $sanitized['api_key'] = \sanitize_text_field($input['api_key']);
         }
         
         if (isset($input['scan_frequency'])) {
-            $sanitized['scan_frequency'] = sanitize_text_field($input['scan_frequency']);
+            $sanitized['scan_frequency'] = \sanitize_text_field($input['scan_frequency']);
         }
         
         return $sanitized;
@@ -3286,14 +3286,14 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     public function add_admin_menu() {
-        if (!is_admin() || !current_user_can('manage_options')) {
+        if (!\is_admin() || !\current_user_can('manage_options')) {
             return;
         }
 
         // Add main menu page
-        add_menu_page(
-            esc_html__('Kura AI Security', 'kura-ai'),
-            esc_html__('Kura AI', 'kura-ai'),
+        \add_menu_page(
+            \esc_html__('Kura AI Security', 'kura-ai'),
+            \esc_html__('Kura AI', 'kura-ai'),
             'manage_options',
             'kura-ai',
             array($this, 'display_admin_page'),
@@ -3302,19 +3302,19 @@ class Kura_Ai_Admin {
         );
 
         // Add submenu pages
-        add_submenu_page(
+        \add_submenu_page(
             'kura-ai',
-            esc_html__('Dashboard', 'kura-ai'),
-            esc_html__('Dashboard', 'kura-ai'),
+            \esc_html__('Dashboard', 'kura-ai'),
+            \esc_html__('Dashboard', 'kura-ai'),
             'manage_options',
             'kura-ai',
             array($this, 'display_admin_page')
         );
 
-        add_submenu_page(
+        \add_submenu_page(
             'kura-ai',
-            esc_html__('Security Scanner', 'kura-ai'),
-            esc_html__('Scanner', 'kura-ai'),
+            \esc_html__('Security Scanner', 'kura-ai'),
+            \esc_html__('Scanner', 'kura-ai'),
             'manage_options',
             'kura-ai-scanner',
             array($this, 'display_scanner_page')
@@ -3497,10 +3497,53 @@ class Kura_Ai_Admin {
             // Make plugin properties available to the template
             $plugin_name = $this->plugin_name;
             $version = $this->version;
+            
+            // Add activity logs tab
+            add_action('kura_ai_logs_tabs', array($this, 'add_activity_log_tab'), 10);
+            
+            // Get the active tab
+            $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'activity';
+            
             include $template_path;
+            
+            // Display the appropriate tab content
+            if ($active_tab === 'audit' && class_exists('Kura_AI\Kura_AI_Audit_Log_Admin')) {
+                // Get the audit log admin instance
+                global $kura_ai_audit_log_admin;
+                if ($kura_ai_audit_log_admin) {
+                    $kura_ai_audit_log_admin->display_audit_log_page();
+                }
+            } else {
+                // Default to activity logs
+                $this->display_activity_logs_content();
+            }
         } else {
             echo '<div class="wrap"><h1>' . esc_html__('Activity Logs', 'kura-ai') . '</h1><p>' . esc_html__('Template file not found.', 'kura-ai') . '</p></div>';
         }
+    }
+    
+    /**
+     * Add activity log tab to the logs page.
+     *
+     * @since    1.0.0
+     * @param    string    $current_tab    The current active tab.
+     */
+    public function add_activity_log_tab($current_tab) {
+        $activity_tab = 'activity';
+        $class = ($current_tab === $activity_tab) ? 'nav-tab-active' : '';
+        echo '<a class="nav-tab ' . esc_attr($class) . '" href="?page=kura-ai-logs&tab=' . esc_attr($activity_tab) . '">';
+        echo '<span class="dashicons dashicons-list-view"></span> ' . esc_html__('Activity Logs', 'kura-ai');
+        echo '</a>';
+    }
+    
+    /**
+     * Display activity logs content.
+     *
+     * @since    1.0.0
+     */
+    public function display_activity_logs_content() {
+        // Include the activity logs content
+        include trailingslashit($this->template_path) . 'kura-ai-activity-logs-content.php';
     }
 
     /**
@@ -3621,12 +3664,12 @@ class Kura_Ai_Admin {
      */
     public function enqueue_admin_scripts() {
         // Get current screen
-        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        $screen = \function_exists('get_current_screen') ? \get_current_screen() : null;
+        $page = isset($_GET['page']) ? \sanitize_text_field($_GET['page']) : '';
         
         // Enqueue SweetAlert2 library on all Kura AI admin pages
-        if (strpos($page, 'kura-ai') !== false || (isset($screen->id) && strpos($screen->id, 'kura-ai') !== false)) {
-            wp_enqueue_script(
+        if (\strpos($page, 'kura-ai') !== false || (isset($screen->id) && \strpos($screen->id, 'kura-ai') !== false)) {
+            \wp_enqueue_script(
                 'sweetalert2',
                 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js',
                 array(),
@@ -3635,7 +3678,7 @@ class Kura_Ai_Admin {
             );
             
             // Enqueue SweetAlert2 CSS
-            wp_enqueue_style(
+            \wp_enqueue_style(
                 'sweetalert2',
                 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css',
                 array(),
@@ -3643,7 +3686,7 @@ class Kura_Ai_Admin {
             );
             
             // Enqueue Font Awesome for icons
-            wp_enqueue_style(
+            \wp_enqueue_style(
                 'font-awesome',
                 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
                 array(),
@@ -3651,7 +3694,7 @@ class Kura_Ai_Admin {
             );
             
             // Enqueue SweetAlert2 configuration script
-            wp_enqueue_script(
+            \wp_enqueue_script(
                 'kura-ai-sweetalert-config',
                 $this->assets_url . 'js/sweetalert-config.js',
                 array('sweetalert2'),
@@ -3861,9 +3904,9 @@ class Kura_Ai_Admin {
      * @since    1.0.0
      */
     public function enqueue_styles() {
-        $page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        $page = isset($_GET['page']) ? \sanitize_text_field($_GET['page']) : '';
         
-        wp_enqueue_style(
+        \wp_enqueue_style(
             'kura-ai-admin-styles',
             $this->assets_url . 'css/kura-ai-admin.css',
             array(),
@@ -3872,8 +3915,8 @@ class Kura_Ai_Admin {
         );
         
         // Navigation menu styles for all Kura AI admin pages
-        if (strpos($page, 'kura-ai') !== false) {
-            wp_enqueue_style(
+        if (\strpos($page, 'kura-ai') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-navigation-styles',
                 $this->assets_url . 'css/kura-ai-navigation.css',
                 array(),
@@ -3883,8 +3926,8 @@ class Kura_Ai_Admin {
         }
         
         // Login Security Settings styles
-        if ($page === 'kura-ai-login-security' || strpos($page, 'login-security') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-login-security' || \strpos($page, 'login-security') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-settings-styles',
                 $this->assets_url . 'css/kura-ai-settings.css',
                 array(),
@@ -3894,8 +3937,8 @@ class Kura_Ai_Admin {
         }
         
         // Page-specific styles
-        if ($page === 'kura-ai-compliance' || strpos($page, 'compliance') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-compliance' || \strpos($page, 'compliance') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-compliance-styles',
                 $this->assets_url . 'css/compliance.css',
                 array(),
@@ -3904,8 +3947,8 @@ class Kura_Ai_Admin {
             );
         }
         
-        if ($page === 'kura-ai-file-monitor' || strpos($page, 'file-monitor') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-file-monitor' || \strpos($page, 'file-monitor') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-file-monitor-styles',
                 $this->assets_url . 'css/file-monitor.css',
                 array(),
@@ -3914,8 +3957,8 @@ class Kura_Ai_Admin {
             );
         }
         
-        if ($page === 'kura-ai-security-hardening' || strpos($page, 'hardening') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-security-hardening' || \strpos($page, 'hardening') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-security-hardening-styles',
                 $this->assets_url . 'css/security-hardening.css',
                 array(),
@@ -3924,8 +3967,8 @@ class Kura_Ai_Admin {
             );
         }
         
-        if ($page === 'kura-ai-scanner' || strpos($page, 'scanner') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-scanner' || \strpos($page, 'scanner') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-security-scanner-styles',
                 $this->assets_url . 'css/security-scanner.css',
                 array(),
@@ -3934,8 +3977,8 @@ class Kura_Ai_Admin {
             );
         }
         
-        if ($page === 'kura-ai-malware-detection' || strpos($page, 'malware-detection') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-malware-detection' || \strpos($page, 'malware-detection') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-malware-detection-styles',
                 $this->assets_url . 'css/malware-detection.css',
                 array(),
@@ -3944,8 +3987,8 @@ class Kura_Ai_Admin {
             );
         }
         
-        if ($page === 'kura-ai-ai-analysis' || strpos($page, 'ai-analysis') !== false) {
-            wp_enqueue_style(
+        if ($page === 'kura-ai-ai-analysis' || \strpos($page, 'ai-analysis') !== false) {
+            \wp_enqueue_style(
                 'kura-ai-ai-analysis-styles',
                 $this->assets_url . 'css/ai-analysis.css',
                 array(),
