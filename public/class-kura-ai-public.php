@@ -50,9 +50,22 @@ class Kura_AI_Public
      */
     public function enqueue_styles()
     {
+        // Get plugin directory URL with fallback
+        $plugin_url = '';
+        if (\function_exists('\plugin_dir_url')) {
+            $plugin_url = \plugin_dir_url(__FILE__);
+        } else if (function_exists('plugin_dir_url')) {
+            $plugin_url = plugin_dir_url(__FILE__);
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('\WP_CONTENT_URL') ? \WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins/' . basename(dirname(dirname(__FILE__))) . '/public/';
+        }
+        
         \wp_enqueue_style(
             $this->plugin_name,
-            \plugin_dir_url(__FILE__) . '../assets/css/kura-ai-public.css',
+            $plugin_url . '../assets/css/kura-ai-public.css',
             array(),
             $this->version,
             'all',
@@ -66,9 +79,22 @@ class Kura_AI_Public
      */
     public function enqueue_scripts()
     {
+        // Get plugin directory URL with fallback
+        $plugin_url = '';
+        if (\function_exists('\plugin_dir_url')) {
+            $plugin_url = \plugin_dir_url(__FILE__);
+        } else if (function_exists('plugin_dir_url')) {
+            $plugin_url = plugin_dir_url(__FILE__);
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('WP_CONTENT_URL') ? WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins/' . basename(dirname(dirname(__FILE__))) . '/public/';
+        }
+        
         \wp_enqueue_script(
             $this->plugin_name,
-            \plugin_dir_url(__FILE__) . '../assets/js/kura-ai-public.js',
+            $plugin_url . '../assets/js/kura-ai-public.js',
             array('jquery'),
             $this->version,
             false,
@@ -118,7 +144,7 @@ class Kura_AI_Public
             // Get notice ID
             $notice_id = isset($_POST['notice_id']) ? \sanitize_text_field(\wp_unslash($_POST['notice_id'])) : '';
             
-            if (\empty($notice_id)) {
+            if (empty($notice_id)) {
                 \wp_send_json_error(\esc_html__('Missing notice ID.', 'kura-ai'));
                 return;
             }
@@ -131,8 +157,10 @@ class Kura_AI_Public
                 \update_user_meta($user_id, 'kura_ai_dismissed_notice_' . $notice_id, true);
             } else {
                 // For non-logged in users, store in a cookie
-                $expiration = time() + (30 * DAY_IN_SECONDS); // 30 days
-                \setcookie('kura_ai_dismissed_notice_' . $notice_id, '1', $expiration, COOKIEPATH, COOKIE_DOMAIN);
+                $expiration = time() + (30 * (defined('\DAY_IN_SECONDS') ? \DAY_IN_SECONDS : 86400)); // 30 days
+                \setcookie('kura_ai_dismissed_notice_' . $notice_id, '1', $expiration, 
+                    defined('\COOKIEPATH') ? \COOKIEPATH : '/', 
+                    defined('\COOKIE_DOMAIN') ? \COOKIE_DOMAIN : '');
             }
             
             \wp_send_json_success();

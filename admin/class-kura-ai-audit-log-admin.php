@@ -72,9 +72,22 @@ class Kura_AI_Audit_Log_Admin {
      * @since    1.0.0
      */
     public function enqueue_styles() {
+        // Get plugin directory URL with fallback
+        $plugin_url = '';
+        if (\function_exists('\plugin_dir_url')) {
+            $plugin_url = \plugin_dir_url(__FILE__);
+        } else if (function_exists('plugin_dir_url')) {
+            $plugin_url = plugin_dir_url(__FILE__);
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('\WP_CONTENT_URL') ? \WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins/' . basename(dirname(__FILE__)) . '/';
+        }
+        
         wp_enqueue_style(
             $this->plugin_name . '-audit-log',
-            plugin_dir_url(__FILE__) . 'css/kura-ai-audit-log-admin.css',
+            $plugin_url . 'css/kura-ai-audit-log-admin.css',
             array(),
             $this->version,
             'all'
@@ -87,9 +100,22 @@ class Kura_AI_Audit_Log_Admin {
      * @since    1.0.0
      */
     public function enqueue_scripts() {
+        // Get plugin directory URL with fallback
+        $plugin_url = '';
+        if (\function_exists('\plugin_dir_url')) {
+            $plugin_url = \plugin_dir_url(__FILE__);
+        } else if (function_exists('plugin_dir_url')) {
+            $plugin_url = plugin_dir_url(__FILE__);
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('\WP_CONTENT_URL') ? \WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins/' . basename(dirname(__FILE__)) . '/';
+        }
+        
         wp_enqueue_script(
             $this->plugin_name . '-audit-log',
-            plugin_dir_url(__FILE__) . 'js/kura-ai-audit-log-admin.js',
+            $plugin_url . 'js/kura-ai-audit-log-admin.js',
             array('jquery'),
             $this->version,
             false

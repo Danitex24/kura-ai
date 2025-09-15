@@ -17,6 +17,11 @@ if (!defined('WPINC')) {
     die;
 }
 
+// Define ABSPATH if not already defined (for testing environments)
+if (!defined('ABSPATH')) {
+    define('ABSPATH', dirname(__FILE__) . '/../../../');
+}
+
 // Ensure WordPress core files are loaded
 if (!function_exists('add_action')) {
     require_once(ABSPATH . 'wp-includes/plugin.php');
@@ -26,12 +31,24 @@ if (!function_exists('plugins_url')) {
     require_once(ABSPATH . 'wp-includes/plugin.php');
 }
 
+if (!function_exists('plugin_dir_path')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
+}
+
+if (!function_exists('plugin_basename')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
+}
+
 if (!function_exists('dbDelta')) {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 }
 
-if (!function_exists('wp_get_current_user')) {
+if (!function_exists('wp_get_current_user') || !function_exists('is_admin')) {
     require_once(ABSPATH . 'wp-includes/pluggable.php');
+}
+
+if (!function_exists('register_activation_hook') || !function_exists('register_deactivation_hook')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
 }
 
 /**
@@ -43,13 +60,76 @@ define('KURA_AI_VERSION', '1.0.0');
 /**
  * Define plugin constants
  */
-define('KURA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('KURA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('KURA_AI_PLUGIN_BASENAME', plugin_basename(__FILE__));
+// Ensure plugin_dir_path function exists or create fallback
+if (!function_exists('plugin_dir_path')) {
+    function plugin_dir_path($file) {
+        return trailingslashit(dirname($file));
+    }
+}
+
+// Fallback for plugins_url if it's not available
+if (!function_exists('plugins_url')) {
+    function plugins_url($path = '', $plugin = '') {
+        // Simple fallback that works for basic cases
+        $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+        $wp_content_dir = defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : ABSPATH . 'wp-content';
+        $wp_content_url = defined('WP_CONTENT_URL') ? WP_CONTENT_URL : $base_url . '/wp-content';
+        
+        if (empty($plugin) && defined('WP_PLUGIN_DIR')) {
+            $plugin_dir = WP_PLUGIN_DIR;
+            $plugin_url = defined('WP_PLUGIN_URL') ? WP_PLUGIN_URL : $wp_content_url . '/plugins';
+        } else {
+            $plugin_dir = $wp_content_dir . '/plugins';
+            $plugin_url = $wp_content_url . '/plugins';
+        }
+        
+        if (!empty($plugin)) {
+            $folder = dirname($plugin);
+            if ('.' !== $folder) {
+                $plugin_url .= '/' . ltrim($folder, '/');
+            }
+        }
+        
+        if ($path && is_string($path)) {
+            $plugin_url .= '/' . ltrim($path, '/');
+        }
+        
+        return $plugin_url;
+    }
+}
+
+// Ensure plugin_dir_url function exists or create fallback
+if (!function_exists('plugin_dir_url')) {
+    function plugin_dir_url($file) {
+        $url = function_exists('plugins_url') ? trailingslashit(plugins_url('', $file)) : trailingslashit(dirname($file));
+        return $url;
+    }
+}
+
+// Ensure plugin_basename function exists or create fallback
+if (!function_exists('plugin_basename')) {
+    function plugin_basename($file) {
+        $file = str_replace('\\', '/', $file); // sanitize for Win32
+        $plugin_dir = str_replace('\\', '/', WP_PLUGIN_DIR);
+        $file = preg_replace('#^' . preg_quote($plugin_dir, '#') . '/|^' . preg_quote(WP_CONTENT_DIR . '/plugins/', '#') . '#', '', $file);
+        return $file;
+    }
+}
+
+// Ensure trailingslashit function exists
+if (!function_exists('trailingslashit')) {
+    function trailingslashit($string) {
+        return rtrim($string, '/') . '/';
+    }
+}
+
+define('KURA_AI_PLUGIN_DIR', function_exists('plugin_dir_path') ? plugin_dir_path(__FILE__) : trailingslashit(dirname(__FILE__)));
+define('KURA_AI_PLUGIN_URL', function_exists('plugin_dir_url') ? plugin_dir_url(__FILE__) : trailingslashit(dirname(__FILE__)));
+define('KURA_AI_PLUGIN_BASENAME', function_exists('plugin_basename') ? plugin_basename(__FILE__) : basename(dirname(__FILE__)) . '/' . basename(__FILE__));
 
 // Define additional plugin constants
 if (!defined('KURA_AI_BASENAME')) {
-    define('KURA_AI_BASENAME', plugin_basename(__FILE__));
+    define('KURA_AI_BASENAME', function_exists('plugin_basename') ? plugin_basename(__FILE__) : basename(dirname(__FILE__)) . '/' . basename(__FILE__));
 }
 if (!defined('KURA_AI_PLUGIN_NAME')) {
     define('KURA_AI_PLUGIN_NAME', 'kura-ai');
@@ -57,6 +137,10 @@ if (!defined('KURA_AI_PLUGIN_NAME')) {
 
 // Ensure all WordPress functions needed by the plugin are available
 if (!function_exists('register_activation_hook')) {
+    require_once(ABSPATH . 'wp-includes/plugin.php');
+}
+
+if (!function_exists('register_deactivation_hook')) {
     require_once(ABSPATH . 'wp-includes/plugin.php');
 }
 
@@ -74,6 +158,60 @@ if (!function_exists('wp_is_post_revision')) {
 
 if (!function_exists('maybe_serialize')) {
     require_once(ABSPATH . 'wp-includes/functions.php');
+}
+
+// Fallback for dbDelta if it's still not available
+if (!function_exists('dbDelta')) {
+    function dbDelta($queries = '', $execute = true) {
+        global $wpdb;
+        
+        if (!is_array($queries)) {
+            $queries = explode(';', $queries);
+        }
+        
+        $results = array();
+        
+        if ($execute && isset($wpdb) && is_object($wpdb)) {
+            foreach ($queries as $query) {
+                $query = trim($query);
+                if (!empty($query)) {
+                    $results[] = $wpdb->query($query);
+                }
+            }
+        }
+        
+        return $results;
+    }
+}
+
+// Fallback for register_activation_hook if it's still not available
+if (!function_exists('register_activation_hook')) {
+    function register_activation_hook($file, $callback) {
+        // This is just a stub for testing environments
+        if (function_exists('error_log')) {
+            error_log('Fallback register_activation_hook called for ' . $file);
+        }
+        return false;
+    }
+}
+
+// Fallback for register_deactivation_hook if it's still not available
+if (!function_exists('register_deactivation_hook')) {
+    function register_deactivation_hook($file, $callback) {
+        // This is just a stub for testing environments
+        if (function_exists('error_log')) {
+            error_log('Fallback register_deactivation_hook called for ' . $file);
+        }
+        return false;
+    }
+}
+
+// Fallback for is_admin if it's still not available
+if (!function_exists('is_admin')) {
+    function is_admin() {
+        // Simple fallback - assume we're in admin context in testing environment
+        return true;
+    }
 }
 
 // Fallback definitions if WordPress functions aren't available (shouldn't happen in normal operation)
@@ -116,12 +254,16 @@ if (\function_exists('plugin_dir_path')) {
 }
 
 if (\function_exists('register_activation_hook')) {
-    \register_activation_hook(__FILE__, array('Kura_AI\Kura_AI_Activator', 'activate'));
+    \register_activation_hook(__FILE__, array('Kura_AI\\Kura_AI_Activator', 'activate'));
 }
 
 // Register the audit log functionality
 function kura_ai_register_audit_log() {
     global $wpdb;
+    if (!isset($wpdb) || !\is_object($wpdb)) {
+        return;
+    }
+    
     $charset_collate = $wpdb->get_charset_collate();
     $table_name = $wpdb->prefix . 'kura_ai_audit_logs';
     
@@ -145,10 +287,20 @@ function kura_ai_register_audit_log() {
         KEY created_at (created_at)
     ) $charset_collate;";
     
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta($sql);
+    if (defined('ABSPATH')) {
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        if (\function_exists('\dbDelta')) {
+            \dbDelta($sql);
+        } else {
+            // Fallback if dbDelta isn't available
+            $wpdb->query($sql);
+        }
+    }
 }
-\add_action('plugins_loaded', 'kura_ai_register_audit_log');
+
+if (\function_exists('\add_action')) {
+    \add_action('plugins_loaded', 'kura_ai_register_audit_log');
+}
 
 /**
  * Ensure required tables exist on plugin load
@@ -162,6 +314,8 @@ function kura_ai_ensure_tables() {
     if (!isset($wpdb) || !\is_object($wpdb)) {
         return;
     }
+    
+    // We've already defined a fallback for dbDelta, so we can proceed
     
     $charset_collate = $wpdb->get_charset_collate();
     
@@ -186,8 +340,8 @@ function kura_ai_ensure_tables() {
         // Load WordPress upgrade functions if available
         if (defined('ABSPATH')) {
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($security_reports_sql);
+            if (\function_exists('\dbDelta')) {
+                \dbDelta($security_reports_sql);
             } else {
                 // Fallback if dbDelta isn't available (shouldn't happen in normal WordPress environment)
                 $wpdb->query($security_reports_sql);
@@ -270,15 +424,8 @@ function kura_ai_ensure_tables() {
             UNIQUE KEY provider (provider)
         ) $charset_collate;";
         
-        // Load WordPress upgrade functions if available
-        if (defined('ABSPATH')) {
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($api_keys_sql);
-            } else {
-                $wpdb->query($api_keys_sql);
-            }
-        }
+        // Use our dbDelta function (either native or fallback)
+        dbDelta($api_keys_sql);
         
         // Add default API key for OpenAI if not exists
         $existing_key = $wpdb->get_var($wpdb->prepare(
@@ -322,14 +469,8 @@ function kura_ai_ensure_tables() {
             KEY created_at (created_at)
         ) $charset_collate;";
         
-        // Load WordPress upgrade functions if available
-        if (defined('ABSPATH')) {
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($audit_logs_sql);
-            } else {
-                $wpdb->query($audit_logs_sql);
-            }
+        // Use our dbDelta function (either native or fallback)
+        dbDelta($audit_logs_sql);
         }
     }
     
@@ -351,15 +492,8 @@ function kura_ai_ensure_tables() {
             KEY created_at (created_at)
         ) $charset_collate;";
         
-        // Load WordPress upgrade functions if available
-        if (defined('ABSPATH')) {
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($file_versions_sql);
-            } else {
-                $wpdb->query($file_versions_sql);
-            }
-        }
+        // Use our dbDelta function (either native or fallback)
+        dbDelta($file_versions_sql);
     }
     
     // Check and create brute force protection table
@@ -379,15 +513,8 @@ function kura_ai_ensure_tables() {
             KEY username (username)
         ) $charset_collate;";
         
-        // Load WordPress upgrade functions if available
-        if (defined('ABSPATH')) {
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($brute_force_sql);
-            } else {
-                $wpdb->query($brute_force_sql);
-            }
-        }
+        // Use our dbDelta function (either native or fallback)
+        dbDelta($brute_force_sql);
     }
     
     // Check and create analytics table
@@ -413,15 +540,8 @@ function kura_ai_ensure_tables() {
             KEY created_at (created_at)
         ) $charset_collate;";
         
-        // Load WordPress upgrade functions if available
-        if (defined('ABSPATH')) {
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            if (function_exists('dbDelta')) {
-                dbDelta($analytics_sql);
-            } else {
-                $wpdb->query($analytics_sql);
-            }
-        }
+        // Use our dbDelta function (either native or fallback)
+        dbDelta($analytics_sql);
         
         // Insert sample data for testing if table was just created
         $sample_data = array(
@@ -485,7 +605,7 @@ function kura_ai_ensure_tables() {
             );
         }
     }
-}
+
 
 // Run table check on admin_init to ensure database is available
 if (function_exists('add_action')) {
@@ -497,14 +617,35 @@ if (function_exists('add_action')) {
  * 
  * @since 1.0.0
  */
-if (function_exists('plugin_dir_path')) {
-    require_once plugin_dir_path(__FILE__) . 'includes/class-kura-ai-deactivator.php';
-} else {
-    require_once dirname(__FILE__) . '/includes/class-kura-ai-deactivator.php';
+// Load deactivator class
+$deactivator_path = function_exists('plugin_dir_path') ? plugin_dir_path(__FILE__) . 'includes/class-kura-ai-deactivator.php' : dirname(__FILE__) . '/includes/class-kura-ai-deactivator.php';
+require_once $deactivator_path;
+
+// Register deactivation hook if function exists
+if (function_exists('register_deactivation_hook')) {
+    register_deactivation_hook(__FILE__, '\Kura_AI\Kura_AI_Deactivator::deactivate');
+    
+    // Add action to load deactivation script on plugins page
+    if (function_exists('add_action')) {
+        add_action('admin_enqueue_scripts', function($hook) {
+            if ($hook === 'plugins.php') {
+                // Ensure deactivation handler is loaded
+                if (class_exists('\Kura_AI\Kura_AI_Deactivation_Handler')) {
+                    $deactivation_handler = new \Kura_AI\Kura_AI_Deactivation_Handler('kura-ai', '1.0.0');
+                    $deactivation_handler->enqueue_deactivation_script($hook);
+                }
+            }
+        }, 5); // Priority 5 to ensure it runs early
+    }
 }
 
-if (function_exists('register_deactivation_hook')) {
-    register_deactivation_hook(__FILE__, array('Kura_AI\Kura_AI_Deactivator', 'deactivate'));
+// Load deactivation handler
+$handler_path = function_exists('plugin_dir_path') ? plugin_dir_path(__FILE__) . 'admin/class-kura-ai-deactivation-handler.php' : dirname(__FILE__) . '/admin/class-kura-ai-deactivation-handler.php';
+require_once $handler_path;
+
+// Initialize deactivation handler directly for AJAX requests
+if (function_exists('is_admin') && is_admin() && defined('DOING_AJAX') && DOING_AJAX) {
+    $deactivation_handler = new \Kura_AI\Kura_AI_Deactivation_Handler('kura-ai', '1.0.0');
 }
 
 /**
@@ -513,11 +654,9 @@ if (function_exists('register_deactivation_hook')) {
  * 
  * @since 1.0.0
  */
-if (defined('KURA_AI_PLUGIN_DIR')) {
-    require_once KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai.php';
-} else {
-    require_once dirname(__FILE__) . '/includes/class-kura-ai.php';
-}
+// Load the main plugin class
+$main_class_path = defined('KURA_AI_PLUGIN_DIR') ? KURA_AI_PLUGIN_DIR . 'includes/class-kura-ai.php' : dirname(__FILE__) . '/includes/class-kura-ai.php';
+require_once $main_class_path;
 
 // Helper functions
 function get_core_files($directory)
@@ -554,16 +693,19 @@ function get_core_files($directory)
 function run_kura_ai()
 {
     // Make sure WordPress functions are available
-    if (!function_exists('add_action')) {
+    if (!\function_exists('add_action')) {
         return;
     }
     
     // Make sure the Kura_AI class is available
-    if (!class_exists('Kura_AI\Kura_AI')) {
+    if (!\class_exists('\\Kura_AI\\Kura_AI')) {
+        if (function_exists('error_log')) {
+            error_log('KuraAI: Main plugin class not found');
+        }
         return;
     }
     
-    $plugin = new Kura_AI\Kura_AI();
+    $plugin = new \Kura_AI\Kura_AI();
     $plugin->run();
 }
 

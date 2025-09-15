@@ -120,12 +120,21 @@ class Kura_AI {
         // Add chatbot to admin dashboard
         $this->loader->add_action('admin_enqueue_scripts', $chatbot, 'enqueue_scripts');
         $this->loader->add_action('admin_footer', $chatbot, 'render_chatbot');
+        
+        // Initialize deactivation handler if we're in admin
+        if (\is_admin() && \function_exists('\get_current_screen')) {
+            $screen = \get_current_screen();
+            // Only initialize on plugins page or always to ensure AJAX works
+            if (!$screen || $screen->id === 'plugins') {
+                $deactivation_handler = new Kura_AI_Deactivation_Handler($this->get_plugin_name(), $this->get_version());
+            }
+        }
     }
 
     private function define_public_hooks() {
         $plugin_public = new Kura_AI_Public($this->get_plugin_name(), $this->get_version());
-        $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
-        $this->loader->add_action('\wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
+        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_styles');
+        $this->loader->add_action('wp_enqueue_scripts', $plugin_public, 'enqueue_scripts');
         
         // Add chatbot to frontend as well
         $chatbot = new Kura_Ai_Chatbot();
@@ -168,14 +177,14 @@ class Kura_AI {
      */
     private function init_audit_log() {
         // Load the audit log class
-        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-audit-log.php';
+        require_once \plugin_dir_path(dirname(__FILE__)) . 'includes/class-kura-ai-audit-log.php';
         
         // Initialize the audit log
         $this->audit_log = new Kura_AI_Audit_Log($this->get_plugin_name(), $this->get_version());
         
         // If we're in the admin area, load the admin-specific functionality
-		if (is_admin()) {
-			require_once plugin_dir_path(dirname(__FILE__)) . 'admin/class-kura-ai-audit-log-admin.php';
+		if (\function_exists('\is_admin') && \is_admin()) {
+			require_once \plugin_dir_path(dirname(__FILE__)) . 'admin/class-kura-ai-audit-log-admin.php';
 			
 			// Create a global instance of the audit log admin
 			global $kura_ai_audit_log_admin;

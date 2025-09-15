@@ -305,6 +305,34 @@ class Kura_AI_Audit_Log
     }
 
     /**
+     * Create the audit log table if missing.
+     */
+    private function create_audit_log_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql = "CREATE TABLE {$this->table_name} (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            event_type varchar(50) NOT NULL,
+            action varchar(50) DEFAULT NULL,
+            severity varchar(20) NOT NULL DEFAULT 'info',
+            message text NOT NULL,
+            user_id bigint(20) DEFAULT NULL,
+            user_role varchar(50) DEFAULT NULL,
+            ip_address varchar(45) DEFAULT NULL,
+            object_type varchar(50) DEFAULT NULL,
+            object_id varchar(50) DEFAULT NULL,
+            data longtext,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
+            KEY event_type (event_type),
+            KEY severity (severity),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+    
+    /**
      * Log a security audit event.
      *
      * @since    1.0.0
@@ -375,6 +403,25 @@ class Kura_AI_Audit_Log
         $logging_scope = \get_option('kura_ai_audit_logging_scope', 'all');
         if ($logging_scope === 'significant' && $severity === 'info') {
             return false;
+        }
+
+        // Check if audit log table exists before logging
+        $table_exists = $wpdb->get_var($wpdb->prepare(
+            "SHOW TABLES LIKE %s",
+            $this->table_name
+        ));
+        if (!$table_exists) {
+            error_log('KuraAI: Audit log table does not exist, attempting to create it.');
+            $this->create_audit_log_table();
+            // Re-check after creation
+            $table_exists = $wpdb->get_var($wpdb->prepare(
+                "SHOW TABLES LIKE %s",
+                $this->table_name
+            ));
+            if (!$table_exists) {
+                error_log('KuraAI: Failed to create audit log table, skipping log entry.');
+                return false;
+            }
         }
 
         $result = $wpdb->insert($this->table_name, $log_data);

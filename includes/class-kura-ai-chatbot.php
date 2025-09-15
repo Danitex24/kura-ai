@@ -201,11 +201,24 @@ Keep responses concise, helpful, and friendly. If asked about features not relat
         if (!$this->is_enabled()) {
             return;
         }
+        
+        // Get plugin directory URL with fallback
+        $plugin_url = '';
+        if (\function_exists('\plugin_dir_url')) {
+            $plugin_url = \plugin_dir_url(__FILE__);
+        } else if (function_exists('plugin_dir_url')) {
+            $plugin_url = plugin_dir_url(__FILE__);
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('\WP_CONTENT_URL') ? \WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins/' . basename(dirname(dirname(__FILE__))) . '/includes/';
+        }
 
         // Enqueue chatbot styles
         wp_enqueue_style(
             'kura-ai-chatbot',
-            plugin_dir_url(__FILE__) . '../public/css/chatbot.css',
+            $plugin_url . '../public/css/chatbot.css',
             array(),
             KURA_AI_VERSION
         );
@@ -213,7 +226,7 @@ Keep responses concise, helpful, and friendly. If asked about features not relat
         // Enqueue chatbot script
         wp_enqueue_script(
             'kura-ai-chatbot',
-            plugin_dir_url(__FILE__) . '../public/js/chatbot.js',
+            $plugin_url . '../public/js/chatbot.js',
             array('jquery'),
             KURA_AI_VERSION,
             true

@@ -590,7 +590,20 @@ class Kura_Ai_Admin {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
         $this->plugin_path = \trailingslashit(\plugin_dir_path(__FILE__));
-        $this->assets_url = \trailingslashit(\plugin_dir_url(__FILE__));
+        
+        // Use plugin_dir_url with fallback if plugins_url is not available
+        if (\function_exists('\plugin_dir_url')) {
+            $this->assets_url = \trailingslashit(\plugin_dir_url(__FILE__));
+        } else if (function_exists('plugin_dir_url')) {
+            $this->assets_url = \trailingslashit(plugin_dir_url(__FILE__));
+        } else {
+            // Simple fallback that works for basic cases
+            $base_url = 'http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 's' : '') . '://' . $_SERVER['HTTP_HOST'];
+            $wp_content_url = defined('WP_CONTENT_URL') ? WP_CONTENT_URL : $base_url . '/wp-content';
+            $plugin_url = $wp_content_url . '/plugins';
+            $this->assets_url = \trailingslashit($plugin_url . '/' . basename(dirname(__FILE__)));
+        }
+        
         $this->template_path = $this->plugin_path . 'partials/';
         
         // Initialize file monitor
