@@ -118,7 +118,9 @@ $has_api_key = !empty($api_key);
                                         </span>
                                     </p>
                                     <div class="kura-ai-suggestion-content">
-                                         <?php echo esc_html($issue['ai_suggestion']); ?>
+                                        $ai_suggestion = !empty($issue['ai_suggestion']) ? esc_html($issue['ai_suggestion']) : '';
+                                        // Sanitize AI response to plain text
+                                        $ai_suggestion = Kura_AI\Kura_AI_AI_Handler::sanitize_ai_response($ai_suggestion);
                                      </div>
                                 </div>
                                 <?php

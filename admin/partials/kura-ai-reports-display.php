@@ -222,3 +222,9 @@ $last_scan = !empty($settings['last_scan']) ? (int)$settings['last_scan'] : 0;
         </div>
     </div>
 </div>
+        $ai_suggestion = !empty($report['ai_suggestion']) ? esc_html($report['ai_suggestion']) : '';
+        // Sanitize AI response to plain text
+        $ai_suggestion = Kura_AI\Kura_AI_AI_Handler::sanitize_ai_response($ai_suggestion);
+        <div class="ai-suggestion-modal-content">
+            <?php echo esc_html($ai_suggestion); ?>
+        </div>

@@ -102,6 +102,9 @@ class Kura_AI_AI_Handler {
                 throw new \Exception(\__('No suggestion was returned by the AI.', 'kura-ai'));
             }
 
+            // Sanitize AI response to plain text
+            $suggestion = Kura_AI_AI_Handler::sanitize_ai_response($suggestion);
+
             // Log the suggestion
             $logger = new Kura_AI_Logger($this->plugin_name, $this->version);
             $logger->log(
@@ -121,5 +124,20 @@ class Kura_AI_AI_Handler {
                 \sprintf(\__('Error getting AI suggestion: %s', 'kura-ai'), $e->getMessage())
             );
         }
+    }
+
+    /**
+     * Sanitize AI response to plain text (strip Markdown and formatting).
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function sanitize_ai_response($text) {
+        // Remove Markdown headings, bold, italics, code blocks, inline code, and special characters
+        $text = preg_replace('/[#*_`>\-]+/', '', $text); // Remove markdown chars
+        $text = preg_replace('/\n{2,}/', "\n", $text); // Collapse multiple newlines
+        $text = strip_tags($text); // Remove HTML tags if any
+        $text = trim($text);
+        return $text;
     }
 }
