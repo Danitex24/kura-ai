@@ -175,10 +175,10 @@ class Kura_AI_Captcha {
         $stored = \set_transient($transient_key, (string)$captcha_answer, 600); // 10 minutes expiration
         
         // Log for debugging
-        \error_log('CAPTCHA Debug - Generated new CAPTCHA');
-        \error_log('CAPTCHA Debug - Key: ' . $captcha_key);
-        \error_log('CAPTCHA Debug - Answer: ' . $captcha_answer . ' (stored as string: ' . (string)$captcha_answer . ')');
-        \error_log('CAPTCHA Debug - Transient stored: ' . ($stored ? 'yes' : 'no'));
+        // \error_log('CAPTCHA Debug - Generated new CAPTCHA');
+        // \error_log('CAPTCHA Debug - Key: ' . $captcha_key);
+        // \error_log('CAPTCHA Debug - Answer: ' . $captcha_answer . ' (stored as string: ' . (string)$captcha_answer . ')');
+        // \error_log('CAPTCHA Debug - Transient stored: ' . ($stored ? 'yes' : 'no'));
         
         ?>
         <p>
