@@ -711,3 +711,18 @@ function run_kura_ai()
 
 // Run the plugin
 run_kura_ai();
+
+/**
+ * Add Settings link to plugin action links on Plugins page.
+ *
+ * @param array $links Existing plugin action links.
+ * @return array Modified plugin action links with Settings link.
+ */
+function Kura_AI_add_settings_link($links) {
+    $settings_url = admin_url('admin.php?page=kura-ai-settings');
+    $settings_link = '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'kura-ai') . '</a>';
+    array_unshift($links, $settings_link);
+    return $links;
+}
+
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'Kura_AI_add_settings_link');
