@@ -2,6 +2,13 @@
 $settings = get_option('kura_ai_settings');
 $current_provider = !empty($settings['ai_service']) ? $settings['ai_service'] : '';
 
+// Fallback: If no provider is selected, try to find any active API key
+if (empty($current_provider)) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'kura_ai_api_keys';
+    $current_provider = $wpdb->get_var("SELECT provider FROM $table_name WHERE status = 'active' LIMIT 1");
+}
+
 // Check if API keys are set for the current provider
 global $wpdb;
 $table_name = $wpdb->prefix . 'kura_ai_api_keys';

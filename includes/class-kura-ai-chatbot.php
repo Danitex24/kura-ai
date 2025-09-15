@@ -68,8 +68,8 @@ class Kura_Ai_Chatbot {
      */
     public function __construct() {
         // Initialize AI handler if class exists
-        if (class_exists('Kura_Ai\Kura_Ai_Ai_Handler')) {
-            $this->ai_handler = new Kura_Ai_Ai_Handler('kura-ai', '1.0.0');
+        if (class_exists('Kura_AI\Kura_AI_AI_Handler')) {
+            $this->ai_handler = new \Kura_AI\Kura_AI_AI_Handler('kura-ai', '1.0.0');
         }
     }
 
